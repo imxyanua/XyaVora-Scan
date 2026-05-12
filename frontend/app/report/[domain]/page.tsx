@@ -6,6 +6,9 @@ import { SSLCard }              from "@/components/dashboard/SSLCard";
 import { TechStackCard }        from "@/components/dashboard/TechStackCard";
 import { SecurityHeadersCard }  from "@/components/dashboard/SecurityHeadersCard";
 import { DNSRecordsCard }       from "@/components/dashboard/DNSRecordsCard";
+import { WhoisCard }            from "@/components/dashboard/WhoisCard";
+import { CookiesCard }          from "@/components/dashboard/CookiesCard";
+import { SecurityTxtCard }      from "@/components/dashboard/SecurityTxtCard";
 import { ScreenshotCard }       from "@/components/dashboard/ScreenshotCard";
 import { analyzeDomain }        from "@/lib/api";
 
@@ -83,11 +86,18 @@ export default async function ReportPage({ params }: Props) {
           </div>
         </div>
 
-        {/* ── Row 3: DNS + Screenshot ── */}
+        {/* ── Row 3: DNS + WHOIS ── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2">
             <DNSRecordsCard dns={report.dns} />
           </div>
+          <WhoisCard whois={report.whois} />
+        </div>
+
+        {/* ── Row 4: Cookies + Security.txt + Screenshot ── */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <CookiesCard cookies={report.cookies} />
+          <SecurityTxtCard securityTxt={report.securityTxt} />
           <ScreenshotCard screenshot={report.screenshot} />
         </div>
 
