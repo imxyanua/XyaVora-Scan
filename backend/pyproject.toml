@@ -1,0 +1,5 @@
+[project]
+name = "xyavora-scan-backend"
+version = "0.1.0"
+description = "Domain security posture analyzer — FastAPI backend with 8 independent analyzers (DNS, SSL, HTTP headers, WHOIS, cookies, tech stack, security.txt, score)"
+requires-python = ">=3.12"

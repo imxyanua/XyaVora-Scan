@@ -1,5 +1,6 @@
 {
-  "name": "frontend",
+  "name": "xyavora-scan",
+  "description": "Domain security posture analyzer — scans DNS, SSL, HTTP headers, WHOIS, cookies, tech stack, and security.txt in one terminal-style dashboard",
   "version": "0.1.0",
   "private": true,
   "scripts": {
