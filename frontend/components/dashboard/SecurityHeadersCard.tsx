@@ -31,18 +31,18 @@ export function SecurityHeadersCard({ headers }: Props) {
           return (
             <div
               key={h.header}
-              className="data-grid-row flex justify-between items-center px-4 py-2.5"
+              className="data-grid-row flex justify-between items-start gap-3 px-4 py-2.5"
             >
-              <div className="min-w-0 mr-4">
+              <div className="min-w-0 flex-1">
                 <span className="text-primary-fixed">{h.header}</span>
                 {h.value && (
-                  <span className="text-primary-fixed/40 text-[11px] ml-2 truncate hidden sm:inline">
-                    → {h.value}
-                  </span>
+                  <p className="text-primary-fixed/40 text-[10px] mt-0.5 truncate">
+                    {h.value}
+                  </p>
                 )}
               </div>
-              <span className={`status-badge ${badge.cls} text-[10px] shrink-0`}>
-                {h.value ? `${badge.text} ${h.value}` : badge.text}
+              <span className={`status-badge ${badge.cls} text-[10px] shrink-0 mt-0.5`}>
+                {badge.text}
               </span>
             </div>
           );
@@ -50,19 +50,25 @@ export function SecurityHeadersCard({ headers }: Props) {
 
         {/* Server / X-Powered-By */}
         {headers.server && (
-          <div className="data-grid-row flex justify-between items-center px-4 py-2.5">
-            <span className="text-primary-fixed/70">Server</span>
-            <span className="status-badge status-warn text-[10px]">
-              [!!] {headers.server}
-            </span>
+          <div className="data-grid-row flex justify-between items-start gap-3 px-4 py-2.5">
+            <div className="min-w-0 flex-1">
+              <span className="text-primary-fixed/70">Server</span>
+              <p className="text-primary-fixed/40 text-[10px] mt-0.5 truncate">
+                {headers.server}
+              </p>
+            </div>
+            <span className="status-badge status-warn text-[10px] shrink-0 mt-0.5">[!!]</span>
           </div>
         )}
         {headers.xPoweredBy && (
-          <div className="data-grid-row flex justify-between items-center px-4 py-2.5">
-            <span className="text-primary-fixed/70">X-Powered-By</span>
-            <span className="status-badge status-warn text-[10px]">
-              [!!] {headers.xPoweredBy}
-            </span>
+          <div className="data-grid-row flex justify-between items-start gap-3 px-4 py-2.5">
+            <div className="min-w-0 flex-1">
+              <span className="text-primary-fixed/70">X-Powered-By</span>
+              <p className="text-primary-fixed/40 text-[10px] mt-0.5 truncate">
+                {headers.xPoweredBy}
+              </p>
+            </div>
+            <span className="status-badge status-warn text-[10px] shrink-0 mt-0.5">[!!]</span>
           </div>
         )}
       </div>
