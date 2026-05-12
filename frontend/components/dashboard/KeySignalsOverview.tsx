@@ -1,0 +1,97 @@
+import type { HeadersResult, DnsResult } from "@/types";
+
+interface Props {
+  headers: HeadersResult;
+  dns:     DnsResult;
+  ssl:     { httpsAvailable: boolean };
+}
+
+type SignalStatus = "pass" | "warn" | "fail" | "missing";
+
+interface Signal {
+  label:  string;
+  status: SignalStatus;
+  value?: string;
+}
+
+const BADGE: Record<SignalStatus, { cls: string; text: string }> = {
+  pass:    { cls: "status-pass",    text: "[OK] PASS"  },
+  warn:    { cls: "status-warn",    text: "[!!] WARN"  },
+  fail:    { cls: "status-fail",    text: "[FAIL]"     },
+  missing: { cls: "status-missing", text: "[-] NULL"   },
+};
+
+export function KeySignalsOverview({ headers, dns, ssl }: Props) {
+  const findHeader = (name: string) =>
+    headers.securityHeaders.find((h) =>
+      h.header.toLowerCase() === name.toLowerCase()
+    );
+
+  const hsts    = findHeader("Strict-Transport-Security");
+  const csp     = findHeader("Content-Security-Policy");
+  const xframe  = findHeader("X-Frame-Options");
+
+  // DMARC: detected but p=none → warn
+  const dmarcStatus: SignalStatus =
+    !dns.dmarcDetected ? "missing" :
+    dns.dmarcRecord?.includes("p=none") ? "warn" : "pass";
+
+  const signals: Signal[] = [
+    {
+      label:  "SEC.HTTPS",
+      status: ssl.httpsAvailable ? "pass" : "fail",
+    },
+    {
+      label:  "SEC.HSTS",
+      status: hsts?.status === "present" ? "pass" : hsts?.status === "warning" ? "warn" : "missing",
+    },
+    {
+      label:  "SEC.CSP",
+      status: csp?.status === "present" ? "pass" : csp?.status === "warning" ? "warn" : "missing",
+    },
+    {
+      label:  "MAIL.DMARC",
+      status: dmarcStatus,
+    },
+    {
+      label:  "SEC.X-FRAME",
+      status: xframe?.status === "present" ? "pass" : "missing",
+    },
+    {
+      label:  "DNS.SPF",
+      status: dns.spfDetected ? "pass" : "missing",
+    },
+  ];
+
+  return (
+    <div className="card-panel p-5 flex flex-col h-full">
+      {/* Header */}
+      <div className="flex justify-between items-start border-b border-primary-fixed/20 pb-2 mb-4 shrink-0">
+        <h2 className="font-mono text-[11px] tracking-widest text-primary-fixed/60 uppercase">
+          SYS.KEY_SIGNALS_OVERVIEW
+        </h2>
+        <span className="font-mono text-[11px] text-primary-fixed/40">[MATRIX_VIEW]</span>
+      </div>
+
+      {/* Signal grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2 flex-1">
+        {signals.map((sig) => {
+          const badge = BADGE[sig.status];
+          return (
+            <div
+              key={sig.label}
+              className="border border-primary-fixed/20 p-3 bg-[#070B0F] flex flex-col justify-center items-center text-center glow-hover"
+            >
+              <span className="font-mono text-[11px] text-primary-fixed/80 mb-2 leading-tight">
+                {sig.label}
+              </span>
+              <span className={`status-badge ${badge.cls} text-[10px]`}>
+                {badge.text}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
