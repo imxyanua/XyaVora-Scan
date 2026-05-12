@@ -37,3 +37,18 @@ yarn-error.log*
 
 # ── Coverage ──────────────────────────────────
 coverage/
+
+# ── Claude Code artifacts ─────────────────────
+frontend/AGENTS.md
+frontend/CLAUDE.md
+
+# ── Stitch prototype (local reference only) ───
+Frontend-demo/
+
+# ── Next.js default placeholder assets ────────
+frontend/public/file.svg
+frontend/public/globe.svg
+frontend/public/next.svg
+frontend/public/vercel.svg
+frontend/public/window.svg
+frontend/README.md
