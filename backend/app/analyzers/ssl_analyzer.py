@@ -1,7 +1,158 @@
-from app.schemas.report import SslResult
+import asyncio
+import ssl
+import socket
+from datetime import datetime, timezone, timedelta
+
+from app.schemas.report import SslResult, Finding
 from app.schemas.analyzer import AnalyzerResult
+
+# Warn when certificate expires within this many days
+_EXPIRY_WARN_DAYS = 30
+
+
+def _get_cert_info(hostname: str) -> dict:
+    """
+    Opens a TLS connection and returns the parsed certificate dict.
+    Runs in a thread via asyncio.to_thread because ssl/socket are blocking.
+    """
+    ctx = ssl.create_default_context()
+    with ctx.wrap_socket(
+        socket.create_connection((hostname, 443), timeout=8),
+        server_hostname=hostname,
+    ) as conn:
+        cert   = conn.getpeercert()
+        cipher = conn.cipher()          # (name, protocol, bits)
+        return {"cert": cert, "cipher": cipher}
+
+
+def _parse_cert(hostname: str, info: dict) -> SslResult:
+    cert   = info["cert"]
+    cipher = info.get("cipher")
+
+    # Subject — take CN from the subject tuple list
+    subject_cn = ""
+    for field in cert.get("subject", ()):
+        for key, val in field:
+            if key == "commonName":
+                subject_cn = val
+
+    # Issuer
+    issuer_o = ""
+    for field in cert.get("issuer", ()):
+        for key, val in field:
+            if key == "organizationName":
+                issuer_o = val
+
+    # Validity dates — format: "May 12 00:00:00 2026 GMT"
+    valid_from_raw = cert.get("notBefore", "")
+    valid_to_raw   = cert.get("notAfter",  "")
+
+    fmt = "%b %d %H:%M:%S %Y %Z"
+    try:
+        valid_from = datetime.strptime(valid_from_raw, fmt).replace(tzinfo=timezone.utc)
+        valid_to   = datetime.strptime(valid_to_raw,   fmt).replace(tzinfo=timezone.utc)
+        days_remaining = (valid_to - datetime.now(timezone.utc)).days
+    except ValueError:
+        valid_from = datetime.now(timezone.utc)
+        valid_to   = datetime.now(timezone.utc)
+        days_remaining = 0
+
+    # SAN — Subject Alternative Names
+    san_domains: list[str] = [
+        val for kind, val in cert.get("subjectAltName", ())
+        if kind == "DNS"
+    ]
+
+    # TLS version from cipher tuple: cipher[1] is the protocol string
+    protocol = cipher[1] if cipher else None
+
+    warning = None
+    if days_remaining < 0:
+        warning = f"Certificate expired {abs(days_remaining)} day(s) ago."
+    elif days_remaining < _EXPIRY_WARN_DAYS:
+        warning = f"Certificate expires in {days_remaining} day(s)."
+
+    return SslResult(
+        httpsAvailable=True,
+        issuer=issuer_o or "Unknown",
+        subject=subject_cn or hostname,
+        validFrom=valid_from.isoformat(),
+        validTo=valid_to.isoformat(),
+        daysRemaining=max(0, days_remaining),
+        sanDomains=san_domains,
+        trusted=True,   # ssl.create_default_context() validates chain — if we got here, it's trusted
+        protocol=protocol,
+        warning=warning,
+    )
+
+
+def _build_findings(result: SslResult) -> list[Finding]:
+    findings: list[Finding] = []
+
+    if not result.httpsAvailable:
+        findings.append(Finding(
+            id="no_https",
+            severity="high",
+            category="SSL",
+            title="HTTPS Not Available",
+            description="The domain does not respond on port 443 or the TLS handshake failed.",
+            impact="All traffic is sent in plaintext and can be intercepted or modified.",
+            recommendation="Obtain an SSL/TLS certificate and configure HTTPS. Consider Let's Encrypt for free certificates.",
+            status="fail",
+        ))
+        return findings
+
+    if result.daysRemaining == 0:
+        findings.append(Finding(
+            id="ssl_expired",
+            severity="high",
+            category="SSL",
+            title="SSL Certificate Expired",
+            description=f"The certificate for {result.subject} has expired.",
+            impact="Browsers will show a security warning and block access for most users.",
+            recommendation="Renew the SSL certificate immediately.",
+            status="fail",
+        ))
+    elif result.daysRemaining < _EXPIRY_WARN_DAYS:
+        findings.append(Finding(
+            id="ssl_expiring_soon",
+            severity="medium",
+            category="SSL",
+            title=f"SSL Certificate Expiring Soon ({result.daysRemaining} days)",
+            description=f"The certificate expires on {result.validTo[:10]}.",
+            impact="If not renewed, users will see browser security warnings.",
+            recommendation="Renew the certificate before expiry. Enable auto-renewal if using Let's Encrypt.",
+            status="warning",
+        ))
+    else:
+        findings.append(Finding(
+            id="ssl_valid",
+            severity="info",
+            category="SSL",
+            title="SSL Certificate Is Valid",
+            description=f"Certificate is trusted, valid for {result.daysRemaining} more day(s). Protocol: {result.protocol}.",
+            recommendation="No action required. Monitor expiration date.",
+            status="pass",
+        ))
+
+    return findings
 
 
 async def analyze_ssl(hostname: str) -> AnalyzerResult:
-    # TODO: implement with ssl/socket
-    return AnalyzerResult(key="ssl", status="success", data=SslResult(), findings=[])
+    try:
+        info = await asyncio.to_thread(_get_cert_info, hostname)
+        result = _parse_cert(hostname, info)
+    except ssl.SSLCertVerificationError as exc:
+        # Connection succeeded but cert is untrusted — still return partial info
+        result = SslResult(
+            httpsAvailable=True,
+            trusted=False,
+            error=f"Certificate verification failed: {exc}",
+        )
+    except (ConnectionRefusedError, TimeoutError, OSError) as exc:
+        result = SslResult(httpsAvailable=False, error=str(exc))
+    except Exception as exc:
+        result = SslResult(httpsAvailable=False, error=str(exc))
+
+    findings = _build_findings(result)
+    return AnalyzerResult(key="ssl", status="success", data=result, findings=findings)
