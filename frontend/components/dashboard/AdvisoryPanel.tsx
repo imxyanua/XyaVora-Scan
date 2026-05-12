@@ -1,4 +1,8 @@
+"use client";
+
+import { useState, useCallback } from "react";
 import type { Finding, FindingStatus } from "@/types";
+import { FindingDrawer } from "./FindingDrawer";
 
 interface Props {
   findings: Finding[];
@@ -41,6 +45,9 @@ const GROUPS: Group[] = [
 ];
 
 export function AdvisoryPanel({ findings }: Props) {
+  const [activeFinding, setActiveFinding] = useState<Finding | null>(null);
+  const closeFinding = useCallback(() => setActiveFinding(null), []);
+
   const failFindings = findings.filter((f) => f.status === "fail");
   const warnFindings = findings.filter((f) => f.status === "warning");
   const infoFindings = findings.filter((f) => f.status === "info" || f.status === "pass");
@@ -49,6 +56,8 @@ export function AdvisoryPanel({ findings }: Props) {
   const totalIssues = failFindings.length + warnFindings.length;
 
   return (
+    <>
+    <FindingDrawer finding={activeFinding} onClose={closeFinding} />
     <div className="card-panel flex flex-col h-full">
       {/* Header */}
       <div className="p-3 border-b border-primary-fixed/20 flex justify-between items-center bg-[#070B0F] shrink-0">
@@ -100,6 +109,7 @@ export function AdvisoryPanel({ findings }: Props) {
                       </div>
                       <button
                         type="button"
+                        onClick={() => setActiveFinding(finding)}
                         className="shrink-0 font-mono text-[10px] text-primary-fixed border border-primary-fixed/50 px-1.5 py-0.5 hover:bg-primary-fixed hover:text-[#070B0F] transition-colors"
                       >
                         [FIX]
@@ -113,5 +123,6 @@ export function AdvisoryPanel({ findings }: Props) {
         })}
       </div>
     </div>
+    </>
   );
 }
