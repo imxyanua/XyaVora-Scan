@@ -18,14 +18,15 @@ from app.analyzers.screenshot_analyzer  import analyze_screenshot
 from app.analyzers.score_analyzer       import analyze_score
 
 
-async def _run(coro) -> AnalyzerResult:
+async def _run(coro, timeout: float | None = None) -> AnalyzerResult:
     """
     Wraps an analyzer coroutine with a per-analyzer timeout.
     Returns an error AnalyzerResult instead of raising so one failure
     never aborts the whole scan.
     """
+    t = timeout if timeout is not None else settings.ANALYZER_TIMEOUT_SECONDS
     try:
-        return await asyncio.wait_for(coro, timeout=settings.ANALYZER_TIMEOUT_SECONDS)
+        return await asyncio.wait_for(coro, timeout=t)
     except asyncio.TimeoutError:
         return AnalyzerResult(key="unknown", status="error", errors=["Analyzer timed out"])
     except Exception as exc:
@@ -47,7 +48,8 @@ async def run_scan(target: str, normalized_url: str, hostname: str) -> ScanRepor
                 _run(analyze_tech_stack(normalized_url)),
                 _run(analyze_cookies(normalized_url)),
                 _run(analyze_security_txt(normalized_url)),
-                _run(analyze_screenshot(normalized_url, settings.ENABLE_SCREENSHOT)),
+                _run(analyze_screenshot(normalized_url, settings.ENABLE_SCREENSHOT),
+                     timeout=settings.SCREENSHOT_TIMEOUT_SECONDS),
             )
         )
 
