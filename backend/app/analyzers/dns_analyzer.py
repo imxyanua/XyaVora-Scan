@@ -88,14 +88,16 @@ def _build_findings(
 
 async def analyze_dns(hostname: str) -> AnalyzerResult:
     resolver = dns.asyncresolver.Resolver()
-    resolver.timeout = 5
-    resolver.lifetime = 8
+    resolver.timeout = 3
+    resolver.lifetime = 4   # per-query cap; keeps total well inside ANALYZER_TIMEOUT_SECONDS
 
-    # Run all record type queries concurrently
-    results = await asyncio.gather(
+    # Run all record type queries + DMARC concurrently in one gather call
+    *type_results, dmarc_result = await asyncio.gather(
         *[_query(resolver, hostname, rtype) for rtype in _RECORD_TYPES],
+        _query(resolver, f"_dmarc.{hostname}", "TXT"),
         return_exceptions=True,
     )
+    results = type_results  # keep variable name for the loop below
 
     all_records: list[DnsRecord] = []
     for r in results:
@@ -104,8 +106,7 @@ async def analyze_dns(hostname: str) -> AnalyzerResult:
 
     txt_records = [r for r in all_records if r.type == "TXT"]
 
-    # DMARC is published at _dmarc.<domain>, not <domain> itself
-    dmarc_records = await _query(resolver, f"_dmarc.{hostname}", "TXT")
+    dmarc_records: list[DnsRecord] = dmarc_result if isinstance(dmarc_result, list) else []
 
     spf_detected, spf_record     = _detect_spf(txt_records)
     dmarc_detected, dmarc_record = _detect_dmarc(dmarc_records)
