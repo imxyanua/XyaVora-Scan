@@ -150,11 +150,13 @@ export interface SecurityTxtResult {
 // ── Screenshot ───────────────────────────────
 
 export interface ScreenshotResult {
-  url?:        string;
-  base64?:     string;
-  capturedAt?: string;
-  viewport?:   string;
-  error?:      string;
+  url?:           string;
+  base64?:        string;
+  mobileBase64?:  string;
+  capturedAt?:    string;
+  viewport?:      string;
+  mobileViewport?: string;
+  error?:         string;
 }
 
 // ── Main Report ──────────────────────────────

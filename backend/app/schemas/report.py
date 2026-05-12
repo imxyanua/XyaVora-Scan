@@ -146,11 +146,13 @@ class SecurityTxtResult(_Base):
 # ── Screenshot ────────────────────────────────────────────────────
 
 class ScreenshotResult(_Base):
-    url:        Optional[str] = None
-    base64:     Optional[str] = None
-    capturedAt: Optional[str] = None
-    viewport:   Optional[str] = None
-    error:      Optional[str] = None
+    url:           Optional[str] = None
+    base64:        Optional[str] = None
+    mobileBase64:  Optional[str] = None
+    capturedAt:    Optional[str] = None
+    viewport:      Optional[str] = None
+    mobileViewport: Optional[str] = None
+    error:         Optional[str] = None
 
 
 # ── Main Report ───────────────────────────────────────────────────
