@@ -26,7 +26,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <nav className="hidden md:flex flex-col bg-[#070B0F] fixed left-0 top-0 h-full w-64 border-r border-[#223042] z-40 pt-[72px] pb-8 px-4">
+    <nav className="hidden md:flex flex-col bg-[#070B0F] fixed left-0 top-0 h-full w-64 border-r border-[#223042] z-30 pt-16 pb-8 px-4">
       {/* Brand */}
       <div className="mb-8 px-4">
         <p className="font-mono text-lg font-bold text-primary-fixed tracking-tight uppercase">

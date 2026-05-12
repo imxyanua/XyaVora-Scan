@@ -11,7 +11,7 @@ export function TopBar({ domain }: TopBarProps) {
   const router = useRouter();
 
   return (
-    <header className="bg-[#070B0F]/90 backdrop-blur-sm border-b border-primary-fixed/20 flex justify-between items-center w-full px-8 h-16 z-50 sticky top-0 shrink-0">
+    <header className="bg-[#070B0F]/90 backdrop-blur-sm border-b border-primary-fixed/20 flex justify-between items-center w-full px-8 h-16 z-40 sticky top-0 shrink-0">
       {/* Left */}
       <div className="flex items-center gap-3">
         {/* Mobile logo */}

@@ -46,7 +46,7 @@ export function FindingDrawer({ finding, onClose }: Props) {
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className={`fixed inset-0 z-40 bg-[#070B0F]/70 backdrop-blur-sm transition-opacity duration-200 ${
+        className={`fixed inset-0 z-50 bg-[#070B0F]/70 backdrop-blur-sm transition-opacity duration-200 ${
           open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
       />
@@ -55,7 +55,7 @@ export function FindingDrawer({ finding, onClose }: Props) {
       <aside
         role="dialog"
         aria-modal="true"
-        className={`fixed top-0 right-0 z-50 h-full w-full max-w-md bg-[#0F1720] border-l border-primary-fixed/20 flex flex-col transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 right-0 z-60 h-full w-full max-w-md bg-[#0F1720] border-l border-primary-fixed/20 flex flex-col transition-transform duration-300 ease-in-out ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
