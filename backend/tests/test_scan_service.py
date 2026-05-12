@@ -68,9 +68,11 @@ async def test_run_scan_returns_report():
 
 
 @pytest.mark.asyncio
-async def test_run_scan_stubs_return_empty_data():
-    # While analyzers are stubs, results should still be valid Pydantic models
+async def test_run_scan_example_com():
+    # All analyzers now implemented — verify structural correctness, not exact values
     report = await run_scan("example.com", "https://example.com", "example.com")
-    assert report.findings == []
-    assert report.techStack == []
-    assert report.cookies == []
+    assert isinstance(report.findings, list)
+    assert isinstance(report.techStack, list)
+    assert isinstance(report.cookies, list)
+    assert isinstance(report.score, int)
+    assert report.grade in ("A", "B", "C", "D", "F")
