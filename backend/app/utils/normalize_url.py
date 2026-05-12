@@ -5,12 +5,11 @@ from urllib.parse import urlparse
 def normalize_url(target: str) -> tuple[str, str]:
     """
     Returns (normalized_url, hostname).
-    Strips scheme/path noise, forces https://.
-    Raises ValueError if target looks malformed.
+    Always produces https:// — we never scan plain HTTP targets because
+    the SSL analyzer needs to verify HTTPS availability independently.
     """
     target = target.strip()
 
-    # Strip leading scheme if present
     if re.match(r"^https?://", target, re.IGNORECASE):
         parsed = urlparse(target)
         hostname = parsed.hostname or ""
@@ -21,12 +20,12 @@ def normalize_url(target: str) -> tuple[str, str]:
     if not hostname:
         raise ValueError(f"Cannot parse hostname from: {target!r}")
 
-    # Reject obviously bad hostnames
+    # Reject chars that are valid in URLs but not in hostnames (e.g. underscore).
+    # RFC 1123 allows only a-z, 0-9, hyphen, dot.
     if not re.match(r"^[a-z0-9]([a-z0-9\-\.]*[a-z0-9])?$", hostname, re.IGNORECASE):
         raise ValueError(f"Invalid hostname: {hostname!r}")
 
     if "." not in hostname:
         raise ValueError(f"Hostname has no TLD: {hostname!r}")
 
-    normalized_url = f"https://{hostname}"
-    return normalized_url, hostname
+    return f"https://{hostname}", hostname

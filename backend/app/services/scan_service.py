@@ -1,0 +1,85 @@
+import asyncio
+from datetime import datetime, timezone
+
+from app.core.config import settings
+from app.schemas.report import (
+    ScanReport, DnsResult, SslResult, HeadersResult,
+    WhoisResult, SecurityTxtResult, ScreenshotResult,
+)
+from app.schemas.analyzer import AnalyzerResult
+from app.analyzers.dns_analyzer         import analyze_dns
+from app.analyzers.ssl_analyzer         import analyze_ssl
+from app.analyzers.headers_analyzer     import analyze_headers
+from app.analyzers.whois_analyzer       import analyze_whois
+from app.analyzers.tech_stack_analyzer  import analyze_tech_stack
+from app.analyzers.cookies_analyzer     import analyze_cookies
+from app.analyzers.security_txt_analyzer import analyze_security_txt
+from app.analyzers.screenshot_analyzer  import analyze_screenshot
+from app.analyzers.score_analyzer       import analyze_score
+
+
+async def _run(coro) -> AnalyzerResult:
+    """
+    Wraps an analyzer coroutine with a per-analyzer timeout.
+    Returns an error AnalyzerResult instead of raising so one failure
+    never aborts the whole scan.
+    """
+    try:
+        return await asyncio.wait_for(coro, timeout=settings.ANALYZER_TIMEOUT_SECONDS)
+    except asyncio.TimeoutError:
+        return AnalyzerResult(key="unknown", status="error", errors=["Analyzer timed out"])
+    except Exception as exc:
+        return AnalyzerResult(key="unknown", status="error", errors=[str(exc)])
+
+
+async def run_scan(target: str, normalized_url: str, hostname: str) -> ScanReport:
+    """
+    Runs all analyzers concurrently then assembles a ScanReport.
+    The global SCAN_TIMEOUT_SECONDS caps the entire pipeline.
+    """
+    async def _pipeline() -> ScanReport:
+        dns_r, ssl_r, headers_r, whois_r, tech_r, cookies_r, sectxt_r, shot_r = (
+            await asyncio.gather(
+                _run(analyze_dns(hostname)),
+                _run(analyze_ssl(hostname)),
+                _run(analyze_headers(normalized_url)),
+                _run(analyze_whois(hostname)),
+                _run(analyze_tech_stack(normalized_url)),
+                _run(analyze_cookies(normalized_url)),
+                _run(analyze_security_txt(normalized_url)),
+                _run(analyze_screenshot(normalized_url, settings.ENABLE_SCREENSHOT)),
+            )
+        )
+
+        # Collect all findings from every analyzer
+        all_findings = [
+            f
+            for result in (dns_r, ssl_r, headers_r, whois_r, tech_r, cookies_r, sectxt_r, shot_r)
+            for f in result.findings
+        ]
+
+        # Score is computed last — it depends on the combined findings list
+        score_r = await _run(analyze_score(all_findings))
+        score_data = score_r.data or {}
+
+        return ScanReport(
+            target=target,
+            normalizedUrl=normalized_url,
+            hostname=hostname,
+            scanTime=datetime.now(timezone.utc).isoformat(),
+            score=score_data.get("score", 0),
+            grade=score_data.get("grade", "F"),
+            status=score_data.get("status", "High Risk"),
+            summary=score_data.get("summary", ""),
+            dns=dns_r.data        if isinstance(dns_r.data, DnsResult)           else DnsResult(),
+            ssl=ssl_r.data        if isinstance(ssl_r.data, SslResult)           else SslResult(),
+            headers=headers_r.data if isinstance(headers_r.data, HeadersResult)  else HeadersResult(),
+            whois=whois_r.data    if isinstance(whois_r.data, WhoisResult)       else WhoisResult(),
+            techStack=tech_r.data if isinstance(tech_r.data, list)               else [],
+            cookies=cookies_r.data if isinstance(cookies_r.data, list)           else [],
+            securityTxt=sectxt_r.data if isinstance(sectxt_r.data, SecurityTxtResult) else SecurityTxtResult(),
+            screenshot=shot_r.data    if isinstance(shot_r.data, ScreenshotResult)    else ScreenshotResult(),
+            findings=all_findings,
+        )
+
+    return await asyncio.wait_for(_pipeline(), timeout=settings.SCAN_TIMEOUT_SECONDS)
