@@ -1,4 +1,3 @@
-// MOCK: using mock data until backend is ready
 import { AppShell }             from "@/components/layout/AppShell";
 import { RiskScoreCard }        from "@/components/dashboard/RiskScoreCard";
 import { KeySignalsOverview }   from "@/components/dashboard/KeySignalsOverview";
@@ -8,15 +7,33 @@ import { TechStackCard }        from "@/components/dashboard/TechStackCard";
 import { SecurityHeadersCard }  from "@/components/dashboard/SecurityHeadersCard";
 import { DNSRecordsCard }       from "@/components/dashboard/DNSRecordsCard";
 import { ScreenshotCard }       from "@/components/dashboard/ScreenshotCard";
-import { mockGoogleReport }     from "@/mock/googleReport";
+import { analyzeDomain }        from "@/lib/api";
 
 type Props = { params: Promise<{ domain: string }> };
 
 export default async function ReportPage({ params }: Props) {
   const { domain } = await params;
+  const response = await analyzeDomain(domain);
 
-  // TODO: replace with real API call → await analyzeDomain(domain)
-  const report = mockGoogleReport;
+  if (!response.success || !response.data) {
+    return (
+      <AppShell domain={domain}>
+        <div className="p-8 flex flex-col items-center justify-center min-h-[60vh] gap-4">
+          <span className="font-mono text-[10px] text-primary-fixed/30 uppercase tracking-widest">
+            &gt; SCAN_ERROR
+          </span>
+          <p className="font-mono text-error text-sm">
+            {response.error ?? "Scan failed — unknown error."}
+          </p>
+          <a href="/scan" className="btn-ghost px-4 py-2 text-xs">
+            &gt; TRY_AGAIN
+          </a>
+        </div>
+      </AppShell>
+    );
+  }
+
+  const report = response.data;
 
   return (
     <AppShell domain={domain}>

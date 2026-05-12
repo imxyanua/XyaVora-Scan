@@ -227,3 +227,10 @@ body {
 .scan-line {
   background: linear-gradient(to bottom, transparent, rgba(183, 255, 60, 0.5), transparent);
 }
+
+/* ─────────────────────────────────────────────
+   Loading skeleton shimmer
+───────────────────────────────────────────── */
+@keyframes shimmer {
+  100% { transform: translateX(200%); }
+}
