@@ -21,57 +21,57 @@
 
 ---
 
-### Gioi thieu
+### Giới thiệu
 
-**XyaVora-Scan** la cong cu phan tich bao mat domain / website theo phong cach OSINT terminal. Nguoi dung nhap mot domain, he thong se chay nhieu analyzer doc lap va tra ve mot dashboard bao cao toan dien.
+**XyaVora-Scan** là công cụ phân tích bảo mật domain / website theo phong cách OSINT terminal. Người dùng nhập một domain, hệ thống sẽ chạy nhiều analyzer độc lập và trả về một dashboard báo cáo toàn diện.
 
-Du an duoc xay dung nhu mot **portfolio ca nhan** ve cybersecurity — giao dien dark-mode, brutalist, lay cam hung tu phong cach hacker/recon tool.
+Dự án được xây dựng như một **portfolio cá nhân** về cybersecurity — giao diện dark-mode, brutalist, lấy cảm hứng từ phong cách hacker/recon tool.
 
-> English documentation: [README.md](README.md)
+> Tài liệu tiếng Anh: [README.md](README.md)
 
 ---
 
-### Tinh nang phan tich
+### Tính năng phân tích
 
-| Module | Mo ta |
+| Module | Mô tả |
 |---|---|
-| DNS Records | A, AAAA, MX, NS, TXT — phat hien SPF & DMARC |
-| SSL Certificate | Issuer, expiry, TLS version, ngay con lai |
+| DNS Records | A, AAAA, MX, NS, TXT — phát hiện SPF & DMARC |
+| SSL Certificate | Issuer, expiry, TLS version, số ngày còn lại |
 | HTTP Security Headers | HSTS, CSP, X-Frame-Options, XCTO, Referrer-Policy, Permissions-Policy |
-| WHOIS | Registrar, ngay tao/het han, nameservers |
-| Tech Stack | Phat hien framework, CDN, web server, analytics |
-| Cookies | Kiem tra Secure, HttpOnly, SameSite |
-| Security.txt | Kiem tra su ton tai va noi dung |
-| Screenshot | Chup man hinh trang web (Playwright) |
-| Risk Score | Cham diem 0-100, xep hang A-F, phan loai Low/Medium/High Risk |
+| WHOIS | Registrar, ngày tạo/hết hạn, nameservers |
+| Tech Stack | Phát hiện framework, CDN, web server, analytics |
+| Cookies | Kiểm tra Secure, HttpOnly, SameSite |
+| Security.txt | Kiểm tra sự tồn tại và nội dung |
+| Screenshot | Chụp màn hình trang web (Playwright) |
+| Risk Score | Chấm điểm 0-100, xếp hạng A-F, phân loại Low/Medium/High Risk |
 
 ---
 
-### Giao dien
+### Giao diện
 
 - Dark-mode cybersecurity dashboard
-- Phong cach terminal / cyberpunk / brutalist
-- Accent mau lime neon `#B7FF3C`
+- Phong cách terminal / cyberpunk / brutalist
+- Accent màu lime neon `#B7FF3C`
 - Font: Geist (body) + JetBrains Mono (code/data)
-- Border radius: 0 — hoan toan vuong goc
+- Border radius: 0 — hoàn toàn vuông góc
 
 ---
 
 ### Tech Stack
 
-**Frontend (hien tai):**
+**Frontend (hiện tại):**
 - [Next.js 16](https://nextjs.org) — App Router
 - [TypeScript 5](https://www.typescriptlang.org) — strict mode
 - [Tailwind CSS v4](https://tailwindcss.com) — `@theme` CSS config
 
-**Backend (ke hoach):**
+**Backend (kế hoạch):**
 - Node.js + Express + TypeScript
-- Analyzer module-based architecture
+- Kiến trúc module-based analyzer
 - REST API: `POST /api/analyze`
 
 ---
 
-### Cai dat & chay
+### Cài đặt & chạy
 
 ```bash
 git clone https://github.com/imxyanua/XyaVora-Scan.git
@@ -80,25 +80,25 @@ npm install
 npm run dev
 ```
 
-Mo [http://localhost:3000](http://localhost:3000)
+Mở [http://localhost:3000](http://localhost:3000)
 
 ---
 
-### Cau truc project
+### Cấu trúc project
 
 ```
 XyaVora-Scan/
 ├── frontend/
 │   ├── app/
-│   │   ├── landing/          # Trang chu
-│   │   ├── scan/             # Nhap domain
-│   │   ├── scanning/         # Tien trinh scan
-│   │   ├── report/[domain]/  # Dashboard bao cao
-│   │   └── history/          # Lich su scan
+│   │   ├── landing/          # Trang chủ
+│   │   ├── scan/             # Nhập domain
+│   │   ├── scanning/         # Tiến trình scan
+│   │   ├── report/[domain]/  # Dashboard báo cáo
+│   │   └── history/          # Lịch sử scan
 │   ├── components/
 │   │   ├── layout/           # AppShell, Sidebar, TopBar
 │   │   ├── ui/               # Atoms: Button, Badge, Card
-│   │   ├── dashboard/        # Cac panel: SSL, DNS, Headers
+│   │   ├── dashboard/        # Các panel: SSL, DNS, Headers
 │   │   ├── landing/          # ScanInput
 │   │   └── scanning/         # ScanProgress
 │   ├── lib/api.ts            # API client (stub)
@@ -109,32 +109,32 @@ XyaVora-Scan/
 
 ---
 
-### Trang thai phat trien
+### Trạng thái phát triển
 
-| Giai doan | Trang thai |
+| Giai đoạn | Trạng thái |
 |---|---|
-| Frontend mock (UI) | Hoan thanh |
-| Types & Mock data | Hoan thanh |
-| Backend Express API | Ke hoach |
-| DNS Analyzer | Ke hoach |
-| SSL Analyzer | Ke hoach |
-| Headers Analyzer | Ke hoach |
-| WHOIS Analyzer | Ke hoach |
-| Score Analyzer | Ke hoach |
+| Frontend mock (UI) | Hoàn thành |
+| Types & Mock data | Hoàn thành |
+| Backend Express API | Kế hoạch |
+| DNS Analyzer | Kế hoạch |
+| SSL Analyzer | Kế hoạch |
+| Headers Analyzer | Kế hoạch |
+| WHOIS Analyzer | Kế hoạch |
+| Score Analyzer | Kế hoạch |
 
 ---
 
-### Triet ly bao mat
+### Triết lý bảo mật
 
-XyaVora-Scan chi thuc hien **phan tich thu dong, phong thu**:
-- Khong exploit, brute force, hoac quet tan cong
-- SSRF protection — chan localhost, private IP, metadata endpoint
-- Phan tich gioi han o thong tin cong khai
-- Timeout duoc ap dung cho moi thao tac mang
+XyaVora-Scan chỉ thực hiện **phân tích thụ động, phòng thủ**:
+- Không exploit, brute force, hoặc quét tấn công
+- Bảo vệ SSRF — chặn localhost, private IP, metadata endpoint
+- Phân tích giới hạn ở thông tin công khai
+- Timeout được áp dụng cho mọi thao tác mạng
 
 ---
 
-### Giay phep
+### Giấy phép
 
 MIT © [imxyanua](https://github.com/imxyanua)
 
