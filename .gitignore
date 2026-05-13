@@ -33,6 +33,10 @@ __pycache__/
 .env.*
 !.env.example
 
+# ── Runtime data ─────────────────────────────
+backend/history.json
+uvicorn_test.log
+
 # ── Misc ──────────────────────────────────────
 .DS_Store
 *.pem

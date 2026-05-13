@@ -234,3 +234,49 @@ body {
 @keyframes shimmer {
   100% { transform: translateX(200%); }
 }
+
+/* ─────────────────────────────────────────────
+   Print / PDF export
+───────────────────────────────────────────── */
+@media print {
+  @page { margin: 0.5in; }
+
+  /* Strip decorative background */
+  body {
+    background-image: none !important;
+    background-color: #070B0F !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Hide chrome — sidebar, topbar, bottom nav, action buttons */
+  nav,
+  header,
+  .print-hide {
+    display: none !important;
+  }
+
+  /* Remove layout constraints so content fills the page */
+  html, body, #__next, [data-nextjs-scroll-focus-boundary] {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Remove ml-64 from the content wrapper */
+  .md\:ml-64 {
+    margin-left: 0 !important;
+  }
+
+  /* Let the main area expand */
+  main {
+    overflow: visible !important;
+    padding-bottom: 0 !important;
+    height: auto !important;
+  }
+
+  /* Don't break cards across pages */
+  .card-panel {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
