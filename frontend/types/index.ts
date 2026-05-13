@@ -182,10 +182,27 @@ export interface ScanReport {
   findings:      Finding[];
 }
 
+// ── History ───────────────────────────────────
+
+export interface HistoryEntry {
+  id:       string;
+  domain:   string;
+  scanTime: string;
+  score:    number;
+  grade:    RiskGrade;
+  status:   RiskStatus;
+  issues:   number;
+}
+
 // ── API Response ─────────────────────────────
 
 export interface ApiResponse {
   success: boolean;
   data?:   ScanReport;
   error?:  string;
+}
+
+export interface HistoryResponse {
+  success: boolean;
+  data:    HistoryEntry[];
 }

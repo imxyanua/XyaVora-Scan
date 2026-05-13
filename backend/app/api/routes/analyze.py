@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from app.schemas.api import AnalyzeRequest, ApiResponse
 from app.utils.validate_target import validate_target
 from app.services.scan_service import run_scan
+from app.services import history_service
 
 router = APIRouter()
 
@@ -26,4 +27,5 @@ async def analyze(body: AnalyzeRequest):
             content=ApiResponse(success=False, error=f"Scan failed: {exc}").model_dump(),
         )
 
+    history_service.append(report)
     return ApiResponse(success=True, data=report)

@@ -1,4 +1,4 @@
-import type { ApiResponse } from "@/types";
+import type { ApiResponse, HistoryResponse } from "@/types";
 
 // Server-side only — not exposed to the browser.
 // Client components must use a Next.js Route Handler to proxy instead.
@@ -25,5 +25,15 @@ export async function analyzeDomain(target: string): Promise<ApiResponse> {
       success: false,
       error: err instanceof Error ? err.message : "Could not reach backend",
     };
+  }
+}
+
+export async function getHistory(): Promise<HistoryResponse> {
+  try {
+    const res = await fetch(`${API_URL}/api/history`, { cache: "no-store" });
+    const body = await res.json();
+    return body as HistoryResponse;
+  } catch {
+    return { success: false, data: [] };
   }
 }

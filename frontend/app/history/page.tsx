@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { AppShell }      from "@/components/layout/AppShell";
-import { mockHistory }   from "@/mock/historyData";
-import type { HistoryEntry } from "@/mock/historyData";
+import { AppShell }   from "@/components/layout/AppShell";
+import { getHistory } from "@/lib/api";
+import type { HistoryEntry, RiskGrade, RiskStatus } from "@/types";
 
-const GRADE_CLASS: Record<HistoryEntry["grade"], string> = {
+const GRADE_CLASS: Record<RiskGrade, string> = {
   A: "text-status-pass",
   B: "text-primary-fixed",
   C: "text-status-warn",
@@ -11,7 +11,7 @@ const GRADE_CLASS: Record<HistoryEntry["grade"], string> = {
   F: "text-error",
 };
 
-const STATUS_CLASS: Record<HistoryEntry["status"], string> = {
+const STATUS_CLASS: Record<RiskStatus, string> = {
   "Low Risk":    "status-badge status-pass",
   "Medium Risk": "status-badge status-warn",
   "High Risk":   "status-badge status-fail",
@@ -28,7 +28,10 @@ function formatDate(iso: string) {
   });
 }
 
-export default function HistoryPage() {
+export default async function HistoryPage() {
+  const res  = await getHistory();
+  const rows: HistoryEntry[] = res.success ? res.data : [];
+
   return (
     <AppShell>
       <div className="p-4 md:p-8 w-full max-w-[1440px] mx-auto">
@@ -41,82 +44,66 @@ export default function HistoryPage() {
             </span>
             <h1 className="font-mono text-xl font-bold text-primary-fixed">HISTORY</h1>
             <p className="font-mono text-[11px] text-primary-fixed/40 mt-1">
-              {mockHistory.length} scans on record
+              {rows.length} scan{rows.length !== 1 ? "s" : ""} on record
             </p>
           </div>
-          <Link
-            href="/scan"
-            className="btn-primary px-5 py-2 text-xs flex items-center gap-2"
-          >
+          <Link href="/scan" className="btn-primary px-5 py-2 text-xs flex items-center gap-2">
             <span className="material-symbols-outlined text-[16px]">add</span>
             NEW SCAN
           </Link>
         </div>
 
-        {/* Table */}
-        <div className="card-panel overflow-x-auto">
-          {/* Table header */}
-          <div className="grid grid-cols-[1fr_160px_64px_40px_120px_60px_100px] gap-x-4 px-4 py-2 border-b border-primary-fixed/20 bg-[#070B0F]">
-            {["DOMAIN", "SCANNED_AT", "SCORE", "GRD", "STATUS", "ISSUES", ""].map((h) => (
-              <span key={h} className="font-mono text-[10px] text-primary-fixed/30 uppercase tracking-widest">
-                {h}
-              </span>
+        {rows.length === 0 ? (
+          <div className="card-panel p-12 flex flex-col items-center gap-3">
+            <span className="material-symbols-outlined text-4xl text-primary-fixed/20">history</span>
+            <p className="font-mono text-[11px] text-primary-fixed/30">[-] NO_SCANS_YET</p>
+            <Link href="/scan" className="btn-ghost px-4 py-2 text-xs mt-2">&gt; RUN_FIRST_SCAN</Link>
+          </div>
+        ) : (
+          <div className="card-panel overflow-x-auto">
+            {/* Table header */}
+            <div className="grid grid-cols-[1fr_160px_64px_40px_120px_60px_100px] gap-x-4 px-4 py-2 border-b border-primary-fixed/20 bg-[#070B0F]">
+              {["DOMAIN", "SCANNED_AT", "SCORE", "GRD", "STATUS", "ISSUES", ""].map((h) => (
+                <span key={h} className="font-mono text-[10px] text-primary-fixed/30 uppercase tracking-widest">
+                  {h}
+                </span>
+              ))}
+            </div>
+
+            {/* Rows */}
+            {rows.map((entry, i) => (
+              <div
+                key={entry.id}
+                className={`grid grid-cols-[1fr_160px_64px_40px_120px_60px_100px] gap-x-4 px-4 py-3 items-center glow-hover transition-colors ${
+                  i > 0 ? "border-t border-primary-fixed/10" : ""
+                }`}
+              >
+                <span className="font-mono text-sm text-primary-fixed truncate">{entry.domain}</span>
+                <span className="font-mono text-[11px] text-primary-fixed/50">{formatDate(entry.scanTime)}</span>
+                <span className="font-mono text-sm text-secondary-fixed font-bold">
+                  {entry.score}<span className="text-primary-fixed/30 text-[10px]">/100</span>
+                </span>
+                <span className={`font-mono text-sm font-bold ${GRADE_CLASS[entry.grade]}`}>
+                  [{entry.grade}]
+                </span>
+                <span className={STATUS_CLASS[entry.status]}>
+                  {entry.status.toUpperCase().replace(" ", "_")}
+                </span>
+                <span className="font-mono text-[11px]">
+                  {entry.issues > 0
+                    ? <span className="text-status-warn">[{entry.issues}]</span>
+                    : <span className="text-status-pass">[0]</span>}
+                </span>
+                <Link
+                  href={`/report/${entry.domain}`}
+                  className="btn-ghost px-2 py-1 text-[10px] text-center whitespace-nowrap"
+                >
+                  VIEW &gt;
+                </Link>
+              </div>
             ))}
           </div>
-
-          {/* Rows */}
-          {mockHistory.map((entry, i) => (
-            <div
-              key={entry.id}
-              className={`grid grid-cols-[1fr_160px_64px_40px_120px_60px_100px] gap-x-4 px-4 py-3 items-center glow-hover transition-colors ${
-                i > 0 ? "border-t border-primary-fixed/10" : ""
-              }`}
-            >
-              {/* Domain */}
-              <span className="font-mono text-sm text-primary-fixed truncate">
-                {entry.domain}
-              </span>
-
-              {/* Scanned at */}
-              <span className="font-mono text-[11px] text-primary-fixed/50">
-                {formatDate(entry.scanTime)}
-              </span>
-
-              {/* Score */}
-              <span className="font-mono text-sm text-secondary-fixed font-bold">
-                {entry.score}
-                <span className="text-primary-fixed/30 text-[10px]">/100</span>
-              </span>
-
-              {/* Grade */}
-              <span className={`font-mono text-sm font-bold ${GRADE_CLASS[entry.grade]}`}>
-                [{entry.grade}]
-              </span>
-
-              {/* Status */}
-              <span className={STATUS_CLASS[entry.status]}>
-                {entry.status.toUpperCase().replace(" ", "_")}
-              </span>
-
-              {/* Issues */}
-              <span className="font-mono text-[11px] text-primary-fixed/50">
-                {entry.issues > 0 ? (
-                  <span className="text-status-warn">[{entry.issues}]</span>
-                ) : (
-                  <span className="text-status-pass">[0]</span>
-                )}
-              </span>
-
-              {/* Action */}
-              <Link
-                href={`/report/${entry.domain}`}
-                className="btn-ghost px-2 py-1 text-[10px] text-center whitespace-nowrap"
-              >
-                VIEW &gt;
-              </Link>
-            </div>
-          ))}
-        </div>
+        )}
 
       </div>
     </AppShell>
