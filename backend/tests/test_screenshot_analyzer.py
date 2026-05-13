@@ -1,10 +1,17 @@
 """Tests for screenshot_analyzer — mocks Playwright so no browser is needed."""
 import asyncio
+import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app.analyzers.screenshot_analyzer import analyze_screenshot, _capture_one
+# Playwright may not be installed in CI; stub it out before importing the module.
+_pw_stub = MagicMock()
+_pw_stub.sync_api.TimeoutError = type("TimeoutError", (Exception,), {})
+sys.modules.setdefault("playwright", _pw_stub)
+sys.modules.setdefault("playwright.sync_api", _pw_stub.sync_api)
+
+from app.analyzers.screenshot_analyzer import analyze_screenshot, _capture_one  # noqa: E402
 
 
 # ── _capture_one unit tests ────────────────────────────────────────────────────
@@ -33,7 +40,7 @@ def test_capture_one_returns_base64():
 
 
 def test_capture_one_timeout_returns_error():
-    from playwright.sync_api import TimeoutError as PWTimeout
+    PWTimeout = sys.modules["playwright.sync_api"].TimeoutError
     browser = MagicMock()
     ctx = MagicMock()
     page = MagicMock()
