@@ -4,13 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const NAV_ITEMS = [
-  { label: "Dashboard", icon: "dashboard",   href: "/"        },
-  { label: "New Scan",  icon: "radar",       href: "/scan"    },
-  { label: "History",   icon: "description", href: "/history" },
+  { label: "Dashboard", icon: "dashboard",                href: "/"        },
+  { label: "New Scan",  icon: "radar",                   href: "/scan"    },
+  { label: "History",   icon: "description",             href: "/history" },
+  { label: "Domains",   icon: "dns",                     href: "/domains" },
+  { label: "Logs",      icon: "terminal",                href: "/logs"    },
 ] as const;
 
 const BOTTOM_ITEMS = [
-  { label: "Landing", icon: "home", href: "/landing" },
+  { label: "Settings", icon: "settings_input_component", href: "/settings" },
+  { label: "Support",  icon: "help",                     href: "/support"  },
 ] as const;
 
 function getActive(href: string, pathname: string): boolean {

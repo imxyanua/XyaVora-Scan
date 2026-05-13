@@ -23,6 +23,11 @@ _SCAN_CACHE: dict[str, tuple["ScanReport", float]] = {}
 _CACHE_TTL = 120.0  # seconds
 
 
+def is_cached(hostname: str) -> bool:
+    entry = _SCAN_CACHE.get(hostname)
+    return bool(entry and time.monotonic() < entry[1])
+
+
 def _cache_get(hostname: str) -> "ScanReport | None":
     entry = _SCAN_CACHE.get(hostname)
     if entry and time.monotonic() < entry[1]:

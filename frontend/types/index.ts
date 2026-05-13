@@ -194,6 +194,32 @@ export interface HistoryEntry {
   issues:   number;
 }
 
+// ── Scan Log ─────────────────────────────────
+
+export interface LogEntry {
+  timestamp:   string;
+  domain:      string;
+  duration_ms: number;
+  score:       number;
+  grade:       RiskGrade;
+  status:      RiskStatus;
+  cached:      boolean;
+  error?:      string | null;
+}
+
+// ── Backend Settings ──────────────────────────
+
+export interface BackendSettings {
+  ENABLE_SCREENSHOT:           boolean;
+  SCAN_TIMEOUT_SECONDS:        number;
+  ANALYZER_TIMEOUT_SECONDS:    number;
+  SCREENSHOT_TIMEOUT_SECONDS:  number;
+  FETCH_TIMEOUT_SECONDS:       number;
+  MAX_HTML_BYTES:              number;
+  CORS_ORIGIN:                 string;
+  ENV:                         string;
+}
+
 // ── API Response ─────────────────────────────
 
 export interface ApiResponse {
