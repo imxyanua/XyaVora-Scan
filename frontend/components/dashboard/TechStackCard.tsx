@@ -56,7 +56,7 @@ export function TechStackCard({ techStack }: Props) {
           [-] No technologies detected
         </p>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 max-h-[420px] overflow-y-auto pr-1">
           {categories.map((cat) => (
             <div key={cat}>
               <p className="font-mono text-[9px] tracking-widest text-primary-fixed/30 uppercase mb-1.5">

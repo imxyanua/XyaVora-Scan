@@ -79,20 +79,18 @@ export default async function ReportPage({ params }: Props) {
           {/* Technical panels grid */}
           <div className="md:col-span-7 lg:col-span-8 grid grid-cols-1 lg:grid-cols-2 gap-4 content-start">
             <SSLCard ssl={report.ssl} />
-            <TechStackCard techStack={report.techStack} />
+            <WhoisCard whois={report.whois} />
+            <div className="lg:col-span-2">
+              <TechStackCard techStack={report.techStack} />
+            </div>
             <div className="lg:col-span-2">
               <SecurityHeadersCard headers={report.headers} />
             </div>
           </div>
         </div>
 
-        {/* ── Row 3: DNS + WHOIS ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2">
-            <DNSRecordsCard dns={report.dns} />
-          </div>
-          <WhoisCard whois={report.whois} />
-        </div>
+        {/* ── Row 3: DNS ── */}
+        <DNSRecordsCard dns={report.dns} />
 
         {/* ── Row 4: Cookies + Security.txt + Screenshot ── */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
