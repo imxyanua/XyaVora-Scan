@@ -5,13 +5,14 @@ interface Props {
 }
 
 const CATEGORY_PREFIX: Record<TechCategory, string> = {
+  "Web Server":           "SRV",
+  "CDN":                  "CDN",
+  "Hosting":              "HST",
+  "Backend Framework":    "BEF",
   "JavaScript Framework": "JS",
   "CSS Framework":        "CSS",
-  "CDN":                  "CDN",
-  "Web Server":           "SRV",
   "CMS":                  "CMS",
   "Analytics":            "ANL",
-  "Hosting":              "HST",
   "Database":             "DB",
   "Other":                "EXT",
 };
@@ -22,7 +23,24 @@ const CONFIDENCE_COLOR: Record<TechStackItem["confidence"], string> = {
   low:    "text-primary-fixed/50",
 };
 
+const CATEGORY_ORDER: TechCategory[] = [
+  "Web Server", "CDN", "Hosting",
+  "Backend Framework", "JavaScript Framework", "CSS Framework",
+  "CMS", "Analytics", "Database", "Other",
+];
+
 export function TechStackCard({ techStack }: Props) {
+  const grouped = CATEGORY_ORDER.reduce<Record<string, TechStackItem[]>>(
+    (acc, cat) => {
+      const items = techStack.filter((t) => t.category === cat);
+      if (items.length) acc[cat] = items;
+      return acc;
+    },
+    {},
+  );
+
+  const categories = Object.keys(grouped) as TechCategory[];
+
   return (
     <div className="card-panel p-4 flex flex-col">
       {/* Header */}
@@ -33,30 +51,38 @@ export function TechStackCard({ techStack }: Props) {
         <span className="font-mono text-[11px] text-primary-fixed/40">[FINGERPRINT]</span>
       </div>
 
-      {/* Badges */}
-      <div className="flex flex-wrap gap-2">
-        {techStack.map((tech) => {
-          const prefix = CATEGORY_PREFIX[tech.category];
-          const colorCls = CONFIDENCE_COLOR[tech.confidence];
-          return (
-            <span
-              key={tech.name}
-              className={`border border-primary-fixed/30 bg-primary-fixed/5 px-2 py-1 font-mono text-sm flex items-center gap-1 ${colorCls}`}
-            >
-              <span className="text-[10px] text-primary-fixed/50">[{prefix}]</span>
-              {tech.name}
-              {tech.version && (
-                <span className="text-[10px] text-primary-fixed/40"> v{tech.version}</span>
-              )}
-            </span>
-          );
-        })}
-      </div>
-
-      {techStack.length === 0 && (
+      {techStack.length === 0 ? (
         <p className="font-mono text-sm text-on-surface-variant/40">
           [-] No technologies detected
         </p>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {categories.map((cat) => (
+            <div key={cat}>
+              <p className="font-mono text-[9px] tracking-widest text-primary-fixed/30 uppercase mb-1.5">
+                {cat}
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {grouped[cat].map((tech) => {
+                  const prefix = CATEGORY_PREFIX[tech.category];
+                  const colorCls = CONFIDENCE_COLOR[tech.confidence];
+                  return (
+                    <span
+                      key={tech.name}
+                      className={`border border-primary-fixed/25 bg-primary-fixed/5 px-2 py-0.5 font-mono text-[11px] flex items-center gap-1 ${colorCls}`}
+                    >
+                      <span className="text-[9px] text-primary-fixed/40">[{prefix}]</span>
+                      {tech.name}
+                      {tech.version && (
+                        <span className="text-[9px] text-primary-fixed/35"> v{tech.version}</span>
+                      )}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

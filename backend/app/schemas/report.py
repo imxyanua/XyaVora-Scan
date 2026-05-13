@@ -106,7 +106,8 @@ class WhoisResult(_Base):
 
 TechCategory = Literal[
     "JavaScript Framework", "CSS Framework", "CDN",
-    "Web Server", "CMS", "Analytics", "Hosting", "Database", "Other",
+    "Web Server", "Backend Framework", "CMS", "Analytics", "Hosting",
+    "Database", "Other",
 ]
 TechConfidence = Literal["high", "medium", "low"]
 

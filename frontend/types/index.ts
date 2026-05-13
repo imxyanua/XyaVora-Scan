@@ -109,6 +109,7 @@ export type TechCategory =
   | "CSS Framework"
   | "CDN"
   | "Web Server"
+  | "Backend Framework"
   | "CMS"
   | "Analytics"
   | "Hosting"
