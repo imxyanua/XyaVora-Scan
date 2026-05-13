@@ -19,8 +19,10 @@ from app.analyzers.screenshot_analyzer  import analyze_screenshot
 from app.analyzers.score_analyzer       import analyze_score
 
 # In-memory TTL cache: hostname -> (ScanReport, expiry_timestamp)
+# Short TTL — only deduplicates concurrent requests within the same scan operation.
+# Intentional rescans (after a few seconds) always get fresh data.
 _SCAN_CACHE: dict[str, tuple["ScanReport", float]] = {}
-_CACHE_TTL = 120.0  # seconds
+_CACHE_TTL = 5.0  # seconds
 
 
 def is_cached(hostname: str) -> bool:

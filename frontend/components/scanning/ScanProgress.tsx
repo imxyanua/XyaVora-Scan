@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const ANALYZERS = [
   { key: "dns",        label: "DNS_RESOLUTION",     icon: "dns"               },
@@ -23,9 +23,11 @@ const TOTAL_SEGMENTS = 20;
 // Minimum display time per analyzer row (ms) — purely visual
 const ROW_DURATION = 600;
 
-export function ScanProgress({ target }: { target: string }) {
+export function ScanProgress() {
   const router = useRouter();
-  const initialized = useRef(false);
+  const searchParams = useSearchParams();
+  const target = searchParams.get("target")?.trim() || "unknown";
+  const scannedTarget = useRef<string | null>(null);
 
   const [statuses, setStatuses] = useState<StatusMap>(
     () => Object.fromEntries(ANALYZERS.map((a) => [a.key, "pending"])) as StatusMap
@@ -41,8 +43,13 @@ export function ScanProgress({ target }: { target: string }) {
   }, []);
 
   useEffect(() => {
-    if (initialized.current) return;
-    initialized.current = true;
+    // Wait until useSearchParams has the real value
+    if (target === "unknown") return;
+    // Prevent re-running for the same target
+    if (scannedTarget.current === target) return;
+    scannedTarget.current = target;
+
+    let cancelled = false;
 
     // Start the real scan in parallel with the animation
     const scanPromise = fetch("/api/analyze", {
@@ -61,13 +68,15 @@ export function ScanProgress({ target }: { target: string }) {
       const doneAt = cursor;
 
       timers.push(
-        setTimeout(() => setStatuses((prev) => ({ ...prev, [analyzer.key]: "running" })), runAt),
+        setTimeout(() => { if (!cancelled) setStatuses((prev) => ({ ...prev, [analyzer.key]: "running" })); }, runAt),
         setTimeout(() => {
+          if (cancelled) return;
           setStatuses((prev) => ({ ...prev, [analyzer.key]: "complete" }));
 
           // After the last animation row, wait for the real scan to finish
           if (idx === ANALYZERS.length - 1) {
             scanPromise.then((data) => {
+              if (cancelled) return;
               if (!data.success) {
                 setScanError(data.error ?? "Scan failed — unknown error.");
                 return;
@@ -75,14 +84,14 @@ export function ScanProgress({ target }: { target: string }) {
               setScanDone(true);
               setTimeout(() => router.push(`/report/${encodeURIComponent(target)}`), 800);
             }).catch((err) => {
-              setScanError(err instanceof Error ? err.message : "Network error");
+              if (!cancelled) setScanError(err instanceof Error ? err.message : "Network error");
             });
           }
         }, doneAt),
       );
     });
 
-    return () => timers.forEach(clearTimeout);
+    return () => { cancelled = true; timers.forEach(clearTimeout); };
   }, [target, router]);
 
   const completedCount = Object.values(statuses).filter((s) => s === "complete").length;

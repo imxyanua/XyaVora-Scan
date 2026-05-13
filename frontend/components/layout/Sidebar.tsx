@@ -4,11 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const NAV_ITEMS = [
-  { label: "Dashboard", icon: "dashboard",                href: "/"        },
-  { label: "New Scan",  icon: "radar",                   href: "/scan"    },
-  { label: "History",   icon: "description",             href: "/history" },
-  { label: "Domains",   icon: "dns",                     href: "/domains" },
-  { label: "Logs",      icon: "terminal",                href: "/logs"    },
+  { label: "Dashboard", icon: "dashboard",                href: "/dashboard" },
+  { label: "New Scan",  icon: "radar",                   href: "/scan"      },
+  { label: "History",   icon: "description",             href: "/history"   },
+  { label: "Domains",   icon: "dns",                     href: "/domains"   },
+  { label: "Logs",      icon: "terminal",                href: "/logs"      },
 ] as const;
 
 const BOTTOM_ITEMS = [
@@ -17,8 +17,8 @@ const BOTTOM_ITEMS = [
 ] as const;
 
 function getActive(href: string, pathname: string): boolean {
-  if (href === "/") return pathname === "/";
   if (href === "#") return false;
+  if (href === "/dashboard") return pathname === "/dashboard";
   return pathname.startsWith(href);
 }
 
@@ -28,14 +28,14 @@ export function Sidebar() {
   return (
     <nav className="hidden md:flex flex-col bg-[#070B0F] fixed left-0 top-0 h-full w-64 border-r border-[#223042] z-30 pt-16 pb-8 px-4">
       {/* Brand */}
-      <div className="mb-8 px-4">
-        <p className="font-mono text-lg font-bold text-primary-fixed tracking-tight uppercase">
+      <Link href="/" className="mb-8 px-4 block group">
+        <p className="font-mono text-lg font-bold text-primary-fixed tracking-tight uppercase group-hover:text-white transition-colors">
           XyaVora-Scan
         </p>
         <p className="font-mono text-[11px] text-primary-fixed/50 mt-1">
           [SYS.V.2.4.0-STABLE]
         </p>
-      </div>
+      </Link>
 
       {/* Initiate Scan CTA */}
       <Link

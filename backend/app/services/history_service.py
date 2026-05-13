@@ -6,7 +6,7 @@ from pathlib import Path
 from app.schemas.report import ScanReport
 
 _HISTORY_FILE = Path(__file__).parent.parent.parent / "history.json"
-_MAX_ENTRIES = 100
+_MAX_ENTRIES = 30
 
 
 def _load() -> list[dict]:
