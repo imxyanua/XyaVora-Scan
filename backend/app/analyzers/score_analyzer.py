@@ -1,8 +1,7 @@
 from app.schemas.report import Finding, RiskGrade, RiskStatus
 from app.schemas.analyzer import AnalyzerResult
 
-# Point deductions per finding category. Tuned so a domain missing all headers
-# lands around 30–40 (grade F/D) and a fully configured domain scores 90+ (grade A).
+# Deductions for fail-status findings.
 _DEDUCTIONS: dict[str, int] = {
     "no_https":            30,
     "ssl_expired":         20,
@@ -17,9 +16,18 @@ _DEDUCTIONS: dict[str, int] = {
     "missing_dmarc":        8,
     "dmarc_not_strict":     4,
     "server_exposed":       2,
-    "cookie_no_secure":     3,
-    "cookie_no_httponly":   3,
-    "cookie_no_samesite":   2,
+    "cookie_no_secure":     5,
+    "cookie_no_httponly":   4,
+    "domain_expired":      15,
+}
+
+# Deductions for warning-status findings (smaller impact).
+_WARN_DEDUCTIONS: dict[str, int] = {
+    "domain_expiring_soon":   5,
+    "dnssec_not_enabled":     3,
+    "cookie_no_samesite":     2,
+    "no_security_txt":        2,
+    "security_txt_no_contact":1,
 }
 
 
@@ -28,11 +36,11 @@ def compute_score(findings: list[Finding]) -> tuple[int, RiskGrade, RiskStatus, 
     Derives score from findings rather than from individual analyzer fields
     so the scoring logic stays in one place and is easy to adjust.
     """
-    deduction = sum(
-        _DEDUCTIONS.get(f.id.replace("f-", "").replace("-", "_"), 0)
-        for f in findings
-        if f.status == "fail"
-    )
+    def _key(f: Finding) -> str:
+        return f.id.replace("f-", "").replace("-", "_")
+
+    deduction = sum(_DEDUCTIONS.get(_key(f), 0) for f in findings if f.status == "fail")
+    deduction += sum(_WARN_DEDUCTIONS.get(_key(f), 0) for f in findings if f.status == "warning")
     # Cap deduction at 100 to avoid negative scores
     score = max(0, 100 - deduction)
 
