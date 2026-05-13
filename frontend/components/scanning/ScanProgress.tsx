@@ -4,15 +4,15 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 const ANALYZERS = [
-  { key: "dns",        label: "DNS_RESOLUTION",     icon: "dns",               delay: 500  },
-  { key: "ssl",        label: "SSL_CERTIFICATE",    icon: "lock",              delay: 650  },
-  { key: "headers",   label: "HTTP_SEC_HEADERS",   icon: "http",              delay: 550  },
-  { key: "whois",     label: "WHOIS_LOOKUP",        icon: "person_search",     delay: 750  },
-  { key: "techstack", label: "TECH_STACK_DETECT",   icon: "stacks",            delay: 600  },
-  { key: "cookies",   label: "COOKIE_ANALYSIS",     icon: "cookie",            delay: 300  },
-  { key: "sectxt",    label: "SECURITY_TXT_CHECK",  icon: "security",          delay: 280  },
-  { key: "screenshot",label: "SCREENSHOT_CAPTURE",  icon: "screenshot_monitor",delay: 1050 },
-  { key: "score",     label: "RISK_SCORE_CALC",     icon: "monitoring",        delay: 420  },
+  { key: "dns",        label: "DNS_RESOLUTION",     icon: "dns"               },
+  { key: "ssl",        label: "SSL_CERTIFICATE",    icon: "lock"              },
+  { key: "headers",   label: "HTTP_SEC_HEADERS",   icon: "http"              },
+  { key: "whois",     label: "WHOIS_LOOKUP",        icon: "person_search"     },
+  { key: "techstack", label: "TECH_STACK_DETECT",   icon: "stacks"            },
+  { key: "cookies",   label: "COOKIE_ANALYSIS",     icon: "cookie"            },
+  { key: "sectxt",    label: "SECURITY_TXT_CHECK",  icon: "security"          },
+  { key: "screenshot",label: "SCREENSHOT_CAPTURE",  icon: "screenshot_monitor"},
+  { key: "score",     label: "RISK_SCORE_CALC",     icon: "monitoring"        },
 ] as const;
 
 type AnalyzerKey = (typeof ANALYZERS)[number]["key"];
@@ -20,6 +20,8 @@ type Status = "pending" | "running" | "complete";
 type StatusMap = Record<AnalyzerKey, Status>;
 
 const TOTAL_SEGMENTS = 20;
+// Minimum display time per analyzer row (ms) — purely visual
+const ROW_DURATION = 600;
 
 export function ScanProgress({ target }: { target: string }) {
   const router = useRouter();
@@ -29,43 +31,58 @@ export function ScanProgress({ target }: { target: string }) {
     () => Object.fromEntries(ANALYZERS.map((a) => [a.key, "pending"])) as StatusMap
   );
   const [scanDone, setScanDone] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
   const [elapsed, setElapsed] = useState(0);
 
-  // Tick elapsed counter
+  // Elapsed counter
   useEffect(() => {
     const id = setInterval(() => setElapsed((s) => s + 100), 100);
     return () => clearInterval(id);
   }, []);
 
-  // Run analyzer sequence once
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
 
-    let cumulative = 300;
+    // Start the real scan in parallel with the animation
+    const scanPromise = fetch("/api/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ target }),
+    }).then((r) => r.json());
+
+    // Visual animation — runs through each analyzer row sequentially
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    let cursor = 200;
 
     ANALYZERS.forEach((analyzer, idx) => {
-      const runAt  = cumulative;
-      cumulative  += analyzer.delay;
-      const doneAt = cumulative;
+      const runAt  = cursor;
+      cursor      += ROW_DURATION;
+      const doneAt = cursor;
 
-      setTimeout(() => {
-        setStatuses((prev) => ({ ...prev, [analyzer.key]: "running" }));
-      }, runAt);
+      timers.push(
+        setTimeout(() => setStatuses((prev) => ({ ...prev, [analyzer.key]: "running" })), runAt),
+        setTimeout(() => {
+          setStatuses((prev) => ({ ...prev, [analyzer.key]: "complete" }));
 
-      setTimeout(() => {
-        setStatuses((prev) => ({ ...prev, [analyzer.key]: "complete" }));
-
-        if (idx === ANALYZERS.length - 1) {
-          setTimeout(() => {
-            setScanDone(true);
-            setTimeout(() => {
-              router.push(`/report/${encodeURIComponent(target)}`);
-            }, 900);
-          }, 350);
-        }
-      }, doneAt);
+          // After the last animation row, wait for the real scan to finish
+          if (idx === ANALYZERS.length - 1) {
+            scanPromise.then((data) => {
+              if (!data.success) {
+                setScanError(data.error ?? "Scan failed — unknown error.");
+                return;
+              }
+              setScanDone(true);
+              setTimeout(() => router.push(`/report/${encodeURIComponent(target)}`), 800);
+            }).catch((err) => {
+              setScanError(err instanceof Error ? err.message : "Network error");
+            });
+          }
+        }, doneAt),
+      );
     });
+
+    return () => timers.forEach(clearTimeout);
   }, [target, router]);
 
   const completedCount = Object.values(statuses).filter((s) => s === "complete").length;
@@ -102,8 +119,8 @@ export function ScanProgress({ target }: { target: string }) {
           {/* Progress bar */}
           <div className="space-y-2">
             <div className="flex justify-between font-mono text-[11px] uppercase tracking-wider">
-              <span className={scanDone ? "text-primary-fixed" : "text-primary-fixed/60"}>
-                {scanDone ? "SCAN_COMPLETE" : "SCANNING_IN_PROGRESS"}
+              <span className={scanDone ? "text-primary-fixed" : scanError ? "text-error" : "text-primary-fixed/60"}>
+                {scanDone ? "SCAN_COMPLETE" : scanError ? "SCAN_FAILED" : "SCANNING_IN_PROGRESS"}
               </span>
               <span className="text-primary-fixed/60">{progress}%</span>
             </div>
@@ -112,7 +129,9 @@ export function ScanProgress({ target }: { target: string }) {
                 <div
                   key={i}
                   className={`flex-1 border-r border-[#070B0F] last:border-r-0 transition-colors duration-200 ${
-                    i < filledSegs ? "bg-primary-fixed" : "bg-transparent"
+                    i < filledSegs
+                      ? scanError ? "bg-error/70" : "bg-primary-fixed"
+                      : "bg-transparent"
                   }`}
                 />
               ))}
@@ -132,7 +151,6 @@ export function ScanProgress({ target }: { target: string }) {
                     !isLast ? "border-b border-primary-fixed/10" : ""
                   } ${status === "running" ? "bg-primary-fixed/[0.04]" : ""}`}
                 >
-                  {/* Left: status prefix + label */}
                   <div className="flex items-center gap-3 min-w-0">
                     <span
                       className={`font-mono text-[12px] font-bold shrink-0 w-8 ${
@@ -156,7 +174,6 @@ export function ScanProgress({ target }: { target: string }) {
                     </span>
                   </div>
 
-                  {/* Right: status text */}
                   <span
                     className={`font-mono text-[11px] uppercase shrink-0 ml-4 ${
                       status === "complete" ? "text-primary-fixed" :
@@ -188,6 +205,33 @@ export function ScanProgress({ target }: { target: string }) {
                 </p>
               </div>
             </div>
+          )}
+
+          {/* Error banner */}
+          {scanError && (
+            <div className="border border-error/40 bg-error/5 px-5 py-4 flex items-center gap-4">
+              <span className="material-symbols-outlined text-error text-2xl shrink-0">
+                error
+              </span>
+              <div className="min-w-0">
+                <p className="font-mono text-sm text-error font-semibold tracking-wider">
+                  SCAN_FAILED
+                </p>
+                <p className="font-mono text-[11px] text-error/70 mt-1 break-all">
+                  &gt; {scanError}
+                </p>
+              </div>
+              <a href="/scan" className="ml-auto btn-ghost px-3 py-1.5 text-xs shrink-0">
+                RETRY
+              </a>
+            </div>
+          )}
+
+          {/* Waiting for real scan after animation completes */}
+          {completedCount === ANALYZERS.length && !scanDone && !scanError && (
+            <p className="font-mono text-[11px] text-primary-fixed/40 text-center animate-pulse">
+              &gt; AWAITING_BACKEND_RESPONSE...
+            </p>
           )}
 
         </div>

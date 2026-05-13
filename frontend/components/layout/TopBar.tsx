@@ -44,14 +44,14 @@ export function TopBar({ domain }: TopBarProps) {
               onClick={() =>
                 router.push(`/scanning?target=${encodeURIComponent(domain)}`)
               }
-              className="btn-ghost px-4 py-1.5 text-xs flex items-center gap-1.5"
+              className="btn-ghost px-3 py-1.5 text-xs flex items-center gap-1.5"
             >
               <span className="material-symbols-outlined text-[16px]">refresh</span>
-              RESCAN
+              <span className="hidden sm:inline">RESCAN</span>
             </button>
             <button
               type="button"
-              className="btn-primary px-4 py-1.5 text-xs flex items-center gap-1.5"
+              className="btn-primary px-3 py-1.5 text-xs hidden sm:flex items-center gap-1.5"
             >
               <span className="material-symbols-outlined text-[16px]">download</span>
               EXPORT PDF
@@ -59,7 +59,7 @@ export function TopBar({ domain }: TopBarProps) {
           </>
         )}
 
-        <div className="h-6 w-px bg-primary-fixed/20 mx-1" />
+        <div className="h-6 w-px bg-primary-fixed/20 mx-1 hidden sm:block" />
 
         {[
           { icon: "terminal",       label: "Terminal"      },
@@ -70,7 +70,7 @@ export function TopBar({ domain }: TopBarProps) {
             key={btn.icon}
             type="button"
             aria-label={btn.label}
-            className="text-primary-fixed/40 hover:text-primary-fixed transition-colors p-1"
+            className="text-primary-fixed/40 hover:text-primary-fixed transition-colors p-1 hidden sm:block"
           >
             <span className="material-symbols-outlined text-xl">{btn.icon}</span>
           </button>

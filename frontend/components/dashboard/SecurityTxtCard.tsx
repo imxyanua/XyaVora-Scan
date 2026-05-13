@@ -27,7 +27,9 @@ export function SecurityTxtCard({ securityTxt }: Props) {
         <span className={`${statusCls} text-[10px]`}>{statusLabel}</span>
       </div>
 
-      {!securityTxt.present ? (
+      {securityTxt.error ? (
+        <p className="font-mono text-sm text-error/70">[-] {securityTxt.error}</p>
+      ) : !securityTxt.present ? (
         <div className="space-y-2">
           <p className="font-mono text-sm text-primary-fixed/50">
             No security.txt found at well-known or root path.

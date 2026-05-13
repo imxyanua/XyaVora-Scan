@@ -55,6 +55,10 @@ export function AdvisoryPanel({ findings }: Props) {
   const groupData = [failFindings, warnFindings, infoFindings];
   const totalIssues = failFindings.length + warnFindings.length;
 
+  // Start with CRIT expanded, others collapsed
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({ fail: true, warn: false, info: false });
+  const toggle = (key: string) => setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
+
   return (
     <>
     <FindingDrawer finding={activeFinding} onClose={closeFinding} />
@@ -75,21 +79,25 @@ export function AdvisoryPanel({ findings }: Props) {
           const items = groupData[gi];
           if (items.length === 0) return null;
 
-          const isExpanded = gi === 0; // critical always expanded
+          const isExpanded = expanded[group.key] ?? false;
 
           return (
             <div key={group.key} className="border border-primary-fixed/20 bg-[#070B0F]">
               {/* Group header */}
-              <div className="flex justify-between items-center p-2 px-3">
+              <button
+                type="button"
+                onClick={() => toggle(group.key)}
+                className="w-full flex justify-between items-center p-2 px-3 hover:bg-primary-fixed/[0.04] transition-colors"
+              >
                 <span className={`font-mono text-sm font-bold ${group.labelClass}`}>
                   {group.prefix} {group.label} ({items.length})
                 </span>
                 <span className="material-symbols-outlined text-primary-fixed/40 text-sm">
                   {isExpanded ? "expand_more" : "chevron_right"}
                 </span>
-              </div>
+              </button>
 
-              {/* Group items — only render if expanded */}
+              {/* Group items */}
               {isExpanded && (
                 <div className="border-t border-primary-fixed/10 bg-primary-fixed/[0.02] space-y-0">
                   {items.map((finding, i) => (

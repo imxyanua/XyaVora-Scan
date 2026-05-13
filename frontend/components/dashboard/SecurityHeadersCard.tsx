@@ -19,14 +19,22 @@ export function SecurityHeadersCard({ headers }: Props) {
           SYS.HTTP_SEC_HEADERS
         </h3>
         <div className="flex items-center gap-3 font-mono text-[11px] text-primary-fixed/40">
-          <span>STATUS: {headers.statusCode}</span>
-          {headers.redirectDetected && <span>[REDIRECT]</span>}
+          {headers.error
+            ? <span className="text-error/70">[ERR]</span>
+            : <>
+                <span>STATUS: {headers.statusCode}</span>
+                {headers.redirectDetected && <span>[REDIRECT]</span>}
+              </>
+          }
         </div>
       </div>
 
       {/* Headers table */}
       <div className="font-mono text-sm w-full">
-        {headers.securityHeaders.map((h) => {
+        {headers.error && (
+          <p className="font-mono text-sm text-error/70 px-4 py-4">[-] {headers.error}</p>
+        )}
+        {!headers.error && headers.securityHeaders.map((h) => {
           const badge = STATUS_BADGE[h.status];
           return (
             <div
