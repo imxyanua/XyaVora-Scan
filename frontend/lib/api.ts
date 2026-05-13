@@ -37,3 +37,14 @@ export async function getHistory(): Promise<HistoryResponse> {
     return { success: false, data: [] };
   }
 }
+
+export async function getReportById(id: string): Promise<ApiResponse> {
+  try {
+    const res = await fetch(`${API_URL}/api/history/${id}`, { cache: "no-store" });
+    const body = await res.json();
+    if (!res.ok) return { success: false, error: body.error ?? `HTTP ${res.status}` };
+    return body as ApiResponse;
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Could not reach backend" };
+  }
+}

@@ -95,7 +95,7 @@ export default async function HistoryPage() {
                         : <span className="text-status-pass">[0]</span>}
                     </span>
                     <Link
-                      href={`/report/${entry.domain}`}
+                      href={`/report/${entry.domain}?id=${entry.id}`}
                       className="btn-ghost px-2 py-1 text-[10px] text-center whitespace-nowrap"
                     >
                       VIEW &gt;
@@ -129,7 +129,7 @@ export default async function HistoryPage() {
                   <div className="flex justify-between items-center">
                     <span className="font-mono text-[10px] text-primary-fixed/40">{formatDate(entry.scanTime)}</span>
                     <Link
-                      href={`/report/${entry.domain}`}
+                      href={`/report/${entry.domain}?id=${entry.id}`}
                       className="btn-ghost px-3 py-1 text-[10px] whitespace-nowrap"
                     >
                       VIEW &gt;

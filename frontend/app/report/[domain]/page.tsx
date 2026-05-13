@@ -10,13 +10,21 @@ import { WhoisCard }            from "@/components/dashboard/WhoisCard";
 import { CookiesCard }          from "@/components/dashboard/CookiesCard";
 import { SecurityTxtCard }      from "@/components/dashboard/SecurityTxtCard";
 import { ScreenshotCard }       from "@/components/dashboard/ScreenshotCard";
-import { analyzeDomain }        from "@/lib/api";
+import { analyzeDomain, getReportById } from "@/lib/api";
 
-type Props = { params: Promise<{ domain: string }> };
+type Props = {
+  params:       Promise<{ domain: string }>;
+  searchParams: Promise<{ id?: string }>;
+};
 
-export default async function ReportPage({ params }: Props) {
+export default async function ReportPage({ params, searchParams }: Props) {
   const { domain } = await params;
-  const response = await analyzeDomain(domain);
+  const { id }     = await searchParams;
+
+  // If ?id= is present, load the stored historical report instead of re-scanning.
+  const response = id
+    ? await getReportById(id)
+    : await analyzeDomain(domain);
 
   if (!response.success || !response.data) {
     return (
@@ -50,6 +58,20 @@ export default async function ReportPage({ params }: Props) {
           <span className="font-mono text-2xl font-bold text-primary-fixed">{domain}</span>
         </div>
 
+        {/* Historical scan badge */}
+        {id && (
+          <div className="flex items-center gap-2 font-mono text-[10px] text-primary-fixed/40">
+            <span className="material-symbols-outlined text-[14px]">history</span>
+            <span>HISTORICAL_SCAN · {new Date(report.scanTime).toLocaleString("en-GB")}</span>
+            <a
+              href={`/scanning?target=${encodeURIComponent(domain)}`}
+              className="ml-auto btn-ghost px-3 py-1 text-[10px]"
+            >
+              RESCAN &gt;
+            </a>
+          </div>
+        )}
+
         {/* ── Row 1: Score + Key Signals ── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           <div className="lg:col-span-4">
@@ -71,12 +93,9 @@ export default async function ReportPage({ params }: Props) {
 
         {/* ── Row 2: Advisory + Technical panels ── */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-          {/* Advisory panel */}
           <div className="md:col-span-5 lg:col-span-4">
             <AdvisoryPanel findings={report.findings} />
           </div>
-
-          {/* Technical panels grid */}
           <div className="md:col-span-7 lg:col-span-8 grid grid-cols-1 lg:grid-cols-2 gap-4 content-start">
             <SSLCard ssl={report.ssl} />
             <WhoisCard whois={report.whois} />

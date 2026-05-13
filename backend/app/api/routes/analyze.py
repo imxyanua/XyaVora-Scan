@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
 from app.schemas.api import AnalyzeRequest, ApiResponse
@@ -11,7 +11,7 @@ router = APIRouter()
 
 
 @router.post("/analyze", response_model=ApiResponse, dependencies=[Depends(rate_limit)])
-async def analyze(body: AnalyzeRequest, request: Request):
+async def analyze(body: AnalyzeRequest):
     try:
         normalized_url, hostname = validate_target(body.target)
     except ValueError as exc:

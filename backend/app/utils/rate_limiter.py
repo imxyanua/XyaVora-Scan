@@ -4,14 +4,29 @@ from collections import defaultdict, deque
 from fastapi import HTTPException, Request
 
 # Per-IP: max LIMIT requests within WINDOW seconds
-_WINDOW  = 60.0   # seconds
-_LIMIT   = 10     # requests per window
+_WINDOW    = 60.0   # seconds
+_LIMIT     = 10     # requests per window
+_GC_EVERY  = 300.0  # clean up idle IPs every 5 minutes
 
 _buckets: dict[str, deque] = defaultdict(deque)
+_last_gc: float = time.monotonic()
+
+
+def _gc() -> None:
+    """Remove IPs whose last request is older than the window."""
+    global _last_gc
+    now = time.monotonic()
+    if now - _last_gc < _GC_EVERY:
+        return
+    _last_gc = now
+    stale = [ip for ip, dq in _buckets.items() if not dq or now - dq[-1] > _WINDOW]
+    for ip in stale:
+        del _buckets[ip]
 
 
 def rate_limit(request: Request) -> None:
     """FastAPI dependency — raises 429 if caller exceeds the rate limit."""
+    _gc()
     ip = request.client.host if request.client else "unknown"
     now = time.monotonic()
     bucket = _buckets[ip]

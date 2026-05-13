@@ -149,7 +149,7 @@ export default async function DashboardPage() {
                         {entry.status.toUpperCase().replace(" ", "_")}
                       </span>
                       <Link
-                        href={`/report/${entry.domain}`}
+                        href={`/report/${entry.domain}?id=${entry.id}`}
                         className="btn-ghost px-2 py-1 text-[10px] whitespace-nowrap"
                       >
                         VIEW &gt;

@@ -22,19 +22,25 @@ const BADGE: Record<SignalStatus, { cls: string; text: string }> = {
 };
 
 export function KeySignalsOverview({ headers, dns, ssl }: Props) {
+  const headersOk = !headers.error;
+  const dnsOk     = !dns.error;
+
   const findHeader = (name: string) =>
-    headers.securityHeaders.find((h) =>
-      h.header.toLowerCase() === name.toLowerCase()
-    );
+    headersOk
+      ? headers.securityHeaders.find((h) => h.header.toLowerCase() === name.toLowerCase())
+      : undefined;
 
-  const hsts    = findHeader("Strict-Transport-Security");
-  const csp     = findHeader("Content-Security-Policy");
-  const xframe  = findHeader("X-Frame-Options");
+  const hsts   = findHeader("Strict-Transport-Security");
+  const csp    = findHeader("Content-Security-Policy");
+  const xframe = findHeader("X-Frame-Options");
 
-  // DMARC: detected but p=none → warn
-  const dmarcStatus: SignalStatus =
-    !dns.dmarcDetected ? "missing" :
-    dns.dmarcRecord?.includes("p=none") ? "warn" : "pass";
+  const dmarcStatus: SignalStatus = !dnsOk
+    ? "missing"
+    : !dns.dmarcDetected
+    ? "missing"
+    : dns.dmarcRecord?.includes("p=none")
+    ? "warn"
+    : "pass";
 
   const signals: Signal[] = [
     {
@@ -43,11 +49,11 @@ export function KeySignalsOverview({ headers, dns, ssl }: Props) {
     },
     {
       label:  "SEC.HSTS",
-      status: hsts?.status === "present" ? "pass" : hsts?.status === "warning" ? "warn" : "missing",
+      status: !headersOk ? "missing" : hsts?.status === "present" ? "pass" : hsts?.status === "warning" ? "warn" : "missing",
     },
     {
       label:  "SEC.CSP",
-      status: csp?.status === "present" ? "pass" : csp?.status === "warning" ? "warn" : "missing",
+      status: !headersOk ? "missing" : csp?.status === "present" ? "pass" : csp?.status === "warning" ? "warn" : "missing",
     },
     {
       label:  "MAIL.DMARC",
@@ -55,11 +61,11 @@ export function KeySignalsOverview({ headers, dns, ssl }: Props) {
     },
     {
       label:  "SEC.X-FRAME",
-      status: xframe?.status === "present" ? "pass" : "missing",
+      status: !headersOk ? "missing" : xframe?.status === "present" ? "pass" : "missing",
     },
     {
       label:  "DNS.SPF",
-      status: dns.spfDetected ? "pass" : "missing",
+      status: !dnsOk ? "missing" : dns.spfDetected ? "pass" : "missing",
     },
   ];
 

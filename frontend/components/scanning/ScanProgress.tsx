@@ -128,9 +128,11 @@ export function ScanProgress({ target }: { target: string }) {
               {Array.from({ length: TOTAL_SEGMENTS }).map((_, i) => (
                 <div
                   key={i}
-                  className={`flex-1 border-r border-[#070B0F] last:border-r-0 transition-colors duration-200 ${
+                  className={`flex-1 border-r border-[#070B0F] last:border-r-0 transition-colors duration-500 ${
                     i < filledSegs
-                      ? scanError ? "bg-error/70" : "bg-primary-fixed"
+                      ? scanError
+                        ? "bg-error/70"
+                        : "bg-primary-fixed"
                       : "bg-transparent"
                   }`}
                 />
