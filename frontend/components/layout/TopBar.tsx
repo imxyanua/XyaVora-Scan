@@ -16,7 +16,7 @@ export function TopBar({ domain }: TopBarProps) {
       <div className="flex items-center gap-3">
         {/* Mobile logo */}
         <Link
-          href="/landing"
+          href="/"
           className="font-mono text-lg font-bold text-primary-fixed tracking-tighter uppercase md:hidden"
         >
           XyaVora-Scan
