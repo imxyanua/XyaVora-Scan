@@ -24,7 +24,7 @@ const FEATURES = [
   { icon: "stacks",           label: "Tech Stack",          desc: "85+ fingerprint rules — frameworks, CDN, CMS, analytics, hosting"       },
   { icon: "cookie",           label: "Cookie Audit",        desc: "Secure, HttpOnly, SameSite flags per cookie — finds insecure cookies"   },
   { icon: "security",         label: "Security.txt",        desc: "RFC 9116 compliance check — contact, policy, encryption key presence"   },
-  { icon: "screenshot_monitor",label: "Live Screenshot",   desc: "Desktop (1280×720) + mobile (390×844) Playwright capture"               },
+  { icon: "screenshot_monitor",label: "Live Screenshot",   desc: "Desktop (1280x720) + mobile (390x844) Playwright capture"               },
 ];
 
 const HOW_IT_WORKS = [

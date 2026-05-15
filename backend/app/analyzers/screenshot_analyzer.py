@@ -14,12 +14,34 @@ from app.utils.safe_fetch import validate_public_http_url
 
 _DESKTOP_VP = {"width": 1280, "height": 720}
 _MOBILE_VP  = {"width": 390,  "height": 844}
-_TIMEOUT_MS = 8_000
-_RESOURCE_TIMEOUT_SECONDS = 2
-_MAX_RESOURCE_BYTES = 750_000
-_USER_AGENT = "XyaVora-Scan/0.1 (passive-security-scanner; screenshot-renderer)"
+_MIN_NAVIGATION_TIMEOUT_MS = 5_000
+_MAX_NAVIGATION_TIMEOUT_MS = 10_000
+_SCREENSHOT_FALLBACK_TIMEOUT_MS = 2_000
+_DOM_READY_TIMEOUT_MS = 1_500
+_NETWORK_IDLE_TIMEOUT_MS = 1_000
+_IMAGE_READY_TIMEOUT_MS = 1_500
+_RENDER_SETTLE_SECONDS = 0.4
+_RESOURCE_TIMEOUT_SECONDS = 1
+_DEFAULT_MAX_RESOURCE_BYTES = 1_000_000
+_RESOURCE_BYTE_LIMITS = {
+    "document": 1_500_000,
+    "stylesheet": 750_000,
+    "script": 650_000,
+    "font": 500_000,
+    "image": 2_500_000,
+    "fetch": 500_000,
+    "xhr": 500_000,
+}
+_USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+)
+_BROWSER_HEADERS = {
+    "Accept-Language": "en-US,en;q=0.9",
+    "DNT": "1",
+}
 _REDIRECT_STATUSES = {301, 302, 303, 307, 308}
-_ALLOWED_RESOURCE_TYPES = {"document", "stylesheet", "image"}
+_ALLOWED_RESOURCE_TYPES = {"document", "stylesheet", "script", "font", "image", "fetch", "xhr"}
 _BLOCKED_HOST_PARTS = (
     "google-analytics.com",
     "googletagmanager.com",
@@ -28,6 +50,19 @@ _BLOCKED_HOST_PARTS = (
     "hotjar.com",
     "clarity.ms",
 )
+
+
+ResourceCache = dict[str, tuple[int, dict[str, str], bytes]]
+
+
+def _navigation_timeout_ms() -> int:
+    """Give each viewport a bounded slice of the configured screenshot budget."""
+    budget_ms = max(settings.SCREENSHOT_TIMEOUT_SECONDS, 1) * 1000
+    per_viewport_ms = budget_ms // 6
+    return max(
+        _MIN_NAVIGATION_TIMEOUT_MS,
+        min(_MAX_NAVIGATION_TIMEOUT_MS, per_viewport_ms),
+    )
 
 
 def _ensure_windows_subprocess_loop() -> None:
@@ -48,10 +83,18 @@ def _ensure_windows_subprocess_loop() -> None:
         asyncio.set_event_loop_policy(policy_factory())
 
 
-def _safe_resource_fetch(url: str) -> tuple[int, dict[str, str], bytes]:
+def _safe_resource_fetch(
+    url: str,
+    cache: ResourceCache | None = None,
+    resource_type: str = "document",
+) -> tuple[int, dict[str, str], bytes]:
     """Fetch a browser resource through Python so Chromium never accesses the network directly."""
     current_url = validate_public_http_url(url)
+    if cache is not None and current_url in cache:
+        return cache[current_url]
+
     timeout = httpx.Timeout(min(settings.FETCH_TIMEOUT_SECONDS, _RESOURCE_TIMEOUT_SECONDS))
+    max_bytes = _RESOURCE_BYTE_LIMITS.get(resource_type, _DEFAULT_MAX_RESOURCE_BYTES)
 
     with httpx.Client(
         follow_redirects=False,
@@ -70,7 +113,7 @@ def _safe_resource_fetch(url: str) -> tuple[int, dict[str, str], bytes]:
                 for chunk in response.iter_bytes(chunk_size=8192):
                     chunks.append(chunk)
                     total += len(chunk)
-                    if total >= _MAX_RESOURCE_BYTES:
+                    if total >= max_bytes:
                         break
 
                 headers = {
@@ -78,20 +121,88 @@ def _safe_resource_fetch(url: str) -> tuple[int, dict[str, str], bytes]:
                     for key, value in response.headers.items()
                     if key.lower() not in {"content-encoding", "content-length", "transfer-encoding"}
                 }
-                return response.status_code, headers, b"".join(chunks)
+                result = (response.status_code, headers, b"".join(chunks))
+                if cache is not None:
+                    cache[current_url] = result
+                    cache[url] = result
+                return result
 
     raise httpx.TooManyRedirects(f"Exceeded redirect limit for {url}")
 
 
-def _capture_one(browser, url: str, viewport: dict) -> tuple[str | None, str | None]:
+def _screenshot_page(page, timeout_ms: int) -> str:
+    png = page.screenshot(
+        full_page=False,
+        type="png",
+        timeout=min(_SCREENSHOT_FALLBACK_TIMEOUT_MS, timeout_ms),
+        animations="disabled",
+        caret="hide",
+    )
+    return base64.b64encode(png).decode("utf-8")
+
+
+def _goto_for_capture(page, url: str, timeout_ms: int, timeout_error_type: type[Exception]) -> None:
+    try:
+        page.goto(url, wait_until="commit", timeout=timeout_ms)
+    except timeout_error_type:
+        raise
+    except Exception as exc:
+        message = str(exc).lower()
+        if "commit" not in message or "wait_until" not in message:
+            raise
+        page.goto(url, wait_until="domcontentloaded", timeout=timeout_ms)
+
+
+def _settle_page_for_capture(page, timeout_ms: int, timeout_error_type: type[Exception]) -> None:
+    """Best-effort wait for meaningful first-viewport rendering without blocking the whole scan."""
+    for state, limit_ms in (
+        ("domcontentloaded", _DOM_READY_TIMEOUT_MS),
+        ("networkidle", _NETWORK_IDLE_TIMEOUT_MS),
+    ):
+        try:
+            page.wait_for_load_state(state, timeout=min(limit_ms, timeout_ms))
+        except timeout_error_type:
+            pass
+
+    try:
+        page.wait_for_function(
+            """
+            () => Array.from(document.images)
+              .filter((img) => {
+                const rect = img.getBoundingClientRect();
+                return rect.width > 24 && rect.height > 24
+                  && rect.bottom >= 0 && rect.right >= 0
+                  && rect.top <= window.innerHeight && rect.left <= window.innerWidth;
+              })
+              .every((img) => img.complete)
+            """,
+            timeout=min(_IMAGE_READY_TIMEOUT_MS, timeout_ms),
+        )
+    except timeout_error_type:
+        pass
+
+    time.sleep(_RENDER_SETTLE_SECONDS)
+
+
+def _capture_one(
+    browser,
+    url: str,
+    viewport: dict,
+    resource_cache: ResourceCache | None = None,
+) -> tuple[str | None, str | None]:
     """Returns (base64_png, error_str). Closes its own context."""
     from playwright.sync_api import TimeoutError as PWTimeout
+
+    timeout_ms = _navigation_timeout_ms()
+
     try:
         validate_public_http_url(url)
         ctx = browser.new_context(
             viewport=viewport,
             ignore_https_errors=True,
             java_script_enabled=True,
+            user_agent=_USER_AGENT,
+            extra_http_headers=_BROWSER_HEADERS,
         )
         page = ctx.new_page()
 
@@ -111,7 +222,11 @@ def _capture_one(browser, url: str, viewport: dict) -> tuple[str | None, str | N
                 return
 
             try:
-                status, headers, body = _safe_resource_fetch(req_url)
+                status, headers, body = _safe_resource_fetch(
+                    req_url,
+                    resource_cache,
+                    request.resource_type,
+                )
             except Exception:
                 route.abort()
                 return
@@ -120,14 +235,19 @@ def _capture_one(browser, url: str, viewport: dict) -> tuple[str | None, str | N
 
         page.route("**/*", _route_guard)
         try:
-            page.goto(url, wait_until="domcontentloaded", timeout=_TIMEOUT_MS)
-            time.sleep(0.1)
-            png = page.screenshot(full_page=False, type="png")
-            return base64.b64encode(png).decode("utf-8"), None
+            _goto_for_capture(page, url, timeout_ms, PWTimeout)
+            _settle_page_for_capture(page, timeout_ms, PWTimeout)
+            return _screenshot_page(page, timeout_ms), None
+        except PWTimeout:
+            try:
+                return (
+                    _screenshot_page(page, timeout_ms),
+                    f"Page load exceeded {timeout_ms // 1000}s; captured partial render.",
+                )
+            except Exception:
+                return None, f"Page load timed out after {timeout_ms // 1000}s."
         finally:
             ctx.close()
-    except PWTimeout:
-        return None, f"Page load timed out after {_TIMEOUT_MS // 1000}s."
     except Exception as exc:
         return None, str(exc)
 
@@ -145,8 +265,9 @@ def _capture_sync(url: str) -> ScreenshotResult:
         with sync_playwright() as pw:
             browser = pw.chromium.launch(headless=True)
             try:
-                desktop_b64, desktop_err = _capture_one(browser, url, _DESKTOP_VP)
-                mobile_b64,  mobile_err  = _capture_one(browser, url, _MOBILE_VP)
+                resource_cache: ResourceCache = {}
+                desktop_b64, desktop_err = _capture_one(browser, url, _DESKTOP_VP, resource_cache)
+                mobile_b64,  mobile_err  = _capture_one(browser, url, _MOBILE_VP, resource_cache)
 
                 return ScreenshotResult(
                     url=url,

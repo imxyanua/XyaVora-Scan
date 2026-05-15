@@ -1,4 +1,4 @@
-"""Tests for screenshot_analyzer — mocks Playwright so no browser is needed."""
+"""Tests for screenshot_analyzer; mocks Playwright so no browser is needed."""
 import asyncio
 import sys
 from unittest.mock import MagicMock, patch
@@ -11,10 +11,14 @@ _pw_stub.sync_api.TimeoutError = type("TimeoutError", (Exception,), {})
 sys.modules.setdefault("playwright", _pw_stub)
 sys.modules.setdefault("playwright.sync_api", _pw_stub.sync_api)
 
-from app.analyzers.screenshot_analyzer import analyze_screenshot, _capture_one  # noqa: E402
+from app.analyzers.screenshot_analyzer import (  # noqa: E402
+    _ALLOWED_RESOURCE_TYPES,
+    _BROWSER_HEADERS,
+    _USER_AGENT,
+    analyze_screenshot,
+    _capture_one,
+)
 
-
-# ── _capture_one unit tests ────────────────────────────────────────────────────
 
 def _make_browser(png_bytes: bytes = b"PNG"):
     """Return a fake Playwright browser that yields png_bytes on screenshot()."""
@@ -31,12 +35,22 @@ def _make_browser(png_bytes: bytes = b"PNG"):
 def test_capture_one_returns_base64():
     import base64
     png = b"\x89PNG\r\n"
-    browser, _, _ = _make_browser(png)
+    browser, page, _ = _make_browser(png)
     with patch("app.analyzers.screenshot_analyzer.time") as mock_time:
         mock_time.sleep.return_value = None
         b64, err = _capture_one(browser, "https://example.com", {"width": 1280, "height": 720})
     assert err is None
     assert b64 == base64.b64encode(png).decode()
+    page.goto.assert_called_once()
+    assert page.goto.call_args.kwargs["wait_until"] == "commit"
+    assert page.goto.call_args.kwargs["timeout"] >= 5000
+    browser.new_context.assert_called_once()
+    assert browser.new_context.call_args.kwargs["user_agent"] == _USER_AGENT
+    assert browser.new_context.call_args.kwargs["extra_http_headers"] == _BROWSER_HEADERS
+
+
+def test_capture_allows_spa_rendering_resources():
+    assert {"script", "font", "fetch", "xhr"}.issubset(_ALLOWED_RESOURCE_TYPES)
 
 
 def test_capture_one_timeout_returns_error():
@@ -45,12 +59,42 @@ def test_capture_one_timeout_returns_error():
     ctx = MagicMock()
     page = MagicMock()
     page.goto.side_effect = PWTimeout("timeout")
+    page.screenshot.side_effect = RuntimeError("no frame")
     ctx.new_page.return_value = page
     browser.new_context.return_value = ctx
 
     b64, err = _capture_one(browser, "https://example.com", {"width": 390, "height": 844})
     assert b64 is None
     assert "timed out" in err.lower()
+
+
+def test_capture_one_timeout_returns_partial_screenshot():
+    import base64
+    PWTimeout = sys.modules["playwright.sync_api"].TimeoutError
+    png = b"\x89PNG\r\npartial"
+    browser, page, _ = _make_browser(png)
+    page.goto.side_effect = PWTimeout("timeout")
+
+    b64, err = _capture_one(browser, "https://example.com", {"width": 390, "height": 844})
+
+    assert b64 == base64.b64encode(png).decode()
+    assert err is not None
+    assert "partial render" in err
+
+
+def test_capture_one_falls_back_when_commit_wait_is_unsupported():
+    png = b"\x89PNG\r\n"
+    browser, page, _ = _make_browser(png)
+    page.goto.side_effect = [RuntimeError("invalid wait_until value: commit"), None]
+
+    with patch("app.analyzers.screenshot_analyzer.time") as mock_time:
+        mock_time.sleep.return_value = None
+        b64, err = _capture_one(browser, "https://example.com", {"width": 1280, "height": 720})
+
+    assert b64 is not None
+    assert err is None
+    assert page.goto.call_count == 2
+    assert page.goto.call_args_list[1].kwargs["wait_until"] == "domcontentloaded"
 
 
 def test_capture_one_generic_exception_returns_error():
@@ -66,8 +110,6 @@ def test_capture_one_generic_exception_returns_error():
     assert err is not None
 
 
-# ── analyze_screenshot integration (disabled) ─────────────────────────────────
-
 @pytest.mark.asyncio
 async def test_disabled_returns_error_field():
     result = await analyze_screenshot("https://example.com", enabled=False)
@@ -82,8 +124,6 @@ async def test_disabled_returns_no_findings():
     result = await analyze_screenshot("https://example.com", enabled=False)
     assert result.findings == []
 
-
-# ── analyze_screenshot integration (enabled, mocked) ─────────────────────────
 
 def _fake_capture_sync(url: str):
     from app.schemas.report import ScreenshotResult

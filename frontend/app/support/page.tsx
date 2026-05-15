@@ -10,7 +10,7 @@ const ANALYZERS = [
   { icon: "stacks",            key: "TECHSTACK",   label: "Tech Stack",           desc: "85+ fingerprint rules across headers, HTML, and scripts. Detects frameworks, CDN providers, CMS platforms, analytics tools, hosting, and more." },
   { icon: "cookie",            key: "COOKIES",     label: "Cookie Audit",         desc: "Inspects each Set-Cookie header for Secure, HttpOnly, and SameSite flags. Flags cookies that are missing security attributes." },
   { icon: "security",          key: "SECTXT",      label: "Security.txt",         desc: "Checks /.well-known/security.txt and /security.txt per RFC 9116. Verifies Contact, Policy, Encryption, and Expires fields." },
-  { icon: "screenshot_monitor",key: "SCREENSHOT",  label: "Live Screenshot",      desc: "Captures a Playwright screenshot at desktop (1280×720) and mobile (390×844) viewport. Requires ENABLE_SCREENSHOT=true in backend config." },
+  { icon: "screenshot_monitor",key: "SCREENSHOT",  label: "Live Screenshot",      desc: "Captures a Playwright screenshot at desktop (1280x720) and mobile (390x844) viewport. Requires ENABLE_SCREENSHOT=true in backend config." },
 ];
 
 const FAQ = [
@@ -20,7 +20,7 @@ const FAQ = [
   },
   {
     q: "Why does the screenshot show blank or fail?",
-    a: "Screenshot capture requires ENABLE_SCREENSHOT=true in the backend environment and Playwright browsers installed in the deploy image.",
+    a: "Screenshot capture requires ENABLE_SCREENSHOT=true in the backend environment and Playwright browsers installed in the deploy image. Some sites block headless browsers or load too slowly; those cases will be tuned later.",
   },
   {
     q: "How is the risk score calculated?",

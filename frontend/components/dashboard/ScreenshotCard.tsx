@@ -16,7 +16,7 @@ export function ScreenshotCard({ screenshot }: Props) {
 
   const capturedAt = screenshot.capturedAt
     ? new Date(screenshot.capturedAt).toLocaleTimeString("en-GB")
-    : "—";
+    : "-";
 
   const hasMobile  = Boolean(screenshot.mobileBase64);
   const isDisabled = screenshot.error?.toLowerCase().includes("disabled") ?? false;
@@ -33,13 +33,11 @@ export function ScreenshotCard({ screenshot }: Props) {
   return (
     <>
       <div className="card-panel flex flex-col">
-        {/* Header */}
         <div className="p-3 border-b border-primary-fixed/20 bg-[#070B0F] flex justify-between items-center shrink-0">
           <h3 className="font-mono text-[11px] tracking-widest text-primary-fixed/60 uppercase">
             SYS.LIVE_CAPTURE
           </h3>
           <div className="flex items-center gap-3">
-            {/* Viewport toggle — only shown when both captures exist */}
             {imgSrc && hasMobile && (
               <div className="flex items-center gap-1">
                 <button
@@ -70,7 +68,6 @@ export function ScreenshotCard({ screenshot }: Props) {
           </div>
         </div>
 
-        {/* Preview area */}
         <div className="p-4 flex-1 flex flex-col items-center justify-center">
           {imgSrc ? (
             <>
@@ -83,7 +80,6 @@ export function ScreenshotCard({ screenshot }: Props) {
                   alt={`Site screenshot (${view})`}
                   className="w-full h-full object-cover object-top"
                 />
-                {/* Hover overlay */}
                 <div className="absolute inset-0 bg-[#070B0F]/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                   <button
                     type="button"
@@ -116,7 +112,7 @@ export function ScreenshotCard({ screenshot }: Props) {
                 </p>
               ) : isTimedOut ? (
                 <p className="font-mono text-[10px] text-primary-fixed/20 text-center">
-                  Increase SCREENSHOT_TIMEOUT_SECONDS and rescan.
+                  Some sites need tuning for headless capture.
                 </p>
               ) : (
                 <p className="font-mono text-[10px] text-primary-fixed/20 text-center">
@@ -128,13 +124,11 @@ export function ScreenshotCard({ screenshot }: Props) {
         </div>
       </div>
 
-      {/* Lightbox */}
       {lightboxOpen && imgSrc && (
         <div
           className="fixed inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center"
           onClick={() => setLightbox(false)}
         >
-          {/* Top bar */}
           <div
             className="w-full max-w-5xl flex justify-between items-center px-4 py-2 mb-2"
             onClick={(e) => e.stopPropagation()}
@@ -147,11 +141,10 @@ export function ScreenshotCard({ screenshot }: Props) {
               className="font-mono text-[11px] text-primary-fixed/50 hover:text-primary-fixed transition-colors"
               onClick={() => setLightbox(false)}
             >
-              [CLOSE ✕]
+              [CLOSE X]
             </button>
           </div>
 
-          {/* Image — constrained width for mobile so it doesn't stretch */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={imgSrc}
