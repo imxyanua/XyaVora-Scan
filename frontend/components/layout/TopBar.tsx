@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { startScan } from "@/lib/startScan";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 interface TopBarProps {
   domain?: string;
@@ -42,7 +43,7 @@ export function TopBar({ domain }: TopBarProps) {
               onClick={() => startScan(domain)}
               className="btn-ghost px-3 py-1.5 text-xs flex items-center gap-1.5"
             >
-              <span className="material-symbols-outlined text-[16px]">refresh</span>
+              <AppIcon name="refresh" className="text-[16px]" />
               <span className="hidden sm:inline">RESCAN</span>
             </button>
             <button
@@ -50,7 +51,7 @@ export function TopBar({ domain }: TopBarProps) {
               onClick={() => window.print()}
               className="btn-primary px-3 py-1.5 text-xs hidden sm:flex items-center gap-1.5"
             >
-              <span className="material-symbols-outlined text-[16px]">download</span>
+              <AppIcon name="download" className="text-[16px]" />
               EXPORT PDF
             </button>
           </>
@@ -69,7 +70,7 @@ export function TopBar({ domain }: TopBarProps) {
             aria-label={btn.label}
             className="text-primary-fixed/40 hover:text-primary-fixed transition-colors p-1 hidden sm:block"
           >
-            <span className="material-symbols-outlined text-xl">{btn.icon}</span>
+            <AppIcon name={btn.icon} className="text-xl" />
           </button>
         ))}
       </div>

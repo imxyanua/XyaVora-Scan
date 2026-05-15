@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 const ANALYZERS = [
   { icon: "dns",               key: "DNS",         label: "DNS Analysis",         desc: "Resolves A, AAAA, MX, NS, TXT records. Detects SPF and DMARC presence and evaluates policy strictness (p=none vs p=reject)." },
@@ -64,7 +65,7 @@ export default function SupportPage() {
               {...(l.href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
               className="btn-ghost px-4 py-2 text-xs flex items-center gap-2"
             >
-              <span className="material-symbols-outlined text-[16px]">{l.icon}</span>
+              <AppIcon name={l.icon} className="text-[16px]" />
               {l.label}
             </Link>
           ))}
@@ -78,7 +79,7 @@ export default function SupportPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {ANALYZERS.map((a) => (
               <div key={a.key} className="card-panel p-4 flex gap-4">
-                <span className="material-symbols-outlined text-primary-fixed text-[22px] shrink-0 mt-0.5">{a.icon}</span>
+                <AppIcon name={a.icon} className="text-primary-fixed text-[22px] shrink-0 mt-0.5" />
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-mono text-xs font-bold text-primary-fixed">{a.label}</span>

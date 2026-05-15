@@ -11,6 +11,7 @@ import { CookiesCard }          from "@/components/dashboard/CookiesCard";
 import { SecurityTxtCard }      from "@/components/dashboard/SecurityTxtCard";
 import { ScreenshotCard }       from "@/components/dashboard/ScreenshotCard";
 import { ScanLink }             from "@/components/scan/ScanLink";
+import { AppIcon }              from "@/components/ui/AppIcon";
 import { analyzeDomain, getReportById } from "@/lib/api";
 
 type Props = {
@@ -62,7 +63,7 @@ export default async function ReportPage({ params, searchParams }: Props) {
         {/* Historical scan badge */}
         {id && (
           <div className="flex items-center gap-2 font-mono text-[10px] text-primary-fixed/40">
-            <span className="material-symbols-outlined text-[14px]">history</span>
+            <AppIcon name="history" className="text-[14px]" />
             <span>HISTORICAL_SCAN · {new Date(report.scanTime).toLocaleString("en-GB")}</span>
             <ScanLink
               target={domain}

@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { startScan } from "@/lib/startScan";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 const QUICK_TARGETS = ["google.com", "github.com", "cloudflare.com", "mozilla.org"];
 
@@ -54,7 +55,7 @@ export function NewScanForm() {
           type="submit"
           className="btn-primary px-8 py-3 flex items-center justify-center gap-2 whitespace-nowrap"
         >
-          <span className="material-symbols-outlined text-[18px]">travel_explore</span>
+          <AppIcon name="travel_explore" className="text-[18px]" />
           ANALYZE
         </button>
       </form>

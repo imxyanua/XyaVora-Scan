@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { ScreenshotResult } from "@/types";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 interface Props {
   screenshot: ScreenshotResult;
@@ -100,9 +101,7 @@ export function ScreenshotCard({ screenshot }: Props) {
             </>
           ) : (
             <div className="w-full flex flex-col items-center justify-center gap-3 py-6 border border-dashed border-primary-fixed/15">
-              <span className="material-symbols-outlined text-3xl text-primary-fixed/20">
-                hide_image
-              </span>
+              <AppIcon name="hide_image" className="text-3xl text-primary-fixed/20" />
               <p className="font-mono text-[11px] text-primary-fixed/30 text-center">
                 {isDisabled ? "[CAPTURE_DISABLED]" : "[CAPTURE_ERROR]"}
               </p>

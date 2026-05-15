@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import type { Finding, FindingSeverity, FindingStatus } from "@/types";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 interface Props {
   finding: Finding | null;
@@ -86,7 +87,7 @@ function DrawerContent({ finding, onClose }: { finding: Finding; onClose: () => 
           aria-label="Close"
           className="shrink-0 text-primary-fixed/40 hover:text-primary-fixed transition-colors mt-0.5"
         >
-          <span className="material-symbols-outlined text-xl">close</span>
+          <AppIcon name="close" className="text-xl" />
         </button>
       </div>
 

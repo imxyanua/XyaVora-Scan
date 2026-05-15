@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 const ANALYZERS = [
   { key: "dns",        label: "DNS_RESOLUTION",     icon: "dns"               },
@@ -188,8 +189,8 @@ function ScanSession({ target, scanId }: ScanSessionProps) {
                         "text-on-surface-variant/30"
                       }`}
                     >
-                      {status === "complete" ? "[✓]" :
-                       status === "running"  ? "[►]" :
+                      {status === "complete" ? "[OK]" :
+                       status === "running"  ? "[>>]" :
                                               "[-]"}
                     </span>
                     <span
@@ -222,9 +223,7 @@ function ScanSession({ target, scanId }: ScanSessionProps) {
           {/* Scan complete banner */}
           {scanDone && (
             <div className="border border-primary-fixed/40 bg-primary-fixed/5 px-5 py-4 flex items-center gap-4">
-              <span className="material-symbols-outlined text-primary-fixed text-2xl shrink-0">
-                check_circle
-              </span>
+              <AppIcon name="check_circle" className="text-primary-fixed text-2xl shrink-0" />
               <div>
                 <p className="font-mono text-sm text-primary-fixed font-semibold tracking-wider">
                   SCAN_COMPLETE — {ANALYZERS.length} modules processed
@@ -239,9 +238,7 @@ function ScanSession({ target, scanId }: ScanSessionProps) {
           {/* Error banner */}
           {scanError && (
             <div className="border border-error/40 bg-error/5 px-5 py-4 flex items-center gap-4">
-              <span className="material-symbols-outlined text-error text-2xl shrink-0">
-                error
-              </span>
+              <AppIcon name="error" className="text-error text-2xl shrink-0" />
               <div className="min-w-0">
                 <p className="font-mono text-sm text-error font-semibold tracking-wider">
                   SCAN_FAILED

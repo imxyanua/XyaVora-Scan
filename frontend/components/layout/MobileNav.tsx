@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 const NAV_ITEMS = [
   { label: "Home",     icon: "home",        href: "/"          },
@@ -29,7 +30,7 @@ export function MobileNav() {
               active ? "text-primary-fixed" : "text-primary-fixed/40"
             }`}
           >
-            <span className="material-symbols-outlined text-[22px]">{item.icon}</span>
+            <AppIcon name={item.icon} className="text-[22px]" />
             <span className="font-mono text-[9px] uppercase tracking-widest">{item.label}</span>
           </Link>
         );

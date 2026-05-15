@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 type PhaseLockedPageProps = {
   eyebrow: string;
@@ -26,9 +27,7 @@ export function PhaseLockedPage({
 
         <div className="card-panel p-8 mt-6 flex flex-col gap-5">
           <div className="flex items-start gap-4">
-            <span className="material-symbols-outlined text-4xl text-primary-fixed/40 shrink-0">
-              {icon}
-            </span>
+            <AppIcon name={icon} className="text-4xl text-primary-fixed/40 shrink-0" />
             <div className="min-w-0">
               <p className="font-mono text-sm text-primary-fixed font-bold">
                 ACCOUNT_FEATURE_PENDING

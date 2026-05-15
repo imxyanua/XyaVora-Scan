@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ScanInput } from "@/components/landing/ScanInput";
 import { ScanLink } from "@/components/scan/ScanLink";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 const DNS_PREVIEW = [
   { n: "01", type: "A",    val: "142.250.190.78"                     },
@@ -60,7 +61,7 @@ export default function LandingPage() {
       {/* ── Header ── */}
       <header className="w-full flex justify-between items-center px-6 md:px-8 h-16 z-50 border-b border-outline-variant bg-[#070b0f]/90 backdrop-blur-md sticky top-0">
         <Link href="/" className="flex items-center gap-4 group">
-          <span className="material-symbols-outlined text-primary-fixed text-2xl">radar</span>
+          <AppIcon name="radar" className="text-primary-fixed text-2xl" />
           <span className="font-mono text-xl font-bold text-primary-fixed tracking-tighter uppercase group-hover:text-white transition-colors">
             XyaVora-Scan
           </span>
@@ -99,7 +100,7 @@ export default function LandingPage() {
             <div className="lg:col-span-6 flex flex-col justify-center space-y-8">
 
               <div className="inline-flex items-center gap-2 bg-primary-fixed/10 panel-border px-3 py-1.5 w-max">
-                <span className="material-symbols-outlined text-primary-fixed text-sm">rocket_launch</span>
+                <AppIcon name="rocket_launch" className="text-primary-fixed text-sm" />
                 <span className="font-mono text-[11px] tracking-widest font-semibold text-primary-fixed uppercase">
                   V.2.4.0-STABLE — 8 ANALYZERS
                 </span>
@@ -141,7 +142,7 @@ export default function LandingPage() {
                 <div className="col-span-2 bg-[#0F1720] panel-border flex flex-col shadow-lg overflow-hidden">
                   <div className="border-b border-primary-fixed/30 px-4 py-2 flex items-center justify-between bg-[#070B0F]">
                     <span className="text-[11px] tracking-widest font-semibold text-primary-fixed flex items-center gap-2 uppercase">
-                      <span className="material-symbols-outlined text-[14px]">dns</span>
+                      <AppIcon name="dns" className="text-[14px]" />
                       DNS_RESOLUTION
                     </span>
                     <div className="flex gap-1">
@@ -164,7 +165,7 @@ export default function LandingPage() {
                 <div className="bg-[#0F1720] panel-border flex flex-col">
                   <div className="border-b border-primary-fixed/30 px-4 py-2 bg-[#070B0F]">
                     <span className="text-[11px] tracking-widest font-semibold text-primary-fixed flex items-center gap-2 uppercase">
-                      <span className="material-symbols-outlined text-[14px]">lock</span>
+                      <AppIcon name="lock" className="text-[14px]" />
                       SSL_TLS
                     </span>
                   </div>
@@ -182,7 +183,7 @@ export default function LandingPage() {
                 <div className="bg-[#0F1720] panel-border flex flex-col">
                   <div className="border-b border-primary-fixed/30 px-4 py-2 bg-[#070B0F]">
                     <span className="text-[11px] tracking-widest font-semibold text-primary-fixed flex items-center gap-2 uppercase">
-                      <span className="material-symbols-outlined text-[14px]">http</span>
+                      <AppIcon name="http" className="text-[14px]" />
                       SEC_HEADERS
                     </span>
                   </div>
@@ -200,7 +201,7 @@ export default function LandingPage() {
 
                 <div className="absolute -right-8 top-1/4 bg-[#0F1720] border border-primary-fixed p-3 cyber-glow hidden xl:flex flex-col gap-2 z-10">
                   <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-primary-fixed text-[16px] animate-spin">sync</span>
+                    <AppIcon name="sync" className="text-primary-fixed text-[16px] animate-spin" />
                     <span className="text-[11px] text-primary-fixed">ANALYZING_RISK_SIGNALS</span>
                   </div>
                   <div className="flex gap-[2px]">
@@ -232,7 +233,7 @@ export default function LandingPage() {
               {FEATURES.map((f) => (
                 <div key={f.label} className="card-panel p-5 flex flex-col gap-3 glow-hover transition-all">
                   <div className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-primary-fixed text-[22px]">{f.icon}</span>
+                    <AppIcon name={f.icon} className="text-primary-fixed text-[22px]" />
                     <span className="font-mono text-[11px] font-bold text-primary-fixed uppercase tracking-wider">{f.label}</span>
                   </div>
                   <p className="font-mono text-[11px] text-primary-fixed/50 leading-relaxed">{f.desc}</p>
@@ -261,7 +262,7 @@ export default function LandingPage() {
               {HOW_IT_WORKS.map((step) => (
                 <div key={step.step} className="flex flex-col items-center text-center gap-4 relative z-10">
                   <div className="w-16 h-16 border border-primary-fixed/40 bg-[#070B0F] flex items-center justify-center">
-                    <span className="material-symbols-outlined text-primary-fixed text-[28px]">{step.icon}</span>
+                    <AppIcon name={step.icon} className="text-primary-fixed text-[28px]" />
                   </div>
                   <span className="font-mono text-[10px] text-primary-fixed/40 tracking-widest">[STEP_{step.step}]</span>
                   <h3 className="font-mono text-sm font-bold text-primary-fixed">{step.title}</h3>
@@ -298,7 +299,7 @@ export default function LandingPage() {
               </div>
               <div className="pt-4">
                 <Link href="/scan" className="btn-primary px-10 py-3 text-sm inline-flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[18px]">radar</span>
+                  <AppIcon name="radar" className="text-[18px]" />
                   LAUNCH FULL APP
                 </Link>
               </div>
@@ -310,7 +311,7 @@ export default function LandingPage() {
         <footer className="border-t border-primary-fixed/10 px-6 md:px-8 py-8">
           <div className="w-full max-w-[1440px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <Link href="/" className="flex items-center gap-3 group">
-              <span className="material-symbols-outlined text-primary-fixed text-xl">radar</span>
+              <AppIcon name="radar" className="text-primary-fixed text-xl" />
               <span className="font-mono text-sm font-bold text-primary-fixed uppercase group-hover:text-white transition-colors">XyaVora-Scan</span>
               <span className="font-mono text-[10px] text-primary-fixed/30">[V.2.4.0-STABLE]</span>
             </Link>

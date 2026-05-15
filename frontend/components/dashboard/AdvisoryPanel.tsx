@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import type { Finding, FindingStatus } from "@/types";
 import { FindingDrawer } from "./FindingDrawer";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 interface Props {
   findings: Finding[];
@@ -92,9 +93,10 @@ export function AdvisoryPanel({ findings }: Props) {
                 <span className={`font-mono text-sm font-bold ${group.labelClass}`}>
                   {group.prefix} {group.label} ({items.length})
                 </span>
-                <span className="material-symbols-outlined text-primary-fixed/40 text-sm">
-                  {isExpanded ? "expand_more" : "chevron_right"}
-                </span>
+                <AppIcon
+                  name={isExpanded ? "expand_more" : "chevron_right"}
+                  className="text-primary-fixed/40 text-sm"
+                />
               </button>
 
               {/* Group items */}

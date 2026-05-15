@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 const NAV_ITEMS = [
   { label: "New Scan",  icon: "radar",                   href: "/scan"      },
@@ -53,13 +54,12 @@ export function Sidebar() {
                   : "text-primary-fixed/60 hover:text-primary-fixed hover:bg-primary-fixed/10 border border-transparent hover:border-primary-fixed/30"
               }`}
             >
-              <span
-                className={`material-symbols-outlined mr-3 text-[20px] ${
+              <AppIcon
+                name={item.icon}
+                className={`mr-3 text-[20px] ${
                   active ? "text-primary-fixed" : "text-primary-fixed/60"
                 }`}
-              >
-                {item.icon}
-              </span>
+              />
               <span className="font-mono text-[11px] tracking-widest uppercase">
                 {item.label}
               </span>
@@ -76,9 +76,7 @@ export function Sidebar() {
             href={item.href}
             className="flex items-center px-4 py-2 text-primary-fixed/50 hover:text-primary-fixed hover:bg-primary-fixed/10 border border-transparent hover:border-primary-fixed/30 transition-all duration-200"
           >
-            <span className="material-symbols-outlined mr-3 text-[18px]">
-              {item.icon}
-            </span>
+            <AppIcon name={item.icon} className="mr-3 text-[18px]" />
             <span className="font-mono text-[11px] tracking-widest uppercase">
               {item.label}
             </span>
