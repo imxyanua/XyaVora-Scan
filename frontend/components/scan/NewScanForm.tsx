@@ -1,14 +1,13 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { startScan } from "@/lib/startScan";
 
 const QUICK_TARGETS = ["google.com", "github.com", "cloudflare.com", "mozilla.org"];
 
 export function NewScanForm() {
   const [target, setTarget] = useState("");
   const [error, setError] = useState("");
-  const router = useRouter();
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -21,13 +20,13 @@ export function NewScanForm() {
       setError("ERR: INVALID_TARGET — expected format: example.com");
       return;
     }
-    router.push(`/scanning?target=${encodeURIComponent(domain)}`);
+    startScan(domain);
   }
 
   function handleQuick(domain: string) {
     setTarget(domain);
     setError("");
-    router.push(`/scanning?target=${encodeURIComponent(domain)}`);
+    startScan(domain);
   }
 
   return (

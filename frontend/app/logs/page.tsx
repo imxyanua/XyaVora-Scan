@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { AppShell } from "@/components/layout/AppShell";
-import type { LogEntry, RiskGrade, RiskStatus } from "@/types";
+import type { LogEntry, RiskGrade } from "@/types";
 
 const GRADE_CLASS: Record<RiskGrade, string> = {
   A: "text-status-pass", B: "text-primary-fixed",
@@ -42,7 +42,12 @@ export default function LogsPage() {
     }
   }, []);
 
-  useEffect(() => { fetch_logs(); }, [fetch_logs]);
+  useEffect(() => {
+    const id = setTimeout(() => {
+      void fetch_logs();
+    }, 0);
+    return () => clearTimeout(id);
+  }, [fetch_logs]);
 
   useEffect(() => {
     if (!autoRefresh) return;

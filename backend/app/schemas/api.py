@@ -6,6 +6,7 @@ from app.schemas.report import ScanReport
 
 class AnalyzeRequest(BaseModel):
     target: str
+    force_refresh: bool = False
 
     @field_validator("target")
     @classmethod

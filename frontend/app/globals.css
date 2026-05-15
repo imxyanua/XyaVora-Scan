@@ -67,8 +67,8 @@
   --color-status-missing:          #8294A4;
 
   /* ── Typography ── */
-  --font-sans: var(--font-geist);
-  --font-mono: var(--font-jetbrains);
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-mono: "Consolas", "Cascadia Mono", "Courier New", monospace;
 
   /* ── Border Radius — Brutalist: zero everywhere ── */
   --radius:    0px;
@@ -130,7 +130,7 @@ body {
   border: 1px solid currentColor;
   border-radius: 0;
   background: transparent;
-  font-family: var(--font-jetbrains), monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 700;
   line-height: 1;
@@ -167,7 +167,7 @@ body {
   color: #070B0F;
   border: 1px solid #B7FF3C;
   border-radius: 0;
-  font-family: var(--font-jetbrains), monospace;
+  font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -188,7 +188,7 @@ body {
   color: #B7FF3C;
   border: 1px solid rgba(183, 255, 60, 0.3);
   border-radius: 0;
-  font-family: var(--font-jetbrains), monospace;
+  font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -209,7 +209,7 @@ body {
   color: #B7FF3C;
   margin-right: 8px;
   font-weight: bold;
-  font-family: var(--font-jetbrains), monospace;
+  font-family: var(--font-mono);
 }
 
 /* ─────────────────────────────────────────────

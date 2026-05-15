@@ -10,6 +10,7 @@ import { WhoisCard }            from "@/components/dashboard/WhoisCard";
 import { CookiesCard }          from "@/components/dashboard/CookiesCard";
 import { SecurityTxtCard }      from "@/components/dashboard/SecurityTxtCard";
 import { ScreenshotCard }       from "@/components/dashboard/ScreenshotCard";
+import { ScanLink }             from "@/components/scan/ScanLink";
 import { analyzeDomain, getReportById } from "@/lib/api";
 
 type Props = {
@@ -63,12 +64,12 @@ export default async function ReportPage({ params, searchParams }: Props) {
           <div className="flex items-center gap-2 font-mono text-[10px] text-primary-fixed/40">
             <span className="material-symbols-outlined text-[14px]">history</span>
             <span>HISTORICAL_SCAN · {new Date(report.scanTime).toLocaleString("en-GB")}</span>
-            <a
-              href={`/scanning?target=${encodeURIComponent(domain)}`}
+            <ScanLink
+              target={domain}
               className="ml-auto btn-ghost px-3 py-1 text-[10px]"
             >
               RESCAN &gt;
-            </a>
+            </ScanLink>
           </div>
         )}
 

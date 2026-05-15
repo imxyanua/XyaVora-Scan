@@ -4,12 +4,18 @@ import type { ApiResponse, HistoryResponse } from "@/types";
 // Client components must use a Next.js Route Handler to proxy instead.
 const API_URL = process.env.API_URL ?? "http://localhost:8000";
 
-export async function analyzeDomain(target: string): Promise<ApiResponse> {
+export async function analyzeDomain(
+  target: string,
+  options?: { forceRefresh?: boolean },
+): Promise<ApiResponse> {
   try {
     const res = await fetch(`${API_URL}/api/analyze`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ target }),
+      body: JSON.stringify({
+        target,
+        force_refresh: options?.forceRefresh ?? false,
+      }),
       cache: "no-store",
     });
 

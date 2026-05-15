@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AppShell }   from "@/components/layout/AppShell";
+import { ScanLink }   from "@/components/scan/ScanLink";
 import { getHistory } from "@/lib/api";
 import type { RiskGrade, RiskStatus } from "@/types";
 
@@ -119,12 +120,12 @@ export default async function DomainsPage() {
                   >
                     VIEW &gt;
                   </Link>
-                  <Link
-                    href={`/scanning?target=${encodeURIComponent(d.domain)}`}
+                  <ScanLink
+                    target={d.domain}
                     className="font-mono text-[10px] text-primary-fixed/40 hover:text-primary-fixed transition-colors whitespace-nowrap"
                   >
                     RESCAN
-                  </Link>
+                  </ScanLink>
                 </div>
               </div>
             ))}

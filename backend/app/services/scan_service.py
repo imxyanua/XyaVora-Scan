@@ -57,13 +57,18 @@ async def _run(coro, timeout: float | None = None) -> AnalyzerResult:
         return AnalyzerResult(key="unknown", status="error", errors=[str(exc)])
 
 
-async def run_scan(target: str, normalized_url: str, hostname: str) -> ScanReport:
+async def run_scan(
+    target: str,
+    normalized_url: str,
+    hostname: str,
+    force_refresh: bool = False,
+) -> ScanReport:
     """
     Runs all analyzers concurrently then assembles a ScanReport.
     Results are cached for _CACHE_TTL seconds to avoid re-scanning the same
     host (e.g. when the scanning page and the report page both call this).
     """
-    cached = _cache_get(hostname)
+    cached = None if force_refresh else _cache_get(hostname)
     if cached is not None:
         return cached
     async def _pipeline() -> ScanReport:

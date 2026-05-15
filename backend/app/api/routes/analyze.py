@@ -24,8 +24,13 @@ async def analyze(body: AnalyzeRequest):
 
     t0 = time.monotonic()
     try:
-        cached = is_cached(hostname)
-        report = await run_scan(body.target, normalized_url, hostname)
+        cached = False if body.force_refresh else is_cached(hostname)
+        report = await run_scan(
+            body.target,
+            normalized_url,
+            hostname,
+            force_refresh=body.force_refresh,
+        )
     except Exception as exc:
         duration_ms = int((time.monotonic() - t0) * 1000)
         log_service.record(

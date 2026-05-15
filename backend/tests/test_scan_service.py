@@ -1,7 +1,17 @@
 import pytest
+from app.services import scan_service
 from app.services.scan_service import run_scan
 from app.analyzers.score_analyzer import compute_score
-from app.schemas.report import Finding
+from app.schemas.analyzer import AnalyzerResult
+from app.schemas.report import (
+    DnsResult,
+    Finding,
+    HeadersResult,
+    ScreenshotResult,
+    SecurityTxtResult,
+    SslResult,
+    WhoisResult,
+)
 
 
 # ── score_analyzer ────────────────────────────────────────────────
@@ -65,6 +75,66 @@ async def test_run_scan_returns_report():
     assert isinstance(report.score, int)
     assert report.grade in ("A", "B", "C", "D", "F")
     assert report.status in ("Low Risk", "Medium Risk", "High Risk")
+
+
+@pytest.mark.asyncio
+async def test_run_scan_force_refresh_bypasses_cache(monkeypatch):
+    scan_service._SCAN_CACHE.clear()
+    calls = {"dns": 0}
+
+    async def fake_dns(hostname: str):
+        calls["dns"] += 1
+        return AnalyzerResult(key="dns", status="success", data=DnsResult())
+
+    async def fake_ssl(hostname: str):
+        return AnalyzerResult(key="ssl", status="success", data=SslResult())
+
+    async def fake_headers(url: str):
+        return AnalyzerResult(key="headers", status="success", data=HeadersResult())
+
+    async def fake_whois(hostname: str):
+        return AnalyzerResult(key="whois", status="success", data=WhoisResult())
+
+    async def fake_tech_stack(url: str):
+        return AnalyzerResult(key="techStack", status="success", data=[])
+
+    async def fake_cookies(url: str):
+        return AnalyzerResult(key="cookies", status="success", data=[])
+
+    async def fake_security_txt(url: str):
+        return AnalyzerResult(key="securityTxt", status="success", data=SecurityTxtResult())
+
+    async def fake_screenshot(url: str, enabled: bool):
+        return AnalyzerResult(key="screenshot", status="success", data=ScreenshotResult())
+
+    async def fake_score(findings):
+        return AnalyzerResult(
+            key="score",
+            status="success",
+            data={"score": 100, "grade": "A", "status": "Low Risk", "summary": "ok"},
+        )
+
+    monkeypatch.setattr(scan_service, "analyze_dns", fake_dns)
+    monkeypatch.setattr(scan_service, "analyze_ssl", fake_ssl)
+    monkeypatch.setattr(scan_service, "analyze_headers", fake_headers)
+    monkeypatch.setattr(scan_service, "analyze_whois", fake_whois)
+    monkeypatch.setattr(scan_service, "analyze_tech_stack", fake_tech_stack)
+    monkeypatch.setattr(scan_service, "analyze_cookies", fake_cookies)
+    monkeypatch.setattr(scan_service, "analyze_security_txt", fake_security_txt)
+    monkeypatch.setattr(scan_service, "analyze_screenshot", fake_screenshot)
+    monkeypatch.setattr(scan_service, "analyze_score", fake_score)
+
+    await scan_service.run_scan("example.com", "https://example.com", "example.com")
+    await scan_service.run_scan("example.com", "https://example.com", "example.com")
+    assert calls["dns"] == 1
+
+    await scan_service.run_scan(
+        "example.com",
+        "https://example.com",
+        "example.com",
+        force_refresh=True,
+    )
+    assert calls["dns"] == 2
 
 
 @pytest.mark.asyncio

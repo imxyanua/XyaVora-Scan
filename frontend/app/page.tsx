@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ScanInput } from "@/components/landing/ScanInput";
+import { ScanLink } from "@/components/scan/ScanLink";
 
 const DNS_PREVIEW = [
   { n: "01", type: "A",    val: "142.250.190.78"                     },
@@ -286,13 +287,13 @@ export default function LandingPage() {
               </p>
               <div className="flex flex-wrap gap-3 justify-center">
                 {["github.com", "cloudflare.com", "mozilla.org"].map((d) => (
-                  <Link
+                  <ScanLink
                     key={d}
-                    href={`/scanning?target=${encodeURIComponent(d)}`}
+                    target={d}
                     className="btn-ghost px-5 py-2.5 text-xs"
                   >
                     Scan {d} &gt;
-                  </Link>
+                  </ScanLink>
                 ))}
               </div>
               <div className="pt-4">

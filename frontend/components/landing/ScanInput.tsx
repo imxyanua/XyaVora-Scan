@@ -1,17 +1,16 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { startScan } from "@/lib/startScan";
 
 export function ScanInput() {
   const [target, setTarget] = useState("");
-  const router = useRouter();
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     const domain = target.trim();
     if (!domain) return;
-    router.push(`/scanning?target=${encodeURIComponent(domain)}`);
+    startScan(domain);
   }
 
   return (

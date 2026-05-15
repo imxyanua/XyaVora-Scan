@@ -1,15 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { startScan } from "@/lib/startScan";
 
 interface TopBarProps {
   domain?: string;
 }
 
 export function TopBar({ domain }: TopBarProps) {
-  const router = useRouter();
-
   return (
     <header className="bg-[#070B0F]/90 backdrop-blur-sm border-b border-primary-fixed/20 flex justify-between items-center w-full px-8 h-16 z-40 sticky top-0 shrink-0">
       {/* Left */}
@@ -41,9 +39,7 @@ export function TopBar({ domain }: TopBarProps) {
           <>
             <button
               type="button"
-              onClick={() =>
-                router.push(`/scanning?target=${encodeURIComponent(domain)}`)
-              }
+              onClick={() => startScan(domain)}
               className="btn-ghost px-3 py-1.5 text-xs flex items-center gap-1.5"
             >
               <span className="material-symbols-outlined text-[16px]">refresh</span>

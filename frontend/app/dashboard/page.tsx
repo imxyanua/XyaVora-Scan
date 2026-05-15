@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AppShell }   from "@/components/layout/AppShell";
+import { ScanLink }   from "@/components/scan/ScanLink";
 import { getHistory } from "@/lib/api";
 import type { HistoryEntry, RiskGrade, RiskStatus } from "@/types";
 
@@ -169,13 +170,13 @@ export default async function DashboardPage() {
           </h2>
           <div className="flex flex-wrap gap-2">
             {["google.com", "github.com", "cloudflare.com", "mozilla.org", "fastapi.tiangolo.com"].map((d) => (
-              <Link
+              <ScanLink
                 key={d}
-                href={`/scanning?target=${encodeURIComponent(d)}`}
+                target={d}
                 className="btn-ghost px-3 py-1.5 text-[11px]"
               >
                 {d}
-              </Link>
+              </ScanLink>
             ))}
           </div>
         </div>

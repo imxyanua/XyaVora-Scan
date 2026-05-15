@@ -1,8 +1,29 @@
+from urllib.parse import urlparse
+
 import httpx
+
 from app.core.config import settings
+from app.utils.private_ip_guard import assert_public_hostname
 
 # Sent with every request so target servers can identify the scanner.
 _USER_AGENT = "XyaVora-Scan/0.1 (passive-security-scanner; not a browser)"
+
+
+class UnsafeTargetError(httpx.RequestError):
+    """Raised when a URL is not safe to fetch."""
+
+
+def validate_public_http_url(url: str) -> str:
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https"):
+        raise UnsafeTargetError(f"Unsupported URL scheme: {parsed.scheme!r}")
+    if not parsed.hostname:
+        raise UnsafeTargetError("URL must include a hostname.")
+    try:
+        assert_public_hostname(parsed.hostname)
+    except ValueError as exc:
+        raise UnsafeTargetError(str(exc)) from exc
+    return url
 
 
 async def fetch_headers_only(url: str) -> httpx.Response:

@@ -8,12 +8,12 @@ class Settings(BaseSettings):
     ENV: str = "development"
     CORS_ORIGIN: str = "http://localhost:3000"
 
-    SCAN_TIMEOUT_SECONDS: int = 60
+    SCAN_TIMEOUT_SECONDS: int = 90
     ANALYZER_TIMEOUT_SECONDS: int = 8
-    SCREENSHOT_TIMEOUT_SECONDS: int = 25
+    SCREENSHOT_TIMEOUT_SECONDS: int = 45
     FETCH_TIMEOUT_SECONDS: int = 8
     MAX_HTML_BYTES: int = 1_000_000
-    ENABLE_SCREENSHOT: bool = False
+    ENABLE_SCREENSHOT: bool = True
 
 
 settings = Settings()

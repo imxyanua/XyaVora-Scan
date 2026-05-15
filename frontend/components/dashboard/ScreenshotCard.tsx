@@ -18,6 +18,8 @@ export function ScreenshotCard({ screenshot }: Props) {
     : "—";
 
   const hasMobile  = Boolean(screenshot.mobileBase64);
+  const isDisabled = screenshot.error?.toLowerCase().includes("disabled") ?? false;
+  const isTimedOut = screenshot.error?.toLowerCase().includes("timed out") ?? false;
   const imgSrc     = view === "mobile" && hasMobile
     ? `data:image/png;base64,${screenshot.mobileBase64}`
     : screenshot.base64
@@ -102,16 +104,26 @@ export function ScreenshotCard({ screenshot }: Props) {
                 hide_image
               </span>
               <p className="font-mono text-[11px] text-primary-fixed/30 text-center">
-                [CAPTURE_DISABLED]
+                {isDisabled ? "[CAPTURE_DISABLED]" : "[CAPTURE_ERROR]"}
               </p>
               {screenshot.error && (
                 <p className="font-mono text-[10px] text-primary-fixed/20 text-center max-w-[220px]">
                   {screenshot.error}
                 </p>
               )}
-              <p className="font-mono text-[10px] text-primary-fixed/20 text-center">
-                Set ENABLE_SCREENSHOT=true to activate
-              </p>
+              {isDisabled ? (
+                <p className="font-mono text-[10px] text-primary-fixed/20 text-center">
+                  Set ENABLE_SCREENSHOT=true to activate
+                </p>
+              ) : isTimedOut ? (
+                <p className="font-mono text-[10px] text-primary-fixed/20 text-center">
+                  Increase SCREENSHOT_TIMEOUT_SECONDS and rescan.
+                </p>
+              ) : (
+                <p className="font-mono text-[10px] text-primary-fixed/20 text-center">
+                  Verify Playwright is installed in the backend virtualenv.
+                </p>
+              )}
             </div>
           )}
         </div>
