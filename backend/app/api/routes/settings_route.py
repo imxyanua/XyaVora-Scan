@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from app.services import settings_service
 
@@ -20,5 +21,10 @@ async def get_settings():
 
 @router.patch("/settings")
 async def patch_settings(body: SettingsPatch):
+    if settings_service.get("ENV") == "production":
+        return JSONResponse(
+            status_code=403,
+            content={"success": False, "error": "Runtime settings are disabled in production."},
+        )
     updates = {k: v for k, v in body.model_dump().items() if v is not None}
     return {"success": True, "data": settings_service.patch(updates)}

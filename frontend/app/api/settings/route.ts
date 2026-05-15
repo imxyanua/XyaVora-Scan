@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const BACKEND_URL = process.env.API_URL ?? "http://localhost:8000";
+import { getBackendUrl } from "@/lib/backendUrl";
 
 export async function GET() {
   try {
-    const res  = await fetch(`${BACKEND_URL}/api/settings`, { cache: "no-store" });
+    const backendUrl = getBackendUrl();
+    const res  = await fetch(`${backendUrl}/api/settings`, { cache: "no-store" });
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
   } catch (err) {
@@ -15,8 +15,9 @@ export async function GET() {
 
 export async function PATCH(req: NextRequest) {
   try {
+    const backendUrl = getBackendUrl();
     const body = await req.json();
-    const res  = await fetch(`${BACKEND_URL}/api/settings`, {
+    const res  = await fetch(`${backendUrl}/api/settings`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

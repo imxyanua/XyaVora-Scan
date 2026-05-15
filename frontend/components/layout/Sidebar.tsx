@@ -4,21 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const NAV_ITEMS = [
-  { label: "Dashboard", icon: "dashboard",                href: "/dashboard" },
   { label: "New Scan",  icon: "radar",                   href: "/scan"      },
-  { label: "History",   icon: "description",             href: "/history"   },
-  { label: "Domains",   icon: "dns",                     href: "/domains"   },
-  { label: "Logs",      icon: "terminal",                href: "/logs"      },
 ] as const;
 
 const BOTTOM_ITEMS = [
-  { label: "Settings", icon: "settings_input_component", href: "/settings" },
   { label: "Support",  icon: "help",                     href: "/support"  },
 ] as const;
 
 function getActive(href: string, pathname: string): boolean {
   if (href === "#") return false;
-  if (href === "/dashboard") return pathname === "/dashboard";
   return pathname.startsWith(href);
 }
 

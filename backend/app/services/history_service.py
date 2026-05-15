@@ -25,6 +25,15 @@ def _save(entries: list[dict]) -> None:
     )
 
 
+def _report_without_screenshot_images(report: ScanReport) -> dict:
+    data = json.loads(report.model_dump_json())
+    screenshot = data.get("screenshot")
+    if isinstance(screenshot, dict):
+        screenshot["base64"] = None
+        screenshot["mobileBase64"] = None
+    return data
+
+
 def append(report: ScanReport) -> None:
     entries = _load()
 
@@ -43,7 +52,7 @@ def append(report: ScanReport) -> None:
         "grade":    report.grade,
         "status":   report.status,
         "issues":   sum(1 for f in report.findings if f.status in ("fail", "warning")),
-        "report":   json.loads(report.model_dump_json()),
+        "report":   _report_without_screenshot_images(report),
     }
     entries.insert(0, entry)
     _save(entries[:_MAX_ENTRIES])

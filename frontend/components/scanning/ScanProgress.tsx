@@ -71,7 +71,7 @@ function ScanSession({ target, scanId }: ScanSessionProps) {
     const scanPromise = fetch("/api/analyze", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ target, force_refresh: true }),
+      body: JSON.stringify({ target, force_refresh: true, save_history: false }),
     }).then((r) => r.json());
 
     // Visual animation — runs through each analyzer row sequentially

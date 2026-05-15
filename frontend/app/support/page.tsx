@@ -19,7 +19,7 @@ const FAQ = [
   },
   {
     q: "Why does the screenshot show blank or fail?",
-    a: "Screenshot capture requires ENABLE_SCREENSHOT=true in the backend .env and Playwright browsers installed (playwright install chromium). By default it is disabled to keep the backend lightweight.",
+    a: "Screenshot capture requires ENABLE_SCREENSHOT=true in the backend environment and Playwright browsers installed in the deploy image.",
   },
   {
     q: "How is the risk score calculated?",
@@ -31,7 +31,7 @@ const FAQ = [
   },
   {
     q: "How long are results cached?",
-    a: "The backend caches scan results in memory for 120 seconds. Scanning the same domain twice within that window returns the cached result instantly.",
+    a: "The backend keeps a short in-memory cache only to deduplicate duplicate requests during one scan flow. New scans explicitly request fresh results.",
   },
   {
     q: "What is the rate limit?",
@@ -57,7 +57,6 @@ export default function SupportPage() {
           {[
             { label: "GitHub Repository", icon: "code",    href: "https://github.com" },
             { label: "New Scan",          icon: "radar",   href: "/scan"              },
-            { label: "Settings",          icon: "settings",href: "/settings"          },
           ].map((l) => (
             <Link
               key={l.label}

@@ -144,6 +144,7 @@ async def test_analyze_ssl_cert_verification_failed():
 # ── Integration: real TLS ─────────────────────────────────────────
 
 @pytest.mark.asyncio
+@pytest.mark.integration
 async def test_analyze_ssl_github_real():
     result = await analyze_ssl("github.com")
     assert result.status == "success"

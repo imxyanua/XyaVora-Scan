@@ -65,31 +65,40 @@ Dự án xây dựng như một **portfolio cá nhân về cybersecurity** — g
 
 ---
 
-### Cài đặt & chạy
+### Local Development
 
-**1. Backend**
+**1. Backend API**
 
 ```bash
 cd backend
 python -m venv .venv
-.venv\Scripts\activate        # Windows
-# source .venv/bin/activate   # macOS / Linux
+.\.venv\Scripts\activate
 pip install -r requirements.txt
 python -m playwright install chromium
-copy .env.example .env        # Windows; bat screenshot mac dinh
+copy .env.example .env
 python -m uvicorn app.main:app --reload --port 8000
 ```
 
-**2. Frontend**
+**2. Frontend Web**
 
 ```bash
 cd frontend
 npm install
-cp .env.example .env.local    # đặt API_URL=http://localhost:8000
+copy .env.example .env.local
 npm run dev
 ```
 
-Mở [http://localhost:3000](http://localhost:3000)
+Mở frontend tại `http://localhost:3000`.
+
+Quick scan không cần đăng nhập. Guest scan trả report ngay và mặc định không lưu history.
+
+Khi deploy, thiết lập các biến môi trường này trên nền tảng hosting:
+
+```bash
+ENV=production
+CORS_ORIGIN=https://your-frontend-domain.example
+API_URL=https://your-backend-domain.example
+```
 
 ---
 

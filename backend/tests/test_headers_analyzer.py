@@ -143,6 +143,7 @@ async def test_analyze_headers_no_redirect():
 # ── Integration: real network ─────────────────────────────────────
 
 @pytest.mark.asyncio
+@pytest.mark.integration
 async def test_analyze_headers_cloudflare_real():
     # Cloudflare reliably returns HSTS and other security headers
     result = await analyze_headers("https://cloudflare.com")

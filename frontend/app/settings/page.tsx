@@ -55,6 +55,7 @@ export default function SettingsPage() {
     "ENABLE_SCREENSHOT", "SCAN_TIMEOUT_SECONDS", "ANALYZER_TIMEOUT_SECONDS",
     "SCREENSHOT_TIMEOUT_SECONDS", "FETCH_TIMEOUT_SECONDS",
   ];
+  const runtimeLocked = settings?.ENV === "production";
 
   return (
     <AppShell>
@@ -101,12 +102,12 @@ export default function SettingsPage() {
                           <button
                             type="button"
                             onClick={() => toggleBool(key)}
-                            disabled={isSaving}
+                            disabled={isSaving || runtimeLocked}
                             className={`relative w-12 h-6 border transition-colors ${
                               val
                                 ? "bg-primary-fixed/20 border-primary-fixed"
                                 : "bg-transparent border-primary-fixed/30"
-                            } ${isSaving ? "opacity-50" : ""}`}
+                            } ${isSaving || runtimeLocked ? "opacity-50 cursor-not-allowed" : ""}`}
                           >
                             <span
                               className={`absolute top-0.5 h-5 w-5 bg-primary-fixed transition-all duration-200 ${

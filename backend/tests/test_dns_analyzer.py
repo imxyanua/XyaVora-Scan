@@ -67,6 +67,7 @@ def test_build_findings_all_good():
 # ── Integration tests — real DNS (requires network) ───────────────
 
 @pytest.mark.asyncio
+@pytest.mark.integration
 async def test_analyze_dns_google():
     result = await analyze_dns("google.com")
     assert result.status == "success"

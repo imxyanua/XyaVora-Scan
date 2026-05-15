@@ -121,7 +121,7 @@ export function ScreenshotCard({ screenshot }: Props) {
                 </p>
               ) : (
                 <p className="font-mono text-[10px] text-primary-fixed/20 text-center">
-                  Verify Playwright is installed in the backend virtualenv.
+                  Verify Playwright is installed in the backend runtime.
                 </p>
               )}
             </div>

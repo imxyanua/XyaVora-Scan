@@ -65,31 +65,40 @@ Built as a **personal cybersecurity portfolio project** — dark-mode, brutalist
 
 ---
 
-### Getting Started
+### Local Development
 
-**1. Backend**
+**1. Backend API**
 
 ```bash
 cd backend
 python -m venv .venv
-.venv\Scripts\activate        # Windows
-# source .venv/bin/activate   # macOS / Linux
+.\.venv\Scripts\activate
 pip install -r requirements.txt
 python -m playwright install chromium
-copy .env.example .env        # Windows; enables screenshots by default
+copy .env.example .env
 python -m uvicorn app.main:app --reload --port 8000
 ```
 
-**2. Frontend**
+**2. Frontend Web**
 
 ```bash
 cd frontend
 npm install
-cp .env.example .env.local    # sets API_URL=http://localhost:8000
+copy .env.example .env.local
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
+Open the frontend at `http://localhost:3000`.
+
+Quick scans do not require login. Guest scans return the report immediately and do not save history by default.
+
+For deployment, set these environment variables on the hosting provider:
+
+```bash
+ENV=production
+CORS_ORIGIN=https://your-frontend-domain.example
+API_URL=https://your-backend-domain.example
+```
 
 ---
 

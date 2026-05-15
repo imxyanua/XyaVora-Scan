@@ -32,9 +32,9 @@ _BLOCKED_HOST_PARTS = (
 
 def _ensure_windows_subprocess_loop() -> None:
     """
-    Playwright starts a browser subprocess. On Windows, uvicorn --reload can
-    install a selector event-loop policy, whose loops do not support subprocess
-    transports. Force Proactor for new loops before Playwright creates one.
+    Playwright starts a browser subprocess. Some Windows event-loop policies
+    do not support subprocess transports, so force Proactor before Playwright
+    creates a loop.
     """
     if sys.platform != "win32":
         return
@@ -135,7 +135,7 @@ def _capture_one(browser, url: str, viewport: dict) -> tuple[str | None, str | N
 def _capture_sync(url: str) -> ScreenshotResult:
     """
     Uses Playwright's synchronous API (greenlet-based) so it works inside
-    asyncio.to_thread without conflicting with uvicorn's event loop on Windows.
+    asyncio.to_thread without conflicting with the active event loop on Windows.
     Captures desktop (1280x720) and mobile (390x844) in one browser session.
     """
     from playwright.sync_api import sync_playwright
@@ -164,7 +164,7 @@ def _capture_sync(url: str) -> ScreenshotResult:
             url=url,
             error=(
                 "Screenshot capture is unavailable in this Windows event loop. "
-                "Run through the backend virtualenv and restart uvicorn."
+                "Install Playwright browsers in the backend runtime and restart the service."
             ),
         )
     except Exception as exc:

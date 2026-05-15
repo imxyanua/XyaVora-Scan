@@ -136,6 +136,7 @@ async def test_analyze_whois_exception():
 # ── Integration: real whois ───────────────────────────────────────
 
 @pytest.mark.asyncio
+@pytest.mark.integration
 async def test_analyze_whois_github_real():
     result = await analyze_whois("github.com")
     assert result.status == "success"

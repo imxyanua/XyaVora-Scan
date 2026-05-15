@@ -4,15 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const NAV_ITEMS = [
-  { label: "Home",     icon: "dashboard",   href: "/dashboard" },
+  { label: "Home",     icon: "home",        href: "/"          },
   { label: "Scan",     icon: "radar",       href: "/scan"      },
-  { label: "History",  icon: "description", href: "/history"   },
-  { label: "Domains",  icon: "dns",         href: "/domains"   },
-  { label: "Settings", icon: "settings",    href: "/settings"  },
+  { label: "Support",  icon: "help",        href: "/support"   },
 ] as const;
 
 function isActive(href: string, pathname: string): boolean {
-  if (href === "/dashboard") return pathname === "/dashboard";
+  if (href === "/") return pathname === "/";
   return pathname.startsWith(href);
 }
 

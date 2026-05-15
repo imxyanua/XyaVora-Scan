@@ -83,10 +83,10 @@ export default function LandingPage() {
         </nav>
 
         <Link
-          href="/dashboard"
+          href="/scan"
           className="font-mono text-xs tracking-widest uppercase border border-outline-variant text-primary-fixed px-4 py-2 hover:bg-primary-fixed/10 transition-colors duration-200"
         >
-          LAUNCH APP
+          START SCAN
         </Link>
       </header>
 

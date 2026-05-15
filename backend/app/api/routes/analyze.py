@@ -49,5 +49,6 @@ async def analyze(body: AnalyzeRequest):
         score=report.score, grade=report.grade, status=report.status,
         cached=cached,
     )
-    history_service.append(report)
+    if body.save_history:
+        history_service.append(report)
     return ApiResponse(success=True, data=report)

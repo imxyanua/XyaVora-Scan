@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const BACKEND_URL = process.env.API_URL ?? "http://localhost:8000";
+import { getBackendUrl } from "@/lib/backendUrl";
 
 export async function POST(req: NextRequest) {
   try {
+    const backendUrl = getBackendUrl();
     const body = await req.json();
-    const res = await fetch(`${BACKEND_URL}/api/analyze`, {
+    const res = await fetch(`${backendUrl}/api/analyze`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
