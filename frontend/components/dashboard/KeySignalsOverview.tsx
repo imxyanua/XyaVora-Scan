@@ -70,13 +70,13 @@ export function KeySignalsOverview({ headers, dns, ssl }: Props) {
   ];
 
   return (
-    <div className="card-panel p-5 flex flex-col h-full">
+    <div className="bg-[#0D0F10] border border-primary-fixed/15 shadow-[3px_3px_0_#050505] p-5 flex flex-col h-full">
       {/* Header */}
       <div className="flex justify-between items-start border-b border-primary-fixed/20 pb-2 mb-4 shrink-0">
-        <h2 className="font-mono text-[11px] tracking-widest text-primary-fixed/60 uppercase">
-          SYS.KEY_SIGNALS_OVERVIEW
+        <h2 className="font-mono text-[11px] tracking-widest text-white uppercase">
+          Key Signals
         </h2>
-        <span className="font-mono text-[11px] text-primary-fixed/40">[MATRIX_VIEW]</span>
+        <span className="font-mono text-[11px] text-primary-fixed">[MATRIX_VIEW]</span>
       </div>
 
       {/* Signal grid */}
@@ -86,9 +86,9 @@ export function KeySignalsOverview({ headers, dns, ssl }: Props) {
           return (
             <div
               key={sig.label}
-              className="border border-primary-fixed/20 p-3 bg-[#070B0F] flex flex-col justify-center items-center text-center glow-hover"
+              className="border border-primary-fixed/15 p-3 bg-[#151918] flex flex-col justify-center items-center text-center hover:border-primary-fixed/45 hover:bg-primary-fixed/[0.04] transition-colors"
             >
-              <span className="font-mono text-[11px] text-primary-fixed/80 mb-2 leading-tight">
+              <span className="font-mono text-[11px] text-[#d7e8ff] mb-2 leading-tight">
                 {sig.label}
               </span>
               <span className={`status-badge ${badge.cls} text-[10px]`}>

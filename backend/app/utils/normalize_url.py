@@ -1,5 +1,5 @@
 import re
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 
 def normalize_url(target: str) -> tuple[str, str]:
@@ -8,7 +8,7 @@ def normalize_url(target: str) -> tuple[str, str]:
     Always produces https:// — we never scan plain HTTP targets because
     the SSL analyzer needs to verify HTTPS availability independently.
     """
-    target = target.strip()
+    target = unquote(target.strip())
 
     if re.match(r"^https?://", target, re.IGNORECASE):
         parsed = urlparse(target)

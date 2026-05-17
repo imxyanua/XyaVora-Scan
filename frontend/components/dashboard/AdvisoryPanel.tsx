@@ -39,7 +39,7 @@ const GROUPS: Group[] = [
     key:        "info",
     label:      "INFO_LOG",
     prefix:     "[i]",
-    labelClass: "text-primary-fixed/50",
+    labelClass: "text-primary-fixed/65",
     borderCls:  "border-primary-fixed/30",
     statuses:   ["info", "pass"],
   },
@@ -63,11 +63,11 @@ export function AdvisoryPanel({ findings }: Props) {
   return (
     <>
     <FindingDrawer finding={activeFinding} onClose={closeFinding} />
-    <div className="card-panel flex flex-col h-full">
+    <div className="bg-[#0D0F10] border border-primary-fixed/15 shadow-[3px_3px_0_#050505] flex flex-col h-full">
       {/* Header */}
-      <div className="p-3 border-b border-primary-fixed/20 flex justify-between items-center bg-[#070B0F] shrink-0">
-        <h2 className="font-mono text-[11px] tracking-widest text-primary-fixed/60 uppercase">
-          SYS.ADVISORY_PANEL
+      <div className="p-3 border-b border-primary-fixed/20 flex justify-between items-center bg-[#151918] shrink-0">
+        <h2 className="font-mono text-[11px] tracking-widest text-white uppercase">
+          Findings
         </h2>
         <span className={`status-badge ${totalIssues > 0 ? "status-warn" : "status-pass"} text-[10px]`}>
           [QTY:{totalIssues}]
@@ -83,25 +83,25 @@ export function AdvisoryPanel({ findings }: Props) {
           const isExpanded = expanded[group.key] ?? false;
 
           return (
-            <div key={group.key} className="border border-primary-fixed/20 bg-[#070B0F]">
+            <div key={group.key} className="border border-primary-fixed/15 bg-[#101415]">
               {/* Group header */}
               <button
                 type="button"
                 onClick={() => toggle(group.key)}
-                className="w-full flex justify-between items-center p-2 px-3 hover:bg-primary-fixed/[0.04] transition-colors"
+                  className="w-full flex justify-between items-center p-2 px-3 hover:bg-primary-fixed/[0.05] transition-colors"
               >
                 <span className={`font-mono text-sm font-bold ${group.labelClass}`}>
                   {group.prefix} {group.label} ({items.length})
                 </span>
                 <AppIcon
                   name={isExpanded ? "expand_more" : "chevron_right"}
-                  className="text-primary-fixed/40 text-sm"
+                  className="text-primary-fixed/60 text-sm"
                 />
               </button>
 
               {/* Group items */}
               {isExpanded && (
-                <div className="border-t border-primary-fixed/10 bg-primary-fixed/[0.02] space-y-0">
+                <div className="border-t border-primary-fixed/10 bg-[#0D0F10] space-y-0">
                   {items.map((finding, i) => (
                     <div
                       key={finding.id}
@@ -110,10 +110,10 @@ export function AdvisoryPanel({ findings }: Props) {
                       }`}
                     >
                       <div className="min-w-0 mr-2">
-                        <span className="font-mono text-sm text-primary-fixed block truncate">
+                        <span className="font-mono text-sm text-white block truncate">
                           {finding.title}
                         </span>
-                        <span className="font-mono text-[11px] text-primary-fixed/50 block mt-0.5">
+                        <span className="font-mono text-[11px] text-[#d7e8ff]/55 block mt-0.5">
                           &gt; {finding.category}
                         </span>
                       </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { startScan } from "@/lib/startScan";
+import { normalizeScanTarget, startScan } from "@/lib/startScan";
 import { AppIcon } from "@/components/ui/AppIcon";
 
 const QUICK_TARGETS = ["google.com", "github.com", "cloudflare.com", "mozilla.org"];
@@ -12,7 +12,7 @@ export function NewScanForm() {
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    const domain = target.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+    const domain = normalizeScanTarget(target);
     if (!domain) {
       setError("ERR: TARGET_EMPTY — enter a domain to scan");
       return;

@@ -40,6 +40,9 @@ def test_scan_report_camel_case_json():
     assert "scanTime" in data
     assert "techStack" in data
     assert "securityTxt" in data
+    assert "httpOverview" in data
+    assert "pageMetadata" in data
+    assert "siteDiscovery" in data
 
 
 def test_finding_all_fields():

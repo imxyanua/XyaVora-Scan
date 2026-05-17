@@ -3,9 +3,6 @@ import base64
 import sys
 import time
 from datetime import datetime, timezone
-from urllib.parse import urljoin
-
-import httpx
 
 from app.core.config import settings
 from app.schemas.report import ScreenshotResult
@@ -21,17 +18,6 @@ _DOM_READY_TIMEOUT_MS = 1_500
 _NETWORK_IDLE_TIMEOUT_MS = 1_000
 _IMAGE_READY_TIMEOUT_MS = 1_500
 _RENDER_SETTLE_SECONDS = 0.4
-_RESOURCE_TIMEOUT_SECONDS = 1
-_DEFAULT_MAX_RESOURCE_BYTES = 1_000_000
-_RESOURCE_BYTE_LIMITS = {
-    "document": 1_500_000,
-    "stylesheet": 750_000,
-    "script": 650_000,
-    "font": 500_000,
-    "image": 2_500_000,
-    "fetch": 500_000,
-    "xhr": 500_000,
-}
 _USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
@@ -40,7 +26,6 @@ _BROWSER_HEADERS = {
     "Accept-Language": "en-US,en;q=0.9",
     "DNT": "1",
 }
-_REDIRECT_STATUSES = {301, 302, 303, 307, 308}
 _ALLOWED_RESOURCE_TYPES = {"document", "stylesheet", "script", "font", "image", "fetch", "xhr"}
 _BLOCKED_HOST_PARTS = (
     "google-analytics.com",
@@ -50,9 +35,6 @@ _BLOCKED_HOST_PARTS = (
     "hotjar.com",
     "clarity.ms",
 )
-
-
-ResourceCache = dict[str, tuple[int, dict[str, str], bytes]]
 
 
 def _navigation_timeout_ms() -> int:
@@ -81,53 +63,6 @@ def _ensure_windows_subprocess_loop() -> None:
     current_policy = asyncio.get_event_loop_policy()
     if current_policy.__class__.__name__ != "WindowsProactorEventLoopPolicy":
         asyncio.set_event_loop_policy(policy_factory())
-
-
-def _safe_resource_fetch(
-    url: str,
-    cache: ResourceCache | None = None,
-    resource_type: str = "document",
-) -> tuple[int, dict[str, str], bytes]:
-    """Fetch a browser resource through Python so Chromium never accesses the network directly."""
-    current_url = validate_public_http_url(url)
-    if cache is not None and current_url in cache:
-        return cache[current_url]
-
-    timeout = httpx.Timeout(min(settings.FETCH_TIMEOUT_SECONDS, _RESOURCE_TIMEOUT_SECONDS))
-    max_bytes = _RESOURCE_BYTE_LIMITS.get(resource_type, _DEFAULT_MAX_RESOURCE_BYTES)
-
-    with httpx.Client(
-        follow_redirects=False,
-        timeout=timeout,
-        headers={"User-Agent": _USER_AGENT},
-    ) as client:
-        for _ in range(5 + 1):
-            with client.stream("GET", current_url) as response:
-                location = response.headers.get("location")
-                if response.status_code in _REDIRECT_STATUSES and location:
-                    current_url = validate_public_http_url(urljoin(str(response.url), location))
-                    continue
-
-                chunks: list[bytes] = []
-                total = 0
-                for chunk in response.iter_bytes(chunk_size=8192):
-                    chunks.append(chunk)
-                    total += len(chunk)
-                    if total >= max_bytes:
-                        break
-
-                headers = {
-                    key: value
-                    for key, value in response.headers.items()
-                    if key.lower() not in {"content-encoding", "content-length", "transfer-encoding"}
-                }
-                result = (response.status_code, headers, b"".join(chunks))
-                if cache is not None:
-                    cache[current_url] = result
-                    cache[url] = result
-                return result
-
-    raise httpx.TooManyRedirects(f"Exceeded redirect limit for {url}")
 
 
 def _screenshot_page(page, timeout_ms: int) -> str:
@@ -184,11 +119,27 @@ def _settle_page_for_capture(page, timeout_ms: int, timeout_error_type: type[Exc
     time.sleep(_RENDER_SETTLE_SECONDS)
 
 
+def _should_allow_browser_request(url: str, resource_type: str, method: str) -> bool:
+    if not url.startswith(("http://", "https://")):
+        return True
+    if resource_type not in _ALLOWED_RESOURCE_TYPES:
+        return False
+    if any(host_part in url for host_part in _BLOCKED_HOST_PARTS):
+        return False
+    if method not in ("GET", "HEAD"):
+        return False
+
+    try:
+        validate_public_http_url(url)
+    except Exception:
+        return False
+    return True
+
+
 def _capture_one(
     browser,
     url: str,
     viewport: dict,
-    resource_cache: ResourceCache | None = None,
 ) -> tuple[str | None, str | None]:
     """Returns (base64_png, error_str). Closes its own context."""
     from playwright.sync_api import TimeoutError as PWTimeout
@@ -203,35 +154,15 @@ def _capture_one(
             java_script_enabled=True,
             user_agent=_USER_AGENT,
             extra_http_headers=_BROWSER_HEADERS,
+            service_workers="block",
         )
         page = ctx.new_page()
 
         def _route_guard(route, request):
-            req_url = request.url
-            if not req_url.startswith(("http://", "https://")):
+            if _should_allow_browser_request(request.url, request.resource_type, request.method):
                 route.continue_()
-                return
-            if request.resource_type not in _ALLOWED_RESOURCE_TYPES:
+            else:
                 route.abort()
-                return
-            if any(host_part in req_url for host_part in _BLOCKED_HOST_PARTS):
-                route.abort()
-                return
-            if request.method not in ("GET", "HEAD"):
-                route.abort()
-                return
-
-            try:
-                status, headers, body = _safe_resource_fetch(
-                    req_url,
-                    resource_cache,
-                    request.resource_type,
-                )
-            except Exception:
-                route.abort()
-                return
-
-            route.fulfill(status=status, headers=headers, body=body)
 
         page.route("**/*", _route_guard)
         try:
@@ -265,9 +196,8 @@ def _capture_sync(url: str) -> ScreenshotResult:
         with sync_playwright() as pw:
             browser = pw.chromium.launch(headless=True)
             try:
-                resource_cache: ResourceCache = {}
-                desktop_b64, desktop_err = _capture_one(browser, url, _DESKTOP_VP, resource_cache)
-                mobile_b64,  mobile_err  = _capture_one(browser, url, _MOBILE_VP, resource_cache)
+                desktop_b64, desktop_err = _capture_one(browser, url, _DESKTOP_VP)
+                mobile_b64,  mobile_err  = _capture_one(browser, url, _MOBILE_VP)
 
                 return ScreenshotResult(
                     url=url,

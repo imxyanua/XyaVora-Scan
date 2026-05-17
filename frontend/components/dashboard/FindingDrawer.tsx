@@ -74,8 +74,8 @@ function DrawerContent({ finding, onClose }: { finding: Finding; onClose: () => 
       {/* Header */}
       <div className="p-4 border-b border-primary-fixed/20 bg-[#070B0F] flex items-start justify-between gap-3 shrink-0">
         <div className="min-w-0">
-          <span className="font-mono text-[10px] text-primary-fixed/30 uppercase tracking-widest block mb-1">
-            &gt; FINDING_DETAIL
+          <span className="font-mono text-[10px] text-primary-fixed/60 uppercase tracking-widest block mb-1">
+            Finding Detail
           </span>
           <h2 className="font-mono text-sm font-bold text-primary-fixed leading-snug">
             {finding.title}
@@ -85,7 +85,7 @@ function DrawerContent({ finding, onClose }: { finding: Finding; onClose: () => 
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="shrink-0 text-primary-fixed/40 hover:text-primary-fixed transition-colors mt-0.5"
+          className="shrink-0 text-primary-fixed/60 hover:text-primary-fixed transition-colors mt-0.5"
         >
           <AppIcon name="close" className="text-xl" />
         </button>
@@ -99,7 +99,7 @@ function DrawerContent({ finding, onClose }: { finding: Finding; onClose: () => 
         <span className={STATUS_CLASS[finding.status]}>
           [{STATUS_LABEL[finding.status]}]
         </span>
-        <span className="font-mono text-[10px] text-primary-fixed/40 uppercase tracking-widest ml-auto">
+        <span className="font-mono text-[10px] text-primary-fixed/65 uppercase tracking-widest ml-auto">
           {finding.category}
         </span>
       </div>
@@ -109,8 +109,8 @@ function DrawerContent({ finding, onClose }: { finding: Finding; onClose: () => 
 
         {/* Description */}
         <section>
-          <p className="font-mono text-[10px] text-primary-fixed/30 uppercase tracking-widest mb-2">
-            &gt; DESCRIPTION:
+          <p className="font-mono text-[10px] text-primary-fixed/65 uppercase tracking-widest mb-2">
+            Description
           </p>
           <p className="font-mono text-sm text-primary-fixed/70 leading-relaxed">
             {finding.description}
@@ -120,8 +120,8 @@ function DrawerContent({ finding, onClose }: { finding: Finding; onClose: () => 
         {/* Impact */}
         {finding.impact && (
           <section>
-            <p className="font-mono text-[10px] text-primary-fixed/30 uppercase tracking-widest mb-2">
-              &gt; IMPACT:
+            <p className="font-mono text-[10px] text-primary-fixed/65 uppercase tracking-widest mb-2">
+              Impact
             </p>
             <div className="border-l-2 border-status-warn pl-3">
               <p className="font-mono text-sm text-status-warn/80 leading-relaxed">
@@ -133,8 +133,8 @@ function DrawerContent({ finding, onClose }: { finding: Finding; onClose: () => 
 
         {/* Recommendation */}
         <section>
-          <p className="font-mono text-[10px] text-primary-fixed/30 uppercase tracking-widest mb-2">
-            &gt; RECOMMENDATION:
+          <p className="font-mono text-[10px] text-primary-fixed/65 uppercase tracking-widest mb-2">
+            Recommendation
           </p>
           <div className="bg-primary-fixed/[0.04] border border-primary-fixed/15 p-3">
             <p className="font-mono text-sm text-primary-fixed/80 leading-relaxed whitespace-pre-wrap">

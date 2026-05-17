@@ -26,6 +26,12 @@ def test_strips_path():
     assert host == "github.com"
 
 
+def test_accepts_encoded_full_url():
+    url, host = normalize_url("https%3A%2F%2Fwww.instagram.com%2F")
+    assert url == "https://www.instagram.com"
+    assert host == "www.instagram.com"
+
+
 def test_strips_whitespace():
     url, host = normalize_url("  google.com  ")
     assert host == "google.com"

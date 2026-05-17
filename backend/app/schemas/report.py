@@ -15,7 +15,8 @@ FindingSeverity = Literal["info", "low", "medium", "high"]
 FindingStatus   = Literal["pass", "warning", "fail", "info"]
 FindingCategory = Literal[
     "DNS", "SSL", "Headers", "WHOIS",
-    "Tech Stack", "Cookies", "Security.txt", "Screenshot", "General",
+    "Tech Stack", "Cookies", "Security.txt", "Screenshot",
+    "HTTP", "Metadata", "Discovery", "General",
 ]
 
 
@@ -89,7 +90,56 @@ class HeadersResult(_Base):
     error:            Optional[str] = None
 
 
+class HttpOverviewResult(_Base):
+    statusCode:      int = 0
+    finalUrl:        str = ""
+    redirectChain:   list[str] = []
+    redirectCount:   int = 0
+    contentType:     Optional[str] = None
+    contentLength:   Optional[int] = None
+    responseBytes:   int = 0
+    responseTimeMs:  int = 0
+    compression:     Optional[str] = None
+    cacheControl:    Optional[str] = None
+    expires:         Optional[str] = None
+    etag:            Optional[str] = None
+    lastModified:    Optional[str] = None
+    error:           Optional[str] = None
+
+
+class PageMetadataResult(_Base):
+    title:          Optional[str] = None
+    description:    Optional[str] = None
+    canonicalUrl:   Optional[str] = None
+    ogTitle:        Optional[str] = None
+    ogDescription:  Optional[str] = None
+    ogImage:        Optional[str] = None
+    faviconUrl:     Optional[str] = None
+    language:       Optional[str] = None
+    robots:         Optional[str] = None
+    noindex:        bool = False
+    nofollow:       bool = False
+    error:          Optional[str] = None
+
+
 # ── WHOIS ─────────────────────────────────────────────────────────
+
+class SiteDiscoveryResult(_Base):
+    robotsPresent:     bool = False
+    robotsUrl:         Optional[str] = None
+    robotsStatusCode:  Optional[int] = None
+    userAgents:        list[str] = []
+    allowRules:        list[str] = []
+    disallowRules:     list[str] = []
+    crawlDelay:        Optional[str] = None
+    disallowAll:       bool = False
+    sitemapPresent:    bool = False
+    sitemapUrl:        Optional[str] = None
+    sitemapUrls:       list[str] = []
+    sitemapUrlCount:   int = 0
+    sitemapIndexCount: int = 0
+    error:             Optional[str] = None
+
 
 class WhoisResult(_Base):
     registrar:   Optional[str] = None
@@ -174,6 +224,9 @@ class ScanReport(_Base):
     dns:           DnsResult        = DnsResult()
     ssl:           SslResult        = SslResult()
     headers:       HeadersResult    = HeadersResult()
+    httpOverview:  HttpOverviewResult = HttpOverviewResult()
+    pageMetadata:  PageMetadataResult = PageMetadataResult()
+    siteDiscovery: SiteDiscoveryResult = SiteDiscoveryResult()
     whois:         WhoisResult      = WhoisResult()
     techStack:     list[TechStackItem]    = []
     cookies:       list[CookieResult]     = []

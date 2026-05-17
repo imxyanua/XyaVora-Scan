@@ -20,28 +20,28 @@ function FlagBadge({ ok, label }: { ok: boolean; label: string }) {
 
 export function CookiesCard({ cookies }: Props) {
   return (
-    <div className="card-panel p-4 flex flex-col glow-hover transition-all">
+    <div className="bg-[#0D0F10] border border-primary-fixed/15 shadow-[3px_3px_0_#050505] p-4 flex flex-col">
       {/* Header */}
       <div className="flex justify-between items-center border-b border-primary-fixed/20 pb-2 mb-3 shrink-0">
-        <h3 className="font-mono text-[11px] tracking-widest text-primary-fixed/60 uppercase">
-          SYS.COOKIES_AUDIT
+        <h3 className="font-mono text-[11px] tracking-widest text-white uppercase">
+          Cookies
         </h3>
-        <span className="font-mono text-[11px] text-primary-fixed/40">
+        <span className="font-mono text-[11px] text-primary-fixed">
           [{cookies.length} COOKIE{cookies.length !== 1 ? "S" : ""}]
         </span>
       </div>
 
       {cookies.length === 0 ? (
-        <p className="font-mono text-sm text-primary-fixed/40">[-] No cookies set</p>
+        <p className="font-mono text-sm text-primary-fixed/60">[-] No cookies set</p>
       ) : (
         <div className="space-y-3">
           {cookies.map((c, i) => (
             <div
               key={`${c.name}-${i}`}
-              className="border border-primary-fixed/15 bg-primary-fixed/[0.03] p-2"
+              className="border border-primary-fixed/15 bg-[#151918] p-2 hover:border-primary-fixed/40 transition-colors"
             >
               <div className="flex items-center justify-between mb-1.5">
-                <span className="font-mono text-sm text-primary-fixed truncate max-w-[55%]">
+                <span className="font-mono text-sm text-white truncate max-w-[55%]">
                   {c.name}
                 </span>
                 <div className="flex gap-1 flex-wrap justify-end">
@@ -51,7 +51,7 @@ export function CookiesCard({ cookies }: Props) {
                 </div>
               </div>
               {c.sameSite && (
-                <div className="font-mono text-[10px] text-primary-fixed/40">
+                <div className="font-mono text-[10px] text-[#d7e8ff]/55">
                   SameSite={c.sameSite}
                 </div>
               )}

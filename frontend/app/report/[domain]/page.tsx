@@ -5,14 +5,20 @@ import { AdvisoryPanel }        from "@/components/dashboard/AdvisoryPanel";
 import { SSLCard }              from "@/components/dashboard/SSLCard";
 import { TechStackCard }        from "@/components/dashboard/TechStackCard";
 import { SecurityHeadersCard }  from "@/components/dashboard/SecurityHeadersCard";
+import { HttpOverviewCard }     from "@/components/dashboard/HttpOverviewCard";
+import { PageMetadataCard }     from "@/components/dashboard/PageMetadataCard";
+import { SiteDiscoveryCard }    from "@/components/dashboard/SiteDiscoveryCard";
 import { DNSRecordsCard }       from "@/components/dashboard/DNSRecordsCard";
 import { WhoisCard }            from "@/components/dashboard/WhoisCard";
 import { CookiesCard }          from "@/components/dashboard/CookiesCard";
 import { SecurityTxtCard }      from "@/components/dashboard/SecurityTxtCard";
 import { ScreenshotCard }       from "@/components/dashboard/ScreenshotCard";
+import { RawDataCard }          from "@/components/dashboard/RawDataCard";
+import { ResearchToolsCard }    from "@/components/dashboard/ResearchToolsCard";
 import { ScanLink }             from "@/components/scan/ScanLink";
 import { AppIcon }              from "@/components/ui/AppIcon";
 import { analyzeDomain, getReportById } from "@/lib/api";
+import { normalizeScanTarget }  from "@/lib/startScan";
 
 type Props = {
   params:       Promise<{ domain: string }>;
@@ -20,7 +26,8 @@ type Props = {
 };
 
 export default async function ReportPage({ params, searchParams }: Props) {
-  const { domain } = await params;
+  const rawParams = await params;
+  const domain = normalizeScanTarget(decodeURIComponent(rawParams.domain));
   const { id }     = await searchParams;
 
   // If ?id= is present, load the stored historical report instead of re-scanning.
@@ -104,6 +111,9 @@ export default async function ReportPage({ params, searchParams }: Props) {
             <div className="lg:col-span-2">
               <TechStackCard techStack={report.techStack} />
             </div>
+            <HttpOverviewCard http={report.httpOverview} />
+            <PageMetadataCard metadata={report.pageMetadata} />
+            <SiteDiscoveryCard discovery={report.siteDiscovery} />
             <div className="lg:col-span-2">
               <SecurityHeadersCard headers={report.headers} />
             </div>
@@ -119,6 +129,9 @@ export default async function ReportPage({ params, searchParams }: Props) {
           <SecurityTxtCard securityTxt={report.securityTxt} />
           <ScreenshotCard screenshot={report.screenshot} />
         </div>
+
+        <RawDataCard report={report} />
+        <ResearchToolsCard report={report} />
 
       </div>
     </AppShell>

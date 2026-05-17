@@ -5,12 +5,16 @@ from datetime import datetime, timezone
 from app.core.config import settings
 from app.schemas.report import (
     ScanReport, DnsResult, SslResult, HeadersResult,
+    HttpOverviewResult, PageMetadataResult, SiteDiscoveryResult,
     WhoisResult, SecurityTxtResult, ScreenshotResult,
 )
 from app.schemas.analyzer import AnalyzerResult
 from app.analyzers.dns_analyzer         import analyze_dns
 from app.analyzers.ssl_analyzer         import analyze_ssl
 from app.analyzers.headers_analyzer     import analyze_headers
+from app.analyzers.http_overview_analyzer import analyze_http_overview
+from app.analyzers.page_metadata_analyzer import analyze_page_metadata
+from app.analyzers.site_discovery_analyzer import analyze_site_discovery
 from app.analyzers.whois_analyzer       import analyze_whois
 from app.analyzers.tech_stack_analyzer  import analyze_tech_stack
 from app.analyzers.cookies_analyzer     import analyze_cookies
@@ -72,11 +76,14 @@ async def run_scan(
     if cached is not None:
         return cached
     async def _pipeline() -> ScanReport:
-        dns_r, ssl_r, headers_r, whois_r, tech_r, cookies_r, sectxt_r, shot_r = (
+        dns_r, ssl_r, headers_r, http_r, meta_r, discovery_r, whois_r, tech_r, cookies_r, sectxt_r, shot_r = (
             await asyncio.gather(
                 _run(analyze_dns(hostname)),
                 _run(analyze_ssl(hostname)),
                 _run(analyze_headers(normalized_url)),
+                _run(analyze_http_overview(normalized_url)),
+                _run(analyze_page_metadata(normalized_url)),
+                _run(analyze_site_discovery(normalized_url)),
                 _run(analyze_whois(hostname)),
                 _run(analyze_tech_stack(normalized_url)),
                 _run(analyze_cookies(normalized_url)),
@@ -89,7 +96,7 @@ async def run_scan(
         # Collect all findings from every analyzer
         all_findings = [
             f
-            for result in (dns_r, ssl_r, headers_r, whois_r, tech_r, cookies_r, sectxt_r, shot_r)
+            for result in (dns_r, ssl_r, headers_r, http_r, meta_r, discovery_r, whois_r, tech_r, cookies_r, sectxt_r, shot_r)
             for f in result.findings
         ]
 
@@ -112,6 +119,9 @@ async def run_scan(
             dns=dns_r.data           if isinstance(dns_r.data, DnsResult)           else DnsResult(error=_err(dns_r)),
             ssl=ssl_r.data           if isinstance(ssl_r.data, SslResult)           else SslResult(error=_err(ssl_r)),
             headers=headers_r.data   if isinstance(headers_r.data, HeadersResult)   else HeadersResult(error=_err(headers_r)),
+            httpOverview=http_r.data if isinstance(http_r.data, HttpOverviewResult) else HttpOverviewResult(error=_err(http_r)),
+            pageMetadata=meta_r.data if isinstance(meta_r.data, PageMetadataResult) else PageMetadataResult(error=_err(meta_r)),
+            siteDiscovery=discovery_r.data if isinstance(discovery_r.data, SiteDiscoveryResult) else SiteDiscoveryResult(error=_err(discovery_r)),
             whois=whois_r.data       if isinstance(whois_r.data, WhoisResult)       else WhoisResult(error=_err(whois_r)),
             techStack=tech_r.data    if isinstance(tech_r.data, list)               else [],
             cookies=cookies_r.data   if isinstance(cookies_r.data, list)            else [],

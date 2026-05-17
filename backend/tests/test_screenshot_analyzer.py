@@ -15,6 +15,7 @@ from app.analyzers.screenshot_analyzer import (  # noqa: E402
     _ALLOWED_RESOURCE_TYPES,
     _BROWSER_HEADERS,
     _USER_AGENT,
+    _should_allow_browser_request,
     analyze_screenshot,
     _capture_one,
 )
@@ -47,10 +48,22 @@ def test_capture_one_returns_base64():
     browser.new_context.assert_called_once()
     assert browser.new_context.call_args.kwargs["user_agent"] == _USER_AGENT
     assert browser.new_context.call_args.kwargs["extra_http_headers"] == _BROWSER_HEADERS
+    assert browser.new_context.call_args.kwargs["service_workers"] == "block"
 
 
 def test_capture_allows_spa_rendering_resources():
     assert {"script", "font", "fetch", "xhr"}.issubset(_ALLOWED_RESOURCE_TYPES)
+
+
+def test_browser_request_guard_allows_public_gets():
+    assert _should_allow_browser_request("https://example.com/app.js", "script", "GET") is True
+    assert _should_allow_browser_request("data:image/png;base64,aaa", "image", "GET") is True
+
+
+def test_browser_request_guard_blocks_private_and_non_passive_requests():
+    assert _should_allow_browser_request("http://127.0.0.1/admin", "document", "GET") is False
+    assert _should_allow_browser_request("https://example.com/api", "fetch", "POST") is False
+    assert _should_allow_browser_request("https://example.com/video.mp4", "media", "GET") is False
 
 
 def test_capture_one_timeout_returns_error():

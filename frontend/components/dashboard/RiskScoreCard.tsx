@@ -24,13 +24,13 @@ export function RiskScoreCard({ score, grade, status, scanTime }: Props) {
   const elapsed = `${ts.getHours().toString().padStart(2, "0")}:${ts.getMinutes().toString().padStart(2, "0")}:${ts.getSeconds().toString().padStart(2, "0")}`;
 
   return (
-    <div className="card-panel p-5 flex flex-col justify-between relative overflow-hidden h-full group">
+    <div className="bg-[#0D0F10] border border-primary-fixed/15 shadow-[3px_3px_0_#050505] p-5 flex flex-col justify-between relative overflow-hidden h-full group">
       {/* Header */}
       <div className="flex justify-between items-start border-b border-primary-fixed/20 pb-2 mb-4">
-        <h2 className="font-mono text-[11px] tracking-widest text-primary-fixed/60 uppercase">
-          SYS.GLOBAL_RISK_SCORE
+        <h2 className="font-mono text-[11px] tracking-widest text-white uppercase">
+          Risk Score
         </h2>
-        <span className="font-mono text-[11px] text-primary-fixed/40">[METRIC_01]</span>
+        <span className="font-mono text-[11px] text-primary-fixed">[METRIC_01]</span>
       </div>
 
       {/* Score + Grade */}
@@ -38,15 +38,15 @@ export function RiskScoreCard({ score, grade, status, scanTime }: Props) {
         <div>
           <div className="font-mono font-bold text-secondary-fixed leading-none" style={{ fontSize: "3rem" }}>
             {score}
-            <span className="text-primary-fixed/40 text-2xl font-normal">/100</span>
+            <span className="text-primary-fixed/60 text-2xl font-normal">/100</span>
           </div>
-          <div className="font-mono text-[11px] uppercase mt-2 text-primary-fixed/50">
+          <div className="font-mono text-[11px] uppercase mt-2 text-[#d7e8ff]/65">
             &gt; T: {elapsed}
           </div>
         </div>
 
         <div className="text-right">
-          <div className="font-mono font-bold text-primary-fixed mb-2" style={{ fontSize: "3rem" }}>
+          <div className="font-mono font-bold text-white mb-2" style={{ fontSize: "3rem" }}>
             [{grade}]
           </div>
           <span className={`status-badge ${STATUS_CLASS[status]} font-mono text-[11px] uppercase`}>

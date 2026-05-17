@@ -16,6 +16,9 @@ export type FindingCategory =
   | "Cookies"
   | "Security.txt"
   | "Screenshot"
+  | "HTTP"
+  | "Metadata"
+  | "Discovery"
   | "General";
 
 export type RiskGrade  = "A" | "B" | "C" | "D" | "F";
@@ -89,7 +92,56 @@ export interface HeadersResult {
   error?:           string;
 }
 
+export interface HttpOverviewResult {
+  statusCode:     number;
+  finalUrl:       string;
+  redirectChain:  string[];
+  redirectCount:  number;
+  contentType?:   string;
+  contentLength?: number;
+  responseBytes:  number;
+  responseTimeMs: number;
+  compression?:   string;
+  cacheControl?:  string;
+  expires?:       string;
+  etag?:          string;
+  lastModified?:  string;
+  error?:         string;
+}
+
+export interface PageMetadataResult {
+  title?:         string;
+  description?:   string;
+  canonicalUrl?:  string;
+  ogTitle?:       string;
+  ogDescription?: string;
+  ogImage?:       string;
+  faviconUrl?:    string;
+  language?:      string;
+  robots?:        string;
+  noindex:        boolean;
+  nofollow:       boolean;
+  error?:         string;
+}
+
 // ── WHOIS ─────────────────────────────────────
+
+export interface SiteDiscoveryResult {
+  robotsPresent:     boolean;
+  robotsUrl?:        string;
+  robotsStatusCode?: number;
+  userAgents:        string[];
+  allowRules:        string[];
+  disallowRules:     string[];
+  crawlDelay?:       string;
+  disallowAll:       boolean;
+  sitemapPresent:    boolean;
+  sitemapUrl?:       string;
+  sitemapUrls:       string[];
+  sitemapUrlCount:   number;
+  sitemapIndexCount: number;
+  error?:            string;
+}
 
 export interface WhoisResult {
   registrar?:   string;
@@ -174,6 +226,9 @@ export interface ScanReport {
   dns:           DnsResult;
   ssl:           SslResult;
   headers:       HeadersResult;
+  httpOverview:  HttpOverviewResult;
+  pageMetadata:  PageMetadataResult;
+  siteDiscovery: SiteDiscoveryResult;
   whois:         WhoisResult;
   techStack:     TechStackItem[];
   cookies:       CookieResult[];

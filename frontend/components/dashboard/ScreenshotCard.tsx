@@ -32,10 +32,10 @@ export function ScreenshotCard({ screenshot }: Props) {
 
   return (
     <>
-      <div className="card-panel flex flex-col">
-        <div className="p-3 border-b border-primary-fixed/20 bg-[#070B0F] flex justify-between items-center shrink-0">
-          <h3 className="font-mono text-[11px] tracking-widest text-primary-fixed/60 uppercase">
-            SYS.LIVE_CAPTURE
+      <div className="bg-[#0D0F10] border border-primary-fixed/15 shadow-[3px_3px_0_#050505] flex flex-col">
+        <div className="p-3 border-b border-primary-fixed/20 bg-[#151918] flex justify-between items-center shrink-0">
+          <h3 className="font-mono text-[11px] tracking-widest text-white uppercase">
+            Screenshot
           </h3>
           <div className="flex items-center gap-3">
             {imgSrc && hasMobile && (
@@ -46,7 +46,7 @@ export function ScreenshotCard({ screenshot }: Props) {
                   className={`font-mono text-[10px] px-2 py-0.5 border transition-colors ${
                     view === "desktop"
                       ? "border-primary-fixed/50 text-primary-fixed/80 bg-primary-fixed/10"
-                      : "border-primary-fixed/20 text-primary-fixed/30 hover:text-primary-fixed/50"
+                      : "border-primary-fixed/20 text-primary-fixed/55 hover:text-primary-fixed/75"
                   }`}
                 >
                   DESK
@@ -57,21 +57,21 @@ export function ScreenshotCard({ screenshot }: Props) {
                   className={`font-mono text-[10px] px-2 py-0.5 border transition-colors ${
                     view === "mobile"
                       ? "border-primary-fixed/50 text-primary-fixed/80 bg-primary-fixed/10"
-                      : "border-primary-fixed/20 text-primary-fixed/30 hover:text-primary-fixed/50"
+                      : "border-primary-fixed/20 text-primary-fixed/55 hover:text-primary-fixed/75"
                   }`}
                 >
                   MOB
                 </button>
               </div>
             )}
-            <span className="font-mono text-[11px] text-primary-fixed/40">[RENDER]</span>
+            <span className="font-mono text-[11px] text-primary-fixed">[RENDER]</span>
           </div>
         </div>
 
         <div className="p-4 flex-1 flex flex-col items-center justify-center">
           {imgSrc ? (
             <>
-              <div className={`border border-primary-fixed/25 bg-primary-fixed/[0.02] relative group overflow-hidden transition-all duration-200 ${
+              <div className={`border border-primary-fixed/20 bg-[#151918] relative group overflow-hidden transition-all duration-200 ${
                 view === "mobile" ? "w-[55%] aspect-[390/844] mx-auto" : "w-full aspect-video"
               }`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -90,7 +90,7 @@ export function ScreenshotCard({ screenshot }: Props) {
                   </button>
                 </div>
               </div>
-              <div className="mt-3 w-full flex justify-between font-mono text-[11px] text-primary-fixed/50">
+              <div className="mt-3 w-full flex justify-between font-mono text-[11px] text-[#d7e8ff]/65">
                 <span>&gt; RES: {viewportLabel}</span>
                 <span>&gt; TS: {capturedAt}</span>
               </div>
@@ -98,7 +98,7 @@ export function ScreenshotCard({ screenshot }: Props) {
           ) : (
             <div className="w-full flex flex-col items-center justify-center gap-3 py-6 border border-dashed border-primary-fixed/15">
               <AppIcon name="hide_image" className="text-3xl text-primary-fixed/20" />
-              <p className="font-mono text-[11px] text-primary-fixed/30 text-center">
+              <p className="font-mono text-[11px] text-primary-fixed/60 text-center">
                 {isDisabled ? "[CAPTURE_DISABLED]" : "[CAPTURE_ERROR]"}
               </p>
               {screenshot.error && (
@@ -133,12 +133,12 @@ export function ScreenshotCard({ screenshot }: Props) {
             className="w-full max-w-5xl flex justify-between items-center px-4 py-2 mb-2"
             onClick={(e) => e.stopPropagation()}
           >
-            <span className="font-mono text-[11px] text-primary-fixed/50">
+            <span className="font-mono text-[11px] text-primary-fixed/65">
               {screenshot.url ?? ""}&nbsp;|&nbsp;{viewportLabel}&nbsp;|&nbsp;{capturedAt}
             </span>
             <button
               type="button"
-              className="font-mono text-[11px] text-primary-fixed/50 hover:text-primary-fixed transition-colors"
+              className="font-mono text-[11px] text-primary-fixed/65 hover:text-primary-fixed transition-colors"
               onClick={() => setLightbox(false)}
             >
               [CLOSE X]
