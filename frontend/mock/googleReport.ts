@@ -85,6 +85,34 @@ export const mockGoogleReport: ScanReport = {
     ],
   },
 
+  httpOverview: {
+    statusCode:     200,
+    finalUrl:       "https://www.google.com/",
+    redirectChain:  ["https://google.com", "https://www.google.com/"],
+    redirectCount:  1,
+    contentType:    "text/html; charset=UTF-8",
+    contentLength:  18432,
+    responseBytes:  18432,
+    responseTimeMs: 142,
+    compression:    "br",
+    cacheControl:   "private, max-age=0",
+    etag:           undefined,
+  },
+
+  pageMetadata: {
+    title:         "Google",
+    description:   "Search the world's information, including webpages, images, videos and more.",
+    canonicalUrl:  "https://www.google.com/",
+    ogTitle:       "Google",
+    ogDescription: "Search the world's information, including webpages, images, videos and more.",
+    ogImage:       undefined,
+    faviconUrl:    "https://www.google.com/favicon.ico",
+    language:      "en",
+    robots:        undefined,
+    noindex:       false,
+    nofollow:      false,
+  },
+
   whois: {
     registrar:   "MarkMonitor Inc.",
     createdDate: "1997-09-15T00:00:00.000Z",

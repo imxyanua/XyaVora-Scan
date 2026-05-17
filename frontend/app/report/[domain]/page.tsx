@@ -5,6 +5,8 @@ import { AdvisoryPanel }        from "@/components/dashboard/AdvisoryPanel";
 import { SSLCard }              from "@/components/dashboard/SSLCard";
 import { TechStackCard }        from "@/components/dashboard/TechStackCard";
 import { SecurityHeadersCard }  from "@/components/dashboard/SecurityHeadersCard";
+import { HttpOverviewCard }     from "@/components/dashboard/HttpOverviewCard";
+import { PageMetadataCard }     from "@/components/dashboard/PageMetadataCard";
 import { DNSRecordsCard }       from "@/components/dashboard/DNSRecordsCard";
 import { WhoisCard }            from "@/components/dashboard/WhoisCard";
 import { CookiesCard }          from "@/components/dashboard/CookiesCard";
@@ -104,6 +106,8 @@ export default async function ReportPage({ params, searchParams }: Props) {
             <div className="lg:col-span-2">
               <TechStackCard techStack={report.techStack} />
             </div>
+            <HttpOverviewCard http={report.httpOverview} />
+            <PageMetadataCard metadata={report.pageMetadata} />
             <div className="lg:col-span-2">
               <SecurityHeadersCard headers={report.headers} />
             </div>

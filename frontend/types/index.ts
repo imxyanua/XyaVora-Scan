@@ -16,6 +16,8 @@ export type FindingCategory =
   | "Cookies"
   | "Security.txt"
   | "Screenshot"
+  | "HTTP"
+  | "Metadata"
   | "General";
 
 export type RiskGrade  = "A" | "B" | "C" | "D" | "F";
@@ -87,6 +89,38 @@ export interface HeadersResult {
   xPoweredBy?:      string;
   securityHeaders:  SecurityHeaderItem[];
   error?:           string;
+}
+
+export interface HttpOverviewResult {
+  statusCode:     number;
+  finalUrl:       string;
+  redirectChain:  string[];
+  redirectCount:  number;
+  contentType?:   string;
+  contentLength?: number;
+  responseBytes:  number;
+  responseTimeMs: number;
+  compression?:   string;
+  cacheControl?:  string;
+  expires?:       string;
+  etag?:          string;
+  lastModified?:  string;
+  error?:         string;
+}
+
+export interface PageMetadataResult {
+  title?:         string;
+  description?:   string;
+  canonicalUrl?:  string;
+  ogTitle?:       string;
+  ogDescription?: string;
+  ogImage?:       string;
+  faviconUrl?:    string;
+  language?:      string;
+  robots?:        string;
+  noindex:        boolean;
+  nofollow:       boolean;
+  error?:         string;
 }
 
 // ── WHOIS ─────────────────────────────────────
@@ -174,6 +208,8 @@ export interface ScanReport {
   dns:           DnsResult;
   ssl:           SslResult;
   headers:       HeadersResult;
+  httpOverview:  HttpOverviewResult;
+  pageMetadata:  PageMetadataResult;
   whois:         WhoisResult;
   techStack:     TechStackItem[];
   cookies:       CookieResult[];

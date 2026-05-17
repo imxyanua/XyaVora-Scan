@@ -7,6 +7,8 @@ from app.schemas.report import (
     DnsResult,
     Finding,
     HeadersResult,
+    HttpOverviewResult,
+    PageMetadataResult,
     ScreenshotResult,
     SecurityTxtResult,
     SslResult,
@@ -92,6 +94,12 @@ async def test_run_scan_force_refresh_bypasses_cache(monkeypatch):
     async def fake_headers(url: str):
         return AnalyzerResult(key="headers", status="success", data=HeadersResult())
 
+    async def fake_http_overview(url: str):
+        return AnalyzerResult(key="httpOverview", status="success", data=HttpOverviewResult())
+
+    async def fake_page_metadata(url: str):
+        return AnalyzerResult(key="pageMetadata", status="success", data=PageMetadataResult())
+
     async def fake_whois(hostname: str):
         return AnalyzerResult(key="whois", status="success", data=WhoisResult())
 
@@ -117,6 +125,8 @@ async def test_run_scan_force_refresh_bypasses_cache(monkeypatch):
     monkeypatch.setattr(scan_service, "analyze_dns", fake_dns)
     monkeypatch.setattr(scan_service, "analyze_ssl", fake_ssl)
     monkeypatch.setattr(scan_service, "analyze_headers", fake_headers)
+    monkeypatch.setattr(scan_service, "analyze_http_overview", fake_http_overview)
+    monkeypatch.setattr(scan_service, "analyze_page_metadata", fake_page_metadata)
     monkeypatch.setattr(scan_service, "analyze_whois", fake_whois)
     monkeypatch.setattr(scan_service, "analyze_tech_stack", fake_tech_stack)
     monkeypatch.setattr(scan_service, "analyze_cookies", fake_cookies)
