@@ -7,7 +7,10 @@ import { SSLCard }              from "@/components/dashboard/SSLCard";
 import { TechStackCard }        from "@/components/dashboard/TechStackCard";
 import { SecurityHeadersCard }  from "@/components/dashboard/SecurityHeadersCard";
 import { HttpOverviewCard }     from "@/components/dashboard/HttpOverviewCard";
+import { HostNamesCard }        from "@/components/dashboard/HostNamesCard";
 import { PageMetadataCard }     from "@/components/dashboard/PageMetadataCard";
+import { RedirectsCard }        from "@/components/dashboard/RedirectsCard";
+import { ServerInfoCard }       from "@/components/dashboard/ServerInfoCard";
 import { SiteDiscoveryCard }    from "@/components/dashboard/SiteDiscoveryCard";
 import { DNSRecordsCard }       from "@/components/dashboard/DNSRecordsCard";
 import { EmailSecurityCard }    from "@/components/dashboard/EmailSecurityCard";
@@ -157,6 +160,13 @@ export default async function ReportPage({ params, searchParams }: Props) {
         <ReportSection title="Page Intelligence" detail="http behavior, metadata, detected stack">
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 items-stretch">
             <HttpOverviewCard http={report.httpOverview} />
+            <RedirectsCard http={report.httpOverview} />
+            <HostNamesCard
+              http={report.httpOverview}
+              metadata={report.pageMetadata}
+              hostname={report.hostname}
+            />
+            <ServerInfoCard http={report.httpOverview} />
             <PageMetadataCard metadata={report.pageMetadata} />
             <TechStackCard techStack={report.techStack} />
           </div>
