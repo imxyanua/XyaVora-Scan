@@ -29,10 +29,10 @@ export function SSLCard({ ssl }: Props) {
   ];
 
   return (
-    <div className="card-panel p-4 glow-hover transition-all flex flex-col">
+    <div className="bg-[#0D0F10] border border-primary-fixed/15 shadow-[3px_3px_0_#050505] p-4 flex flex-col">
       {/* Header */}
       <div className="flex justify-between items-center border-b border-primary-fixed/20 pb-2 mb-3 shrink-0">
-        <h3 className="font-mono text-[11px] tracking-widest text-primary-fixed/60 uppercase">
+        <h3 className="font-mono text-[11px] tracking-widest text-white uppercase">
           SYS.SSL_CERT_DATA
         </h3>
         <span className={`status-badge ${overallStatus.cls} text-[10px]`}>
@@ -47,16 +47,16 @@ export function SSLCard({ ssl }: Props) {
         <div className="space-y-2 font-mono text-sm flex-1">
           {rows.map((row) => (
             <div key={row.key} className="flex justify-between gap-2">
-              <span className="text-primary-fixed/50 shrink-0">{row.key}:</span>
-              <span className="text-primary-fixed text-right truncate">{row.val}</span>
+              <span className="text-primary-fixed/45 shrink-0">{row.key}:</span>
+              <span className="text-[#d7e8ff] text-right truncate">{row.val}</span>
             </div>
           ))}
 
           {/* Expiry + progress */}
           <div className="pt-2 border-t border-primary-fixed/15 border-dashed space-y-2">
             <div className="flex justify-between gap-2">
-              <span className="text-primary-fixed/50 shrink-0">EXPIRY:</span>
-              <span className="text-primary-fixed">{validUntil}</span>
+              <span className="text-primary-fixed/45 shrink-0">EXPIRY:</span>
+              <span className="text-white">{validUntil}</span>
             </div>
             <div className="w-full h-2 bg-[#070B0F] border border-primary-fixed/20 flex overflow-hidden">
               {Array.from({ length: CERT_SEGMENTS }).map((_, i) => (

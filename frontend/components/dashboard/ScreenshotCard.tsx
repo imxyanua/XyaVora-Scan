@@ -32,9 +32,9 @@ export function ScreenshotCard({ screenshot }: Props) {
 
   return (
     <>
-      <div className="card-panel flex flex-col">
-        <div className="p-3 border-b border-primary-fixed/20 bg-[#070B0F] flex justify-between items-center shrink-0">
-          <h3 className="font-mono text-[11px] tracking-widest text-primary-fixed/60 uppercase">
+      <div className="bg-[#0D0F10] border border-primary-fixed/15 shadow-[3px_3px_0_#050505] flex flex-col">
+        <div className="p-3 border-b border-primary-fixed/20 bg-[#151918] flex justify-between items-center shrink-0">
+          <h3 className="font-mono text-[11px] tracking-widest text-white uppercase">
             SYS.LIVE_CAPTURE
           </h3>
           <div className="flex items-center gap-3">
@@ -64,14 +64,14 @@ export function ScreenshotCard({ screenshot }: Props) {
                 </button>
               </div>
             )}
-            <span className="font-mono text-[11px] text-primary-fixed/40">[RENDER]</span>
+            <span className="font-mono text-[11px] text-primary-fixed">[RENDER]</span>
           </div>
         </div>
 
         <div className="p-4 flex-1 flex flex-col items-center justify-center">
           {imgSrc ? (
             <>
-              <div className={`border border-primary-fixed/25 bg-primary-fixed/[0.02] relative group overflow-hidden transition-all duration-200 ${
+              <div className={`border border-primary-fixed/20 bg-[#151918] relative group overflow-hidden transition-all duration-200 ${
                 view === "mobile" ? "w-[55%] aspect-[390/844] mx-auto" : "w-full aspect-video"
               }`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -90,7 +90,7 @@ export function ScreenshotCard({ screenshot }: Props) {
                   </button>
                 </div>
               </div>
-              <div className="mt-3 w-full flex justify-between font-mono text-[11px] text-primary-fixed/50">
+              <div className="mt-3 w-full flex justify-between font-mono text-[11px] text-[#d7e8ff]/65">
                 <span>&gt; RES: {viewportLabel}</span>
                 <span>&gt; TS: {capturedAt}</span>
               </div>

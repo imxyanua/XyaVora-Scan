@@ -42,17 +42,17 @@ export function RawDataCard({ report }: Props) {
   }
 
   return (
-    <section className="card-panel">
-      <div className="p-3 border-b border-primary-fixed/20 bg-[#070B0F] flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+    <section className="bg-[#0D0F10] border border-primary-fixed/15 shadow-[3px_3px_0_#050505]">
+      <div className="p-3 border-b border-primary-fixed/20 bg-[#151918] flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="font-mono text-[11px] tracking-widest text-primary-fixed/60 uppercase">
+          <h3 className="font-mono text-[11px] tracking-widest text-white uppercase">
             SYS.RAW_DATA
           </h3>
-          <p className="font-mono text-[10px] text-primary-fixed/35 uppercase tracking-widest mt-1">
+          <p className="font-mono text-[10px] text-primary-fixed/45 uppercase tracking-widest mt-1">
             VIEW_OR_DOWNLOAD_SCAN_PAYLOAD
           </p>
         </div>
-        <span className="font-mono text-[10px] text-primary-fixed/40 break-all">
+        <span className="font-mono text-[10px] text-primary-fixed break-all">
           {hostname}
         </span>
       </div>
@@ -77,12 +77,12 @@ export function RawDataCard({ report }: Props) {
           </button>
         </div>
 
-        <p className="font-mono text-[10px] text-primary-fixed/40 leading-relaxed">
+        <p className="font-mono text-[10px] text-[#d7e8ff]/55 leading-relaxed">
           RAW preview omits screenshot base64 to keep the page responsive. Download includes the full scan payload.
         </p>
 
         {showRaw && (
-          <pre className="max-h-[420px] overflow-auto bg-[#070B0F] border border-primary-fixed/10 p-3 font-mono text-[10px] leading-relaxed text-primary-fixed/60 whitespace-pre-wrap break-words">
+          <pre className="max-h-[420px] overflow-auto bg-[#070B0F] border border-primary-fixed/10 p-3 font-mono text-[10px] leading-relaxed text-[#d7e8ff]/70 whitespace-pre-wrap break-words">
             {previewJson}
           </pre>
         )}

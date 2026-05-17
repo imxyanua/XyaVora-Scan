@@ -18,10 +18,10 @@ export function SecurityTxtCard({ securityTxt }: Props) {
   ];
 
   return (
-    <div className="card-panel p-4 flex flex-col glow-hover transition-all">
+    <div className="bg-[#0D0F10] border border-primary-fixed/15 shadow-[3px_3px_0_#050505] p-4 flex flex-col">
       {/* Header */}
       <div className="flex justify-between items-center border-b border-primary-fixed/20 pb-2 mb-3 shrink-0">
-        <h3 className="font-mono text-[11px] tracking-widest text-primary-fixed/60 uppercase">
+        <h3 className="font-mono text-[11px] tracking-widest text-white uppercase">
           SYS.SECURITY_TXT
         </h3>
         <span className={`${statusCls} text-[10px]`}>{statusLabel}</span>
@@ -31,7 +31,7 @@ export function SecurityTxtCard({ securityTxt }: Props) {
         <p className="font-mono text-sm text-error/70">[-] {securityTxt.error}</p>
       ) : !securityTxt.present ? (
         <div className="space-y-2">
-          <p className="font-mono text-sm text-primary-fixed/50">
+          <p className="font-mono text-sm text-[#d7e8ff]/65">
             No security.txt found at well-known or root path.
           </p>
           <p className="font-mono text-[10px] text-primary-fixed/30">
@@ -47,8 +47,8 @@ export function SecurityTxtCard({ securityTxt }: Props) {
           )}
           {rows.map((row) => (
             <div key={row.key} className="flex justify-between gap-2">
-              <span className="text-primary-fixed/50 shrink-0">{row.key}:</span>
-              <span className="text-primary-fixed/80 text-right truncate max-w-[65%]">
+              <span className="text-primary-fixed/45 shrink-0">{row.key}:</span>
+              <span className="text-[#d7e8ff] text-right truncate max-w-[65%]">
                 {row.val}
               </span>
             </div>

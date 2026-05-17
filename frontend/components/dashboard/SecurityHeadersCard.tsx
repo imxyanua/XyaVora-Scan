@@ -12,13 +12,13 @@ const STATUS_BADGE: Record<HeaderStatus, { cls: string; text: string }> = {
 
 export function SecurityHeadersCard({ headers }: Props) {
   return (
-    <div className="card-panel flex flex-col">
+    <div className="bg-[#0D0F10] border border-primary-fixed/15 shadow-[3px_3px_0_#050505] flex flex-col">
       {/* Header */}
-      <div className="p-3 border-b border-primary-fixed/20 bg-[#070B0F] flex justify-between items-center shrink-0">
-        <h3 className="font-mono text-[11px] tracking-widest text-primary-fixed/60 uppercase">
+      <div className="p-3 border-b border-primary-fixed/20 bg-[#151918] flex justify-between items-center shrink-0">
+        <h3 className="font-mono text-[11px] tracking-widest text-white uppercase">
           SYS.HTTP_SEC_HEADERS
         </h3>
-        <div className="flex items-center gap-3 font-mono text-[11px] text-primary-fixed/40">
+        <div className="flex items-center gap-3 font-mono text-[11px] text-primary-fixed">
           {headers.error
             ? <span className="text-error/70">[ERR]</span>
             : <>
@@ -39,12 +39,12 @@ export function SecurityHeadersCard({ headers }: Props) {
           return (
             <div
               key={h.header}
-              className="data-grid-row flex justify-between items-start gap-3 px-4 py-2.5"
+              className="flex justify-between items-start gap-3 px-4 py-2.5 border-b border-primary-fixed/10 last:border-b-0 hover:bg-primary-fixed/[0.04] transition-colors"
             >
               <div className="min-w-0 flex-1">
-                <span className="text-primary-fixed">{h.header}</span>
+                <span className="text-white">{h.header}</span>
                 {h.value && (
-                  <p className="text-primary-fixed/40 text-[10px] mt-0.5 truncate">
+                  <p className="text-[#d7e8ff]/55 text-[10px] mt-0.5 truncate">
                     {h.value}
                   </p>
                 )}
@@ -58,10 +58,10 @@ export function SecurityHeadersCard({ headers }: Props) {
 
         {/* Server / X-Powered-By */}
         {headers.server && (
-          <div className="data-grid-row flex justify-between items-start gap-3 px-4 py-2.5">
+          <div className="flex justify-between items-start gap-3 px-4 py-2.5 border-b border-primary-fixed/10 hover:bg-primary-fixed/[0.04] transition-colors">
             <div className="min-w-0 flex-1">
-              <span className="text-primary-fixed/70">Server</span>
-              <p className="text-primary-fixed/40 text-[10px] mt-0.5 truncate">
+              <span className="text-white">Server</span>
+              <p className="text-[#d7e8ff]/55 text-[10px] mt-0.5 truncate">
                 {headers.server}
               </p>
             </div>
@@ -69,10 +69,10 @@ export function SecurityHeadersCard({ headers }: Props) {
           </div>
         )}
         {headers.xPoweredBy && (
-          <div className="data-grid-row flex justify-between items-start gap-3 px-4 py-2.5">
+          <div className="flex justify-between items-start gap-3 px-4 py-2.5 border-b border-primary-fixed/10 last:border-b-0 hover:bg-primary-fixed/[0.04] transition-colors">
             <div className="min-w-0 flex-1">
-              <span className="text-primary-fixed/70">X-Powered-By</span>
-              <p className="text-primary-fixed/40 text-[10px] mt-0.5 truncate">
+              <span className="text-white">X-Powered-By</span>
+              <p className="text-[#d7e8ff]/55 text-[10px] mt-0.5 truncate">
                 {headers.xPoweredBy}
               </p>
             </div>

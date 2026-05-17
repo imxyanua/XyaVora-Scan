@@ -7,11 +7,11 @@ interface Props {
 
 function Row({ label, value }: { label: string; value?: string | null }) {
   return (
-    <div className="data-grid-row flex justify-between gap-4 px-4 py-2.5">
-      <span className="font-mono text-[10px] text-primary-fixed/40 uppercase tracking-widest shrink-0">
+    <div className="flex justify-between gap-4 px-4 py-2.5 border-b border-primary-fixed/10 last:border-b-0 hover:bg-primary-fixed/[0.04] transition-colors">
+      <span className="font-mono text-[10px] text-primary-fixed/45 uppercase tracking-widest shrink-0">
         {label}
       </span>
-      <span className="font-mono text-[11px] text-primary-fixed/70 text-right break-all">
+      <span className="font-mono text-[11px] text-[#d7e8ff] text-right break-all">
         {value || "-"}
       </span>
     </div>
@@ -23,12 +23,12 @@ export function PageMetadataCard({ metadata }: Props) {
   const description = metadata.ogDescription || metadata.description;
 
   return (
-    <div className="card-panel flex flex-col">
-      <div className="p-3 border-b border-primary-fixed/20 bg-[#070B0F] flex justify-between items-center shrink-0">
-        <h3 className="font-mono text-[11px] tracking-widest text-primary-fixed/60 uppercase">
+    <div className="bg-[#0D0F10] border border-primary-fixed/15 shadow-[3px_3px_0_#050505] flex flex-col">
+      <div className="p-3 border-b border-primary-fixed/20 bg-[#151918] flex justify-between items-center shrink-0">
+        <h3 className="font-mono text-[11px] tracking-widest text-white uppercase">
           SYS.PAGE_METADATA
         </h3>
-        <span className="font-mono text-[11px] text-primary-fixed/40">
+        <span className="font-mono text-[11px] text-primary-fixed">
           {metadata.error ? "[ERR]" : "[META]"}
         </span>
       </div>
@@ -37,20 +37,20 @@ export function PageMetadataCard({ metadata }: Props) {
         <p className="font-mono text-sm text-error/70 px-4 py-4">[-] {metadata.error}</p>
       ) : (
         <>
-          <div className="p-4 space-y-3 border-b border-primary-fixed/10">
+          <div className="p-4 space-y-3 border-b border-primary-fixed/10 bg-[#101415]">
             <div className="flex gap-3 items-start">
               {metadata.faviconUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={metadata.faviconUrl} alt="" className="w-6 h-6 border border-primary-fixed/20" />
+                <img src={metadata.faviconUrl} alt="" className="w-7 h-7 border border-primary-fixed/20 bg-[#070B0F]" />
               ) : (
-                <AppIcon name="http" className="text-2xl text-primary-fixed/30 shrink-0" />
+                <AppIcon name="http" className="text-2xl text-primary-fixed/70 shrink-0" />
               )}
               <div className="min-w-0">
-                <p className="font-mono text-sm text-primary-fixed font-bold leading-snug">
+                <p className="font-mono text-sm text-white font-bold leading-snug">
                   {title || "No title detected"}
                 </p>
                 {description && (
-                  <p className="font-mono text-[11px] text-primary-fixed/50 leading-relaxed mt-1">
+                  <p className="font-mono text-[11px] text-[#d7e8ff]/75 leading-relaxed mt-1">
                     {description}
                   </p>
                 )}
