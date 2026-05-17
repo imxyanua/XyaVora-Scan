@@ -45,10 +45,21 @@ class DnsRecord(_Base):
 
 class DnsResult(_Base):
     records:        list[DnsRecord] = []
+    mxDetected:     bool = False
+    mxRecords:      list[str] = []
     spfDetected:    bool = False
     dmarcDetected:  bool = False
     spfRecord:      Optional[str] = None
     dmarcRecord:    Optional[str] = None
+    spfAll:         Optional[str] = None
+    spfLookupCount: int = 0
+    dmarcPolicy:    Optional[str] = None
+    dmarcSubdomainPolicy: Optional[str] = None
+    dmarcPct:       Optional[int] = None
+    dmarcRua:       Optional[str] = None
+    dmarcRuf:       Optional[str] = None
+    dmarcAlignmentDkim: Optional[str] = None
+    dmarcAlignmentSpf:  Optional[str] = None
     error:          Optional[str] = None
 
 

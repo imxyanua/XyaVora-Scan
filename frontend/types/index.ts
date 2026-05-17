@@ -48,10 +48,21 @@ export interface DnsRecord {
 
 export interface DnsResult {
   records:       DnsRecord[];
+  mxDetected:    boolean;
+  mxRecords:     string[];
   spfDetected:   boolean;
   dmarcDetected: boolean;
   spfRecord?:    string;
   dmarcRecord?:  string;
+  spfAll?:        string;
+  spfLookupCount: number;
+  dmarcPolicy?:   string;
+  dmarcSubdomainPolicy?: string;
+  dmarcPct?:      number;
+  dmarcRua?:      string;
+  dmarcRuf?:      string;
+  dmarcAlignmentDkim?: string;
+  dmarcAlignmentSpf?:  string;
   error?:        string;
 }
 
