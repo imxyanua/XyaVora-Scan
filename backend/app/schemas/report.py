@@ -16,7 +16,7 @@ FindingStatus   = Literal["pass", "warning", "fail", "info"]
 FindingCategory = Literal[
     "DNS", "SSL", "Headers", "WHOIS",
     "Tech Stack", "Cookies", "Security.txt", "Screenshot",
-    "HTTP", "Metadata", "General",
+    "HTTP", "Metadata", "Discovery", "General",
 ]
 
 
@@ -124,6 +124,23 @@ class PageMetadataResult(_Base):
 
 # ── WHOIS ─────────────────────────────────────────────────────────
 
+class SiteDiscoveryResult(_Base):
+    robotsPresent:     bool = False
+    robotsUrl:         Optional[str] = None
+    robotsStatusCode:  Optional[int] = None
+    userAgents:        list[str] = []
+    allowRules:        list[str] = []
+    disallowRules:     list[str] = []
+    crawlDelay:        Optional[str] = None
+    disallowAll:       bool = False
+    sitemapPresent:    bool = False
+    sitemapUrl:        Optional[str] = None
+    sitemapUrls:       list[str] = []
+    sitemapUrlCount:   int = 0
+    sitemapIndexCount: int = 0
+    error:             Optional[str] = None
+
+
 class WhoisResult(_Base):
     registrar:   Optional[str] = None
     createdDate: Optional[str] = None
@@ -209,6 +226,7 @@ class ScanReport(_Base):
     headers:       HeadersResult    = HeadersResult()
     httpOverview:  HttpOverviewResult = HttpOverviewResult()
     pageMetadata:  PageMetadataResult = PageMetadataResult()
+    siteDiscovery: SiteDiscoveryResult = SiteDiscoveryResult()
     whois:         WhoisResult      = WhoisResult()
     techStack:     list[TechStackItem]    = []
     cookies:       list[CookieResult]     = []

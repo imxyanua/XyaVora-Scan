@@ -7,6 +7,7 @@ import { TechStackCard }        from "@/components/dashboard/TechStackCard";
 import { SecurityHeadersCard }  from "@/components/dashboard/SecurityHeadersCard";
 import { HttpOverviewCard }     from "@/components/dashboard/HttpOverviewCard";
 import { PageMetadataCard }     from "@/components/dashboard/PageMetadataCard";
+import { SiteDiscoveryCard }    from "@/components/dashboard/SiteDiscoveryCard";
 import { DNSRecordsCard }       from "@/components/dashboard/DNSRecordsCard";
 import { WhoisCard }            from "@/components/dashboard/WhoisCard";
 import { CookiesCard }          from "@/components/dashboard/CookiesCard";
@@ -112,6 +113,7 @@ export default async function ReportPage({ params, searchParams }: Props) {
             </div>
             <HttpOverviewCard http={report.httpOverview} />
             <PageMetadataCard metadata={report.pageMetadata} />
+            <SiteDiscoveryCard discovery={report.siteDiscovery} />
             <div className="lg:col-span-2">
               <SecurityHeadersCard headers={report.headers} />
             </div>

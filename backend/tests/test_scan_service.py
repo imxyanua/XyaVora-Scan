@@ -9,6 +9,7 @@ from app.schemas.report import (
     HeadersResult,
     HttpOverviewResult,
     PageMetadataResult,
+    SiteDiscoveryResult,
     ScreenshotResult,
     SecurityTxtResult,
     SslResult,
@@ -100,6 +101,9 @@ async def test_run_scan_force_refresh_bypasses_cache(monkeypatch):
     async def fake_page_metadata(url: str):
         return AnalyzerResult(key="pageMetadata", status="success", data=PageMetadataResult())
 
+    async def fake_site_discovery(url: str):
+        return AnalyzerResult(key="siteDiscovery", status="success", data=SiteDiscoveryResult())
+
     async def fake_whois(hostname: str):
         return AnalyzerResult(key="whois", status="success", data=WhoisResult())
 
@@ -127,6 +131,7 @@ async def test_run_scan_force_refresh_bypasses_cache(monkeypatch):
     monkeypatch.setattr(scan_service, "analyze_headers", fake_headers)
     monkeypatch.setattr(scan_service, "analyze_http_overview", fake_http_overview)
     monkeypatch.setattr(scan_service, "analyze_page_metadata", fake_page_metadata)
+    monkeypatch.setattr(scan_service, "analyze_site_discovery", fake_site_discovery)
     monkeypatch.setattr(scan_service, "analyze_whois", fake_whois)
     monkeypatch.setattr(scan_service, "analyze_tech_stack", fake_tech_stack)
     monkeypatch.setattr(scan_service, "analyze_cookies", fake_cookies)

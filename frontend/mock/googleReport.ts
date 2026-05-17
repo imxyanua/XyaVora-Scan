@@ -113,6 +113,22 @@ export const mockGoogleReport: ScanReport = {
     nofollow:      false,
   },
 
+  siteDiscovery: {
+    robotsPresent:     true,
+    robotsUrl:         "https://www.google.com/robots.txt",
+    robotsStatusCode:  200,
+    userAgents:        ["*"],
+    allowRules:        ["/search/about", "/search/howsearchworks"],
+    disallowRules:     ["/search", "/sdch"],
+    crawlDelay:        undefined,
+    disallowAll:       false,
+    sitemapPresent:    true,
+    sitemapUrl:        "https://www.google.com/sitemap.xml",
+    sitemapUrls:       ["https://www.google.com/", "https://www.google.com/search/about"],
+    sitemapUrlCount:   2,
+    sitemapIndexCount: 0,
+  },
+
   whois: {
     registrar:   "MarkMonitor Inc.",
     createdDate: "1997-09-15T00:00:00.000Z",
