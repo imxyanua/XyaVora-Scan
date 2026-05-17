@@ -12,6 +12,7 @@ import { WhoisCard }            from "@/components/dashboard/WhoisCard";
 import { CookiesCard }          from "@/components/dashboard/CookiesCard";
 import { SecurityTxtCard }      from "@/components/dashboard/SecurityTxtCard";
 import { ScreenshotCard }       from "@/components/dashboard/ScreenshotCard";
+import { ResearchToolsCard }    from "@/components/dashboard/ResearchToolsCard";
 import { ScanLink }             from "@/components/scan/ScanLink";
 import { AppIcon }              from "@/components/ui/AppIcon";
 import { analyzeDomain, getReportById } from "@/lib/api";
@@ -125,6 +126,8 @@ export default async function ReportPage({ params, searchParams }: Props) {
           <SecurityTxtCard securityTxt={report.securityTxt} />
           <ScreenshotCard screenshot={report.screenshot} />
         </div>
+
+        <ResearchToolsCard report={report} />
 
       </div>
     </AppShell>
