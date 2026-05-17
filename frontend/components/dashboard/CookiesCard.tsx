@@ -24,7 +24,7 @@ export function CookiesCard({ cookies }: Props) {
       {/* Header */}
       <div className="flex justify-between items-center border-b border-primary-fixed/20 pb-2 mb-3 shrink-0">
         <h3 className="font-mono text-[11px] tracking-widest text-white uppercase">
-          SYS.COOKIES_AUDIT
+          Cookies
         </h3>
         <span className="font-mono text-[11px] text-primary-fixed">
           [{cookies.length} COOKIE{cookies.length !== 1 ? "S" : ""}]
@@ -32,7 +32,7 @@ export function CookiesCard({ cookies }: Props) {
       </div>
 
       {cookies.length === 0 ? (
-        <p className="font-mono text-sm text-primary-fixed/40">[-] No cookies set</p>
+        <p className="font-mono text-sm text-primary-fixed/60">[-] No cookies set</p>
       ) : (
         <div className="space-y-3">
           {cookies.map((c, i) => (

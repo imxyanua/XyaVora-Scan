@@ -46,9 +46,9 @@ export function RawDataCard({ report }: Props) {
       <div className="p-3 border-b border-primary-fixed/20 bg-[#151918] flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="font-mono text-[11px] tracking-widest text-white uppercase">
-            SYS.RAW_DATA
+            Raw Data
           </h3>
-          <p className="font-mono text-[10px] text-primary-fixed/45 uppercase tracking-widest mt-1">
+          <p className="font-mono text-[10px] text-primary-fixed/65 uppercase tracking-widest mt-1">
             VIEW_OR_DOWNLOAD_SCAN_PAYLOAD
           </p>
         </div>

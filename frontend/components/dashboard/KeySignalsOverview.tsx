@@ -74,7 +74,7 @@ export function KeySignalsOverview({ headers, dns, ssl }: Props) {
       {/* Header */}
       <div className="flex justify-between items-start border-b border-primary-fixed/20 pb-2 mb-4 shrink-0">
         <h2 className="font-mono text-[11px] tracking-widest text-white uppercase">
-          SYS.KEY_SIGNALS_OVERVIEW
+          Key Signals
         </h2>
         <span className="font-mono text-[11px] text-primary-fixed">[MATRIX_VIEW]</span>
       </div>

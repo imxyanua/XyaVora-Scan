@@ -39,7 +39,7 @@ const GROUPS: Group[] = [
     key:        "info",
     label:      "INFO_LOG",
     prefix:     "[i]",
-    labelClass: "text-primary-fixed/50",
+    labelClass: "text-primary-fixed/65",
     borderCls:  "border-primary-fixed/30",
     statuses:   ["info", "pass"],
   },
@@ -67,7 +67,7 @@ export function AdvisoryPanel({ findings }: Props) {
       {/* Header */}
       <div className="p-3 border-b border-primary-fixed/20 flex justify-between items-center bg-[#151918] shrink-0">
         <h2 className="font-mono text-[11px] tracking-widest text-white uppercase">
-          SYS.ADVISORY_PANEL
+          Findings
         </h2>
         <span className={`status-badge ${totalIssues > 0 ? "status-warn" : "status-pass"} text-[10px]`}>
           [QTY:{totalIssues}]
@@ -95,7 +95,7 @@ export function AdvisoryPanel({ findings }: Props) {
                 </span>
                 <AppIcon
                   name={isExpanded ? "expand_more" : "chevron_right"}
-                  className="text-primary-fixed/40 text-sm"
+                  className="text-primary-fixed/60 text-sm"
                 />
               </button>
 

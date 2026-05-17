@@ -29,25 +29,25 @@ export function WhoisCard({ whois }: Props) {
       {/* Header */}
       <div className="flex justify-between items-center border-b border-primary-fixed/20 pb-2 mb-3 shrink-0">
         <h3 className="font-mono text-[11px] tracking-widest text-white uppercase">
-          SYS.WHOIS_DATA
+          WHOIS
         </h3>
         <span className="font-mono text-[11px] text-primary-fixed">[REGISTRAR]</span>
       </div>
 
       {whois.error ? (
-        <p className="font-mono text-sm text-primary-fixed/40">[-] {whois.error}</p>
+        <p className="font-mono text-sm text-primary-fixed/60">[-] {whois.error}</p>
       ) : (
         <div className="space-y-2 font-mono text-sm flex-1">
           {rows.map((row) => (
             <div key={row.key} className="flex justify-between gap-2">
-              <span className="text-primary-fixed/45 shrink-0">{row.key}:</span>
+              <span className="text-primary-fixed/65 shrink-0">{row.key}:</span>
               <span className="text-[#d7e8ff] text-right truncate">{row.val}</span>
             </div>
           ))}
 
           {whois.nameServers.length > 0 && (
             <div className="pt-2 border-t border-primary-fixed/15 border-dashed">
-              <span className="text-primary-fixed/45 block mb-1">NS:</span>
+              <span className="text-primary-fixed/65 block mb-1">NS:</span>
               <div className="space-y-1">
                 {whois.nameServers.slice(0, 4).map((ns) => (
                   <div key={ns} className="text-[#d7e8ff]/75 text-xs truncate pl-2">

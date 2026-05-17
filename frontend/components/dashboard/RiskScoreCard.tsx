@@ -28,7 +28,7 @@ export function RiskScoreCard({ score, grade, status, scanTime }: Props) {
       {/* Header */}
       <div className="flex justify-between items-start border-b border-primary-fixed/20 pb-2 mb-4">
         <h2 className="font-mono text-[11px] tracking-widest text-white uppercase">
-          SYS.GLOBAL_RISK_SCORE
+          Risk Score
         </h2>
         <span className="font-mono text-[11px] text-primary-fixed">[METRIC_01]</span>
       </div>
@@ -38,7 +38,7 @@ export function RiskScoreCard({ score, grade, status, scanTime }: Props) {
         <div>
           <div className="font-mono font-bold text-secondary-fixed leading-none" style={{ fontSize: "3rem" }}>
             {score}
-            <span className="text-primary-fixed/40 text-2xl font-normal">/100</span>
+            <span className="text-primary-fixed/60 text-2xl font-normal">/100</span>
           </div>
           <div className="font-mono text-[11px] uppercase mt-2 text-[#d7e8ff]/65">
             &gt; T: {elapsed}

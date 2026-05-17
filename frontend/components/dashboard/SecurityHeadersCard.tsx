@@ -16,7 +16,7 @@ export function SecurityHeadersCard({ headers }: Props) {
       {/* Header */}
       <div className="p-3 border-b border-primary-fixed/20 bg-[#151918] flex justify-between items-center shrink-0">
         <h3 className="font-mono text-[11px] tracking-widest text-white uppercase">
-          SYS.HTTP_SEC_HEADERS
+          Security Headers
         </h3>
         <div className="flex items-center gap-3 font-mono text-[11px] text-primary-fixed">
           {headers.error
