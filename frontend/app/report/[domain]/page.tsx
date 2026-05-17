@@ -15,6 +15,7 @@ import { ScreenshotCard }       from "@/components/dashboard/ScreenshotCard";
 import { ScanLink }             from "@/components/scan/ScanLink";
 import { AppIcon }              from "@/components/ui/AppIcon";
 import { analyzeDomain, getReportById } from "@/lib/api";
+import { normalizeScanTarget }  from "@/lib/startScan";
 
 type Props = {
   params:       Promise<{ domain: string }>;
@@ -22,7 +23,8 @@ type Props = {
 };
 
 export default async function ReportPage({ params, searchParams }: Props) {
-  const { domain } = await params;
+  const rawParams = await params;
+  const domain = normalizeScanTarget(decodeURIComponent(rawParams.domain));
   const { id }     = await searchParams;
 
   // If ?id= is present, load the stored historical report instead of re-scanning.

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppIcon } from "@/components/ui/AppIcon";
+import { normalizeScanTarget } from "@/lib/startScan";
 
 const ANALYZERS = [
   { key: "dns",        label: "DNS_RESOLUTION",     icon: "dns"               },
@@ -30,7 +31,7 @@ const ROW_DURATION = 600;
 
 export function ScanProgress() {
   const searchParams = useSearchParams();
-  const target = searchParams.get("target")?.trim() || "unknown";
+  const target = normalizeScanTarget(searchParams.get("target") ?? "") || "unknown";
   const scanId = searchParams.get("scanId") ?? "manual";
   const scanKey = `${target}:${scanId}`;
 
