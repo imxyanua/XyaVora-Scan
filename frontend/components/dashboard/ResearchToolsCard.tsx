@@ -1,168 +1,305 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import type { ScanReport } from "@/types";
-import { AppIcon } from "@/components/ui/AppIcon";
 
 type Props = {
   report: ScanReport;
 };
 
-type ToolLink = {
-  label: string;
-  detail: string;
-  href: string;
-  icon: string;
+type ResearchTool = {
+  name: string;
+  domain: string;
+  description: string;
+  mark: string;
+  accent: string;
+  iconDomain?: string;
+  href: (input: { hostname: string; normalizedUrl: string; encodedHost: string; encodedUrl: string }) => string;
 };
 
-function makeFileName(hostname: string) {
-  const safeHost = hostname.toLowerCase().replace(/[^a-z0-9.-]+/g, "-");
-  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-  return `${safeHost || "scan"}-${stamp}.json`;
+const RESEARCH_TOOLS: ResearchTool[] = [
+  {
+    name: "Hudson Rock",
+    domain: "hudsonrock.com",
+    description: "Identify Infostealer infection data related to domains and emails",
+    mark: "HR",
+    accent: "#f6c945",
+    href: () => "https://www.hudsonrock.com/",
+  },
+  {
+    name: "SSL Labs Test",
+    domain: "ssllabs.com",
+    description: "Analyzes the SSL configuration of a server and grades it",
+    mark: "SSL",
+    accent: "#f43f3f",
+    iconDomain: "qualys.com",
+    href: ({ encodedHost }) => `https://www.ssllabs.com/ssltest/analyze.html?d=${encodedHost}`,
+  },
+  {
+    name: "Virus Total",
+    domain: "virustotal.com",
+    description: "Checks a URL against multiple antivirus engines",
+    mark: "VT",
+    accent: "#4169ff",
+    iconDomain: "virustotal.com",
+    href: ({ encodedHost }) => `https://www.virustotal.com/gui/domain/${encodedHost}`,
+  },
+  {
+    name: "Shodan",
+    domain: "shodan.io",
+    description: "Search engine for Internet-connected devices",
+    mark: "SH",
+    accent: "#ff6b7a",
+    href: ({ encodedHost }) => `https://www.shodan.io/search?query=${encodedHost}`,
+  },
+  {
+    name: "Archive",
+    domain: "archive.org",
+    description: "View previous versions of a site via the Internet Archive",
+    mark: "AR",
+    accent: "#dfe3e9",
+    href: ({ normalizedUrl }) => `https://web.archive.org/web/*/${normalizedUrl}`,
+  },
+  {
+    name: "URLScan",
+    domain: "urlscan.io",
+    description: "Scans a URL and provides information about the page",
+    mark: "US",
+    accent: "#e65f3f",
+    href: ({ encodedHost }) => `https://urlscan.io/search/#${encodedHost}`,
+  },
+  {
+    name: "Sucuri SiteCheck",
+    domain: "sitecheck.sucuri.net",
+    description: "Checks a URL against blacklists and known threats",
+    mark: "SC",
+    accent: "#008c9b",
+    href: ({ encodedUrl }) => `https://sitecheck.sucuri.net/results/${encodedUrl}`,
+  },
+  {
+    name: "Domain Tools",
+    domain: "whois.domaintools.com",
+    description: "Run a WhoIs lookup on a domain",
+    mark: "DT",
+    accent: "#7d8795",
+    href: ({ encodedHost }) => `https://whois.domaintools.com/${encodedHost}`,
+  },
+  {
+    name: "NS Lookup",
+    domain: "nslookup.io",
+    description: "View DNS records for a domain",
+    mark: "NS",
+    accent: "#6d28d9",
+    href: ({ encodedHost }) => `https://www.nslookup.io/domains/${encodedHost}/dns-records/`,
+  },
+  {
+    name: "DNS Checker",
+    domain: "dnschecker.org",
+    description: "Check global DNS propagation across multiple servers",
+    mark: "DC",
+    accent: "#67d9ef",
+    href: ({ encodedHost }) => `https://dnschecker.org/all-dns-records-of-domain.php?query=${encodedHost}`,
+  },
+  {
+    name: "Censys",
+    domain: "search.censys.io",
+    description: "Lookup hosts associated with a domain",
+    mark: "CY",
+    accent: "#ff7a1a",
+    href: ({ encodedHost }) => `https://search.censys.io/search?resource=hosts&q=${encodedHost}`,
+  },
+  {
+    name: "Page Speed Insights",
+    domain: "developers.google.com",
+    description: "Checks the performance, accessibility and SEO of a page on mobile + desktop",
+    mark: "PS",
+    accent: "#65a7ff",
+    iconDomain: "pagespeed.web.dev",
+    href: ({ encodedUrl }) => `https://pagespeed.web.dev/analysis?url=${encodedUrl}`,
+  },
+  {
+    name: "Built With",
+    domain: "builtwith.com",
+    description: "View the tech stack of a website",
+    mark: "BW",
+    accent: "#0b7f2a",
+    href: ({ encodedHost }) => `https://builtwith.com/${encodedHost}`,
+  },
+  {
+    name: "DNS Dumpster",
+    domain: "dnsdumpster.com",
+    description: "DNS recon tool, to map out a domain from it's DNS records",
+    mark: "DD",
+    accent: "#00d12f",
+    href: () => "https://dnsdumpster.com/",
+  },
+  {
+    name: "BGP Tools",
+    domain: "bgp.tools",
+    description: "View realtime BGP data for any ASN, Prefix or DNS",
+    mark: "BG",
+    accent: "#f5f5f5",
+    href: ({ encodedHost }) => `https://bgp.tools/dns/${encodedHost}`,
+  },
+  {
+    name: "Similar Web",
+    domain: "similarweb.com",
+    description: "View approx traffic and engagement stats for a website",
+    mark: "SW",
+    accent: "#ff7a1a",
+    href: ({ encodedHost }) => `https://www.similarweb.com/website/${encodedHost}/`,
+  },
+  {
+    name: "Blacklist Checker",
+    domain: "blacklistchecker.com",
+    description: "Check if a domain, IP or email is present on the top blacklists",
+    mark: "BL",
+    accent: "#2388ff",
+    href: ({ encodedHost }) => `https://blacklistchecker.com/check/${encodedHost}`,
+  },
+  {
+    name: "Cloudflare Radar",
+    domain: "radar.cloudflare.com",
+    description: "View traffic source locations for a domain through Cloudflare",
+    mark: "CF",
+    accent: "#ff9d2e",
+    href: ({ encodedHost }) => `https://radar.cloudflare.com/domains/domain/${encodedHost}`,
+  },
+  {
+    name: "Mozilla HTTP Observatory",
+    domain: "developer.mozilla.org",
+    description: "Assesses website security posture by analyzing various security headers and practices",
+    mark: "MO",
+    accent: "#f5f5f5",
+    iconDomain: "developer.mozilla.org",
+    href: ({ encodedHost }) => `https://developer.mozilla.org/en-US/observatory/analyze?host=${encodedHost}`,
+  },
+  {
+    name: "AbuseIPDB",
+    domain: "abuseipdb.com",
+    description: "Checks a website against Zscaler's dynamic risk scoring engine",
+    mark: "AB",
+    accent: "#ff334e",
+    href: ({ encodedHost }) => `https://www.abuseipdb.com/check/${encodedHost}`,
+  },
+  {
+    name: "IBM X-Force Exchange",
+    domain: "exchange.xforce.ibmcloud.com",
+    description: "View shared human and machine generated threat intelligence",
+    mark: "XF",
+    accent: "#6b879d",
+    href: ({ encodedUrl }) => `https://exchange.xforce.ibmcloud.com/url/${encodedUrl}`,
+  },
+  {
+    name: "URLVoid",
+    domain: "urlvoid.com",
+    description: "Checks a website across 30+ blocklist engines and website reputation services",
+    mark: "UV",
+    accent: "#ff9800",
+    href: ({ encodedHost }) => `https://www.urlvoid.com/scan/${encodedHost}/`,
+  },
+  {
+    name: "URLhaus",
+    domain: "urlhaus.abuse.ch",
+    description: "Checks if the site is in URLhaus's malware URL exchange",
+    mark: "UH",
+    accent: "#c01818",
+    href: ({ encodedHost }) => `https://urlhaus.abuse.ch/browse.php?search=${encodedHost}`,
+  },
+  {
+    name: "ANY.RUN",
+    domain: "any.run",
+    description: "An interactive malware and web sandbox",
+    mark: "AR",
+    accent: "#39d7ff",
+    href: () => "https://any.run/",
+  },
+];
+
+function faviconUrl(tool: ResearchTool) {
+  return `https://www.google.com/s2/favicons?domain=${tool.iconDomain ?? tool.domain}&sz=64`;
 }
 
-function redactLargePreview(report: ScanReport) {
-  return {
-    ...report,
-    screenshot: {
-      ...report.screenshot,
-      base64: report.screenshot.base64 ? "[desktop screenshot base64 omitted from preview]" : undefined,
-      mobileBase64: report.screenshot.mobileBase64 ? "[mobile screenshot base64 omitted from preview]" : undefined,
-    },
-  };
+function ToolIcon({ tool }: { tool: ResearchTool }) {
+  const [failed, setFailed] = useState(false);
+
+  return (
+    <span
+      className="h-10 w-10 shrink-0 border border-white/10 bg-[#080A0B] flex items-center justify-center overflow-hidden"
+      style={{ boxShadow: `inset 0 0 0 1px ${tool.accent}55` }}
+      aria-hidden="true"
+    >
+      {failed ? (
+        <span
+          className="h-full w-full flex items-center justify-center font-mono text-[11px] font-bold text-[#070B0F]"
+          style={{ backgroundColor: tool.accent }}
+        >
+          {tool.mark}
+        </span>
+      ) : (
+        <img
+          src={faviconUrl(tool)}
+          alt=""
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          className="h-8 w-8 object-contain"
+          onError={() => setFailed(true)}
+        />
+      )}
+    </span>
+  );
 }
 
 export function ResearchToolsCard({ report }: Props) {
-  const [showRaw, setShowRaw] = useState(false);
   const hostname = report.hostname || report.target;
+  const normalizedUrl = report.normalizedUrl || `https://${hostname}`;
   const encodedHost = encodeURIComponent(hostname);
-  const encodedUrl = encodeURIComponent(report.normalizedUrl || `https://${hostname}`);
-
-  const tools: ToolLink[] = [
-    {
-      label: "SSL Labs",
-      detail: "TLS certificate and protocol test",
-      href: `https://www.ssllabs.com/ssltest/analyze.html?d=${encodedHost}`,
-      icon: "lock",
-    },
-    {
-      label: "SecurityHeaders",
-      detail: "HTTP security header validation",
-      href: `https://securityheaders.com/?q=${encodedHost}&followRedirects=on`,
-      icon: "security",
-    },
-    {
-      label: "crt.sh",
-      detail: "Certificate transparency lookup",
-      href: `https://crt.sh/?q=${encodedHost}`,
-      icon: "dns",
-    },
-    {
-      label: "PageSpeed",
-      detail: "Performance and UX diagnostics",
-      href: `https://pagespeed.web.dev/analysis?url=${encodedUrl}`,
-      icon: "monitoring",
-    },
-    {
-      label: "urlscan.io",
-      detail: "Public URL intelligence search",
-      href: `https://urlscan.io/search/#${encodedHost}`,
-      icon: "travel_explore",
-    },
-  ];
-
-  const rawJson = useMemo(() => JSON.stringify(report, null, 2), [report]);
-  const previewJson = useMemo(() => JSON.stringify(redactLargePreview(report), null, 2), [report]);
-
-  function downloadRawData() {
-    const blob = new Blob([rawJson], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = makeFileName(hostname);
-    link.click();
-    window.setTimeout(() => URL.revokeObjectURL(url), 0);
-  }
+  const encodedUrl = encodeURIComponent(normalizedUrl);
+  const hrefInput = { hostname, normalizedUrl, encodedHost, encodedUrl };
 
   return (
-    <section className="card-panel">
-      <div className="p-3 border-b border-primary-fixed/20 bg-[#070B0F] flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h3 className="font-mono text-[11px] tracking-widest text-primary-fixed/60 uppercase">
-            SYS.EXTERNAL_TOOLS_FOR_FURTHER_RESEARCH
-          </h3>
-          <p className="font-mono text-[10px] text-primary-fixed/35 uppercase tracking-widest mt-1">
-            VIEW_OR_DOWNLOAD_RAW_DATA
-          </p>
-        </div>
-        <span className="font-mono text-[10px] text-primary-fixed/40 break-all">
-          {hostname}
-        </span>
-      </div>
+    <section className="bg-[#202322] border border-primary-fixed/10 p-3 md:p-4">
+      <h2 className="font-mono text-xl md:text-2xl font-bold text-primary-fixed mb-5">
+        External Tools for Further Research
+      </h2>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5">
-        <div className="lg:col-span-3 border-b lg:border-b-0 lg:border-r border-primary-fixed/10">
-          <div className="grid grid-cols-1 sm:grid-cols-2">
-            {tools.map((tool) => (
-              <a
-                key={tool.label}
-                href={tool.href}
-                target="_blank"
-                rel="noreferrer"
-                className="group min-h-[76px] border-b border-primary-fixed/10 last:border-b-0 sm:odd:border-r sm:last:border-b sm:border-primary-fixed/10 px-4 py-3 flex items-center gap-3 hover:bg-primary-fixed/[0.04] transition-colors"
-              >
-                <AppIcon
-                  name={tool.icon}
-                  className="text-[20px] text-primary-fixed/70 shrink-0"
-                />
-                <span className="min-w-0">
-                  <span className="block font-mono text-[12px] text-primary-fixed uppercase tracking-wider">
-                    {tool.label}
-                  </span>
-                  <span className="block font-mono text-[10px] text-primary-fixed/45 mt-1">
-                    {tool.detail}
-                  </span>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-1.5">
+        {RESEARCH_TOOLS.map((tool) => (
+          <a
+            key={tool.name}
+            href={tool.href(hrefInput)}
+            target="_blank"
+            rel="noreferrer"
+            className="group bg-[#0D0F10] border border-black shadow-[3px_3px_0_#050505] min-h-[92px] p-2 hover:border-primary-fixed/50 hover:bg-[#111618] transition-colors"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="font-mono text-[15px] leading-tight font-bold text-white truncate">
+                  {tool.name}
+                </h3>
+                <span className="font-mono text-[12px] leading-tight text-primary-fixed underline underline-offset-2 truncate block">
+                  {tool.domain}
                 </span>
-                <AppIcon
-                  name="chevron_right"
-                  className="ml-auto text-[16px] text-primary-fixed/30 group-hover:text-primary-fixed shrink-0"
-                />
-              </a>
-            ))}
-          </div>
-        </div>
+              </div>
+              <span className="font-mono text-[10px] text-primary-fixed/20 group-hover:text-primary-fixed/70">
+                EXT
+              </span>
+            </div>
 
-        <div className="lg:col-span-2 p-4 space-y-3">
-          <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-2">
-            <button
-              type="button"
-              onClick={() => setShowRaw((value) => !value)}
-              className="btn-ghost px-3 py-2 text-xs flex items-center justify-center gap-2"
-            >
-              <AppIcon name="code" className="text-[15px]" />
-              {showRaw ? "HIDE_RAW_DATA" : "VIEW_RAW_DATA"}
-            </button>
-            <button
-              type="button"
-              onClick={downloadRawData}
-              className="btn-primary px-3 py-2 text-xs flex items-center justify-center gap-2"
-            >
-              <AppIcon name="download" className="text-[15px]" />
-              DOWNLOAD_JSON
-            </button>
-          </div>
-
-          <p className="font-mono text-[10px] text-primary-fixed/40 leading-relaxed">
-            RAW preview omits screenshot base64 to keep the page responsive. Download includes the full scan payload.
-          </p>
-
-          {showRaw && (
-            <pre className="max-h-[360px] overflow-auto bg-[#070B0F] border border-primary-fixed/10 p-3 font-mono text-[10px] leading-relaxed text-primary-fixed/60 whitespace-pre-wrap break-words">
-              {previewJson}
-            </pre>
-          )}
-        </div>
+            <div className="mt-2 flex items-center gap-3">
+              <ToolIcon tool={tool} />
+              <p className="font-mono text-[12px] leading-[1.1rem] text-[#d7e8ff]">
+                {tool.description}
+              </p>
+            </div>
+          </a>
+        ))}
       </div>
+
+      <p className="font-mono text-[11px] leading-relaxed text-white/45 mt-7">
+        These tools are not affiliated with XyaVora-Scan. Please use them at your own risk.
+      </p>
     </section>
   );
 }

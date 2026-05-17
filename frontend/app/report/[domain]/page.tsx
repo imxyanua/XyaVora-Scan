@@ -12,6 +12,7 @@ import { WhoisCard }            from "@/components/dashboard/WhoisCard";
 import { CookiesCard }          from "@/components/dashboard/CookiesCard";
 import { SecurityTxtCard }      from "@/components/dashboard/SecurityTxtCard";
 import { ScreenshotCard }       from "@/components/dashboard/ScreenshotCard";
+import { RawDataCard }          from "@/components/dashboard/RawDataCard";
 import { ResearchToolsCard }    from "@/components/dashboard/ResearchToolsCard";
 import { ScanLink }             from "@/components/scan/ScanLink";
 import { AppIcon }              from "@/components/ui/AppIcon";
@@ -127,6 +128,7 @@ export default async function ReportPage({ params, searchParams }: Props) {
           <ScreenshotCard screenshot={report.screenshot} />
         </div>
 
+        <RawDataCard report={report} />
         <ResearchToolsCard report={report} />
 
       </div>
