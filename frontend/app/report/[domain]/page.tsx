@@ -2,6 +2,8 @@ import type { ReactNode }       from "react";
 import { AppShell }             from "@/components/layout/AppShell";
 import { RiskScoreCard }        from "@/components/dashboard/RiskScoreCard";
 import { KeySignalsOverview }   from "@/components/dashboard/KeySignalsOverview";
+import { DataConfidenceStrip }  from "@/components/dashboard/DataConfidenceStrip";
+import { PriorityFindingsCard } from "@/components/dashboard/PriorityFindingsCard";
 import { AdvisoryPanel }        from "@/components/dashboard/AdvisoryPanel";
 import { SSLCard }              from "@/components/dashboard/SSLCard";
 import { TechStackCard }        from "@/components/dashboard/TechStackCard";
@@ -31,16 +33,18 @@ type Props = {
 };
 
 function ReportSection({
+  id,
   title,
   detail,
   children,
 }: {
+  id: string;
   title: string;
   detail: string;
   children: ReactNode;
 }) {
   return (
-    <section className="space-y-3">
+    <section id={id} className="space-y-3 scroll-mt-20">
       <div className="flex items-end justify-between gap-4 border-b border-primary-fixed/15 pb-2">
         <h2 className="font-mono text-[13px] text-white uppercase tracking-widest">
           {title}
@@ -82,6 +86,14 @@ export default async function ReportPage({ params, searchParams }: Props) {
   }
 
   const report = response.data;
+  const sections = [
+    { id: "overview", label: "Overview" },
+    { id: "priorities", label: "Priorities" },
+    { id: "security", label: "Security" },
+    { id: "network", label: "Network" },
+    { id: "page", label: "Page" },
+    { id: "appendix", label: "Appendix" },
+  ];
 
   return (
     <AppShell domain={domain}>
@@ -106,7 +118,21 @@ export default async function ReportPage({ params, searchParams }: Props) {
           </div>
         )}
 
-        <ReportSection title="Overview" detail="risk and primary signals">
+        <nav className="sticky top-0 z-20 -mx-4 md:-mx-6 px-4 md:px-6 py-2 bg-[#070B0F]/90 backdrop-blur border-y border-primary-fixed/10 overflow-x-auto">
+          <div className="flex gap-2 min-w-max">
+            {sections.map((section) => (
+              <a
+                key={section.id}
+                href={`#${section.id}`}
+                className="font-mono text-[11px] text-white/65 border border-primary-fixed/15 bg-[#151918] px-3 py-1.5 hover:text-primary-fixed hover:border-primary-fixed/45 transition-colors"
+              >
+                {section.label}
+              </a>
+            ))}
+          </div>
+        </nav>
+
+        <ReportSection id="overview" title="Overview" detail="risk score, scan time, primary signals">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
             <div className="lg:col-span-4">
               <RiskScoreCard
@@ -124,9 +150,11 @@ export default async function ReportPage({ params, searchParams }: Props) {
               />
             </div>
           </div>
+          <DataConfidenceStrip report={report} />
         </ReportSection>
 
-        <ReportSection title="Findings And Capture" detail="issues plus visual context">
+        <ReportSection id="priorities" title="Risk Priorities" detail="top issues first, then full finding log">
+          <PriorityFindingsCard findings={report.findings} />
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-stretch">
             <div className="xl:col-span-7">
               <AdvisoryPanel findings={report.findings} />
@@ -137,7 +165,7 @@ export default async function ReportPage({ params, searchParams }: Props) {
           </div>
         </ReportSection>
 
-        <ReportSection title="Security Posture" detail="transport, headers, cookies, disclosure">
+        <ReportSection id="security" title="Security Posture" detail="transport, headers, cookies, disclosure">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-stretch">
             <div className="xl:col-span-2">
               <SecurityHeadersCard headers={report.headers} />
@@ -148,7 +176,7 @@ export default async function ReportPage({ params, searchParams }: Props) {
           </div>
         </ReportSection>
 
-        <ReportSection title="Infrastructure And Discovery" detail="dns, mail posture, ownership, crawler hints">
+        <ReportSection id="network" title="Network And Discovery" detail="dns, mail posture, ownership, crawler hints">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
             <EmailSecurityCard dns={report.dns} />
             <WhoisCard whois={report.whois} />
@@ -157,7 +185,7 @@ export default async function ReportPage({ params, searchParams }: Props) {
           <DNSRecordsCard dns={report.dns} />
         </ReportSection>
 
-        <ReportSection title="Page Intelligence" detail="http behavior, metadata, detected stack">
+        <ReportSection id="page" title="Page Intelligence" detail="http behavior, redirects, metadata, detected stack">
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 items-stretch">
             <HttpOverviewCard http={report.httpOverview} />
             <RedirectsCard http={report.httpOverview} />
@@ -172,7 +200,7 @@ export default async function ReportPage({ params, searchParams }: Props) {
           </div>
         </ReportSection>
 
-        <ReportSection title="Appendix" detail="export and external validation">
+        <ReportSection id="appendix" title="Appendix" detail="export and external validation">
           <RawDataCard report={report} />
           <ResearchToolsCard report={report} />
         </ReportSection>
