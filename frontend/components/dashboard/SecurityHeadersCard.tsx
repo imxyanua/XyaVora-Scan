@@ -1,4 +1,5 @@
 import type { HeadersResult, HeaderStatus } from "@/types";
+import { SourceQualityBadge } from "./SourceQualityBadge";
 
 interface Props {
   headers: HeadersResult;
@@ -55,9 +56,12 @@ export function SecurityHeadersCard({ headers }: Props) {
                 )}
               </div>
               {h.confidence && (
-                <span className="font-mono text-[9px] text-white/45 shrink-0 mt-1">
-                  {h.confidence.toUpperCase()}
-                </span>
+                <div className="flex flex-col items-end gap-1 shrink-0 mt-0.5">
+                  <SourceQualityBadge source={h.status === "missing" ? "missing" : "header"} />
+                  <span className="font-mono text-[9px] text-white/45">
+                    {h.confidence.toUpperCase()}
+                  </span>
+                </div>
               )}
               <span className={`status-badge ${badge.cls} text-[10px] shrink-0 mt-0.5`}>
                 {badge.text}

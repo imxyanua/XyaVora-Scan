@@ -1,4 +1,5 @@
 import type { DnsResult } from "@/types";
+import { SourceQualityBadge } from "./SourceQualityBadge";
 
 type Props = {
   dns: DnsResult;
@@ -35,7 +36,10 @@ function EvidenceBlock({ title, items }: { title: string; items?: string[] }) {
 
   return (
     <div className="px-5 py-2 border-b border-primary-fixed/10 bg-[#151918]">
-      <p className="font-mono text-sm text-white font-bold mb-1">{title}</p>
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <p className="font-mono text-sm text-white font-bold">{title}</p>
+        <SourceQualityBadge source="dns" />
+      </div>
       <div className="space-y-1">
         {items.slice(0, 3).map((item) => (
           <p key={item} className="font-mono text-[10px] text-[#d7e8ff]/65 break-all">
@@ -82,6 +86,11 @@ export function EmailSecurityCard({ dns }: Props) {
             <span className={`font-mono text-[10px] border px-2 py-0.5 ${CONFIDENCE_STYLE[dns.emailSecurityConfidence]}`}>
               {dns.emailSecurityConfidence.toUpperCase()}
             </span>
+          )}
+          {(dns.mxEvidence?.length || dns.spfEvidence?.length || dns.dmarcEvidence?.length) ? (
+            <SourceQualityBadge source="dns" />
+          ) : (
+            <SourceQualityBadge source="missing" />
           )}
           <span className={`status-badge ${dns.spfDetected ? "status-pass" : "status-fail"} text-[10px]`}>
             {dns.spfDetected ? "[SPF]" : "[-] SPF"}

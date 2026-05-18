@@ -1,4 +1,5 @@
 import type { TechStackItem, TechCategory } from "@/types";
+import { SourceQualityBadge, type SourceQuality } from "./SourceQualityBadge";
 
 interface Props {
   techStack: TechStackItem[];
@@ -99,6 +100,15 @@ function iconUrl(icon: TechIconMeta) {
     : null;
 }
 
+function sourceQuality(sources?: string[]): SourceQuality {
+  if (!sources || sources.length === 0) return "estimated";
+  if (sources.includes("header")) return "header";
+  if (sources.includes("html") || sources.includes("asset-url") || sources.includes("asset-body") || sources.includes("meta")) return "page";
+  if (sources.includes("cookie")) return "cookie";
+  if (sources.includes("inferred")) return "inferred";
+  return "estimated";
+}
+
 export function TechStackCard({ techStack }: Props) {
   const grouped = CATEGORY_ORDER.reduce<Record<string, TechStackItem[]>>(
     (acc, cat) => {
@@ -168,8 +178,11 @@ export function TechStackCard({ techStack }: Props) {
                           )}
                         </span>
                         {sources.length > 0 && (
-                          <span className="text-[9px] text-white/45 leading-none">
-                            {sources.join(" + ")}
+                          <span className="flex flex-wrap items-center gap-1">
+                            <SourceQualityBadge source={sourceQuality(sources)} />
+                            <span className="text-[9px] text-white/45 leading-none">
+                              {sources.join(" + ")}
+                            </span>
                           </span>
                         )}
                       </span>

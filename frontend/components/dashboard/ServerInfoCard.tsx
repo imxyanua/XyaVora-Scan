@@ -1,4 +1,5 @@
 import type { HttpOverviewResult } from "@/types";
+import { SourceQualityBadge } from "./SourceQualityBadge";
 
 type Props = {
   http: HttpOverviewResult;
@@ -45,14 +46,17 @@ export function ServerInfoCard({ http }: Props) {
           {http.cdnProvider && (
             <div className="px-5 py-2 border-b border-primary-fixed/10 bg-[#151918]">
               <div className="flex items-center justify-between gap-3">
-                <span className="font-mono text-sm text-white font-bold">CDN Confidence</span>
-                {http.cdnConfidence ? (
-                  <span className={`font-mono text-[10px] border px-2 py-0.5 ${CONFIDENCE_STYLE[http.cdnConfidence]}`}>
-                    {http.cdnConfidence.toUpperCase()}
-                  </span>
-                ) : (
-                  <span className="font-mono text-sm text-white/50">Unknown</span>
-                )}
+                <span className="font-mono text-sm text-white font-bold">CDN Source</span>
+                <div className="flex items-center gap-2">
+                  <SourceQualityBadge source="header" />
+                  {http.cdnConfidence ? (
+                    <span className={`font-mono text-[10px] border px-2 py-0.5 ${CONFIDENCE_STYLE[http.cdnConfidence]}`}>
+                      {http.cdnConfidence.toUpperCase()}
+                    </span>
+                  ) : (
+                    <span className="font-mono text-sm text-white/50">Unknown</span>
+                  )}
+                </div>
               </div>
               {(http.cdnEvidence?.length ?? 0) > 0 && (
                 <div className="mt-2 space-y-1">

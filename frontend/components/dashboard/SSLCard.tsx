@@ -1,4 +1,5 @@
 import type { SslResult } from "@/types";
+import { SourceQualityBadge } from "./SourceQualityBadge";
 
 interface Props {
   ssl: SslResult;
@@ -62,10 +63,13 @@ export function SSLCard({ ssl }: Props) {
 
           {ssl.tlsConfidence && (
             <div className="flex justify-between gap-4 px-5 py-1.5 border-b border-primary-fixed/10 bg-[#151918]">
-              <span className="text-white font-bold shrink-0">CONFIDENCE</span>
-              <span className={`font-mono text-[10px] border px-2 py-0.5 ${CONFIDENCE_STYLE[ssl.tlsConfidence]}`}>
-                {ssl.tlsConfidence.toUpperCase()}
-              </span>
+              <span className="text-white font-bold shrink-0">SOURCE</span>
+              <div className="flex items-center gap-2">
+                <SourceQualityBadge source="tls" />
+                <span className={`font-mono text-[10px] border px-2 py-0.5 ${CONFIDENCE_STYLE[ssl.tlsConfidence]}`}>
+                  {ssl.tlsConfidence.toUpperCase()}
+                </span>
+              </div>
             </div>
           )}
 
@@ -96,7 +100,10 @@ export function SSLCard({ ssl }: Props) {
             </div>
             {(ssl.certificateEvidence?.length ?? 0) > 0 && (
               <div className="border-t border-primary-fixed/10 pt-2 space-y-1">
-                <p className="text-white font-bold text-xs">EVIDENCE</p>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-white font-bold text-xs">EVIDENCE</p>
+                  <SourceQualityBadge source="tls" />
+                </div>
                 {ssl.certificateEvidence?.slice(0, 5).map((item) => (
                   <p key={item} className="font-mono text-[10px] text-[#d7e8ff]/65 break-all">
                     &gt; {item}
