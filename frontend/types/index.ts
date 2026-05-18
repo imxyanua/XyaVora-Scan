@@ -200,6 +200,8 @@ export interface TechStackItem {
   category:   TechCategory;
   confidence: "high" | "medium" | "low";
   version?:   string;
+  sources?:   string[];
+  evidence?:  string[];
 }
 
 // ── Cookies ──────────────────────────────────

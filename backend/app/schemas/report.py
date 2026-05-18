@@ -194,6 +194,8 @@ class TechStackItem(_Base):
     category:   TechCategory
     confidence: TechConfidence
     version:    Optional[str] = None
+    sources:    list[str] = []
+    evidence:   list[str] = []
 
 
 # ── Cookies ───────────────────────────────────────────────────────
