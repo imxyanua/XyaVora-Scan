@@ -17,8 +17,7 @@ const STATUS_STYLE: Record<PostureStatus, { cls: string; label: string }> = {
 
 function statusForHeaders(headers: HeadersResult): PostureStatus {
   if (headers.error) return "bad";
-  if (headers.securityHeaders.some((item) => item.status === "missing")) return "bad";
-  if (headers.securityHeaders.some((item) => item.status === "warning")) return "warn";
+  if (headers.securityHeaders.some((item) => item.status === "missing" || item.status === "warning")) return "warn";
   return "good";
 }
 
@@ -86,7 +85,7 @@ export function SecurityPostureSummary({ ssl, headers, cookies, securityTxt }: P
         <Metric
           label="Headers"
           status={headersStatus}
-          value={headers.error ? headers.error : `${missingHeaders} missing, ${weakHeaders} weak or permissive`}
+          value={headers.error ? headers.error : `${missingHeaders} missing best-practice headers, ${weakHeaders} weak or permissive`}
         />
         <Metric
           label="Cookies"

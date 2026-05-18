@@ -20,7 +20,7 @@ function FlagBadge({ ok, label }: { ok: boolean; label: string }) {
 
 export function CookiesCard({ cookies }: Props) {
   return (
-    <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex flex-col">
+    <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex h-full flex-col">
       {/* Header */}
       <div className="px-5 pt-5 pb-3 flex justify-between items-start shrink-0">
         <h3 className="font-mono text-2xl font-bold text-primary-fixed leading-none">
@@ -34,7 +34,7 @@ export function CookiesCard({ cookies }: Props) {
       {cookies.length === 0 ? (
         <p className="font-mono text-sm text-primary-fixed/60 px-5 pb-5">[-] No cookies set</p>
       ) : (
-        <div className="px-5 pb-5 space-y-3">
+        <div className="max-h-[320px] space-y-3 overflow-y-auto px-5 pb-5 pr-3">
           {cookies.map((c, i) => (
             <div
               key={`${c.name}-${i}`}

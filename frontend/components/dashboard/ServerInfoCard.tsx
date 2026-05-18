@@ -7,13 +7,15 @@ type Props = {
 };
 
 function Row({ label, value }: { label: string; value?: string | number | null }) {
+  const displayValue = value ? String(value) : "Unknown";
+
   return (
-    <div className="flex justify-between gap-4 px-5 py-1.5 border-b border-primary-fixed/10 last:border-b-0 hover:bg-primary-fixed/[0.04] transition-colors">
+    <div className="flex items-start justify-between gap-4 px-5 py-1.5 border-b border-primary-fixed/10 last:border-b-0 hover:bg-primary-fixed/[0.04] transition-colors">
       <span className="font-mono text-sm text-white font-bold shrink-0">
         {label}
       </span>
-      <span className="font-mono text-sm text-white text-right break-all">
-        {value || "Unknown"}
+      <span className="min-w-0 max-w-[68%] truncate text-right font-mono text-sm text-white" title={displayValue}>
+        {displayValue}
       </span>
     </div>
   );
@@ -67,7 +69,7 @@ export function ServerInfoCard({ http }: Props) {
       {http.error ? (
         <p className="font-mono text-sm text-error/70 px-4 py-4">[-] {http.error}</p>
       ) : (
-        <div>
+        <div className="flex-1 overflow-hidden">
           <Row label="Server" value={http.server} />
           <Row label="Powered By" value={http.poweredBy} />
           <Row label="CDN" value={http.cdnProvider} />
@@ -89,7 +91,7 @@ export function ServerInfoCard({ http }: Props) {
               {(http.cdnEvidence?.length ?? 0) > 0 && (
                 <div className="mt-2 space-y-1">
                   {http.cdnEvidence?.slice(0, 3).map((item) => (
-                    <p key={item} className="font-mono text-[10px] text-[#d7e8ff]/65 break-all">
+                    <p key={item} className="truncate font-mono text-[10px] text-[#d7e8ff]/65" title={item}>
                       &gt; {item}
                     </p>
                   ))}

@@ -38,7 +38,7 @@ export function DNSRecordsCard({ dns }: Props) {
         </div>
       </div>
 
-      <div className="overflow-x-auto flex-1">
+      <div className="max-h-[360px] flex-1 overflow-auto">
         {dns.error ? (
           <p className="font-mono text-sm text-error/70 px-5 py-6">[-] {dns.error}</p>
         ) : (

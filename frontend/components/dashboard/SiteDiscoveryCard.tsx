@@ -13,13 +13,15 @@ function StatusPill({ ok, label }: { ok: boolean; label: string }) {
 }
 
 function Row({ label, value }: { label: string; value?: string | number | null }) {
+  const displayValue = value ? String(value) : "Unknown";
+
   return (
-    <div className="flex justify-between gap-4 px-5 py-1.5 border-b border-primary-fixed/10 last:border-b-0 hover:bg-primary-fixed/[0.04] transition-colors">
+    <div className="flex items-start justify-between gap-4 px-5 py-1.5 border-b border-primary-fixed/10 last:border-b-0 hover:bg-primary-fixed/[0.04] transition-colors">
       <span className="font-mono text-sm text-white font-bold shrink-0">
         {label}
       </span>
-      <span className="font-mono text-sm text-white text-right break-all">
-        {value || "Unknown"}
+      <span className="min-w-0 max-w-[68%] truncate text-right font-mono text-sm text-white" title={displayValue}>
+        {displayValue}
       </span>
     </div>
   );
@@ -31,7 +33,7 @@ export function SiteDiscoveryCard({ discovery }: Props) {
   const ruleCount = discovery.allowRules.length + discovery.disallowRules.length;
 
   return (
-    <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex flex-col">
+    <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex h-full flex-col">
       <div className="px-5 pt-5 pb-3 flex justify-between items-start shrink-0">
         <h3 className="font-mono text-2xl font-bold text-primary-fixed leading-none">
           Site Discovery
@@ -46,7 +48,7 @@ export function SiteDiscoveryCard({ discovery }: Props) {
         <p className="font-mono text-sm text-error/70 px-4 py-4">[-] {discovery.error}</p>
       ) : (
         <>
-          <div>
+          <div className="flex-1 overflow-hidden">
             <Row label="robots.txt" value={discovery.robotsUrl ?? discovery.robotsStatusCode} />
             <Row label="User Agents" value={topAgents} />
             <Row label="Rules" value={ruleCount} />

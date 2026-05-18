@@ -147,7 +147,7 @@ export function TechStackCard({ techStack }: Props) {
           [-] No technologies detected
         </p>
       ) : (
-        <div className="px-5 pb-5 flex flex-1 min-h-0 flex-col gap-4 overflow-y-auto">
+        <div className="flex max-h-[320px] flex-1 flex-col gap-4 overflow-y-auto px-5 pb-5 pr-3">
           {categories.map((cat) => (
             <div key={cat}>
               <p className="font-mono text-sm text-white font-bold mb-2">
@@ -165,7 +165,7 @@ export function TechStackCard({ techStack }: Props) {
                     <span
                       key={tech.name}
                       title={evidence}
-                      className={`border border-primary-fixed/20 bg-[#151918] px-2 py-1 font-mono text-[11px] inline-flex items-start gap-2 hover:border-primary-fixed/45 transition-colors ${colorCls}`}
+                      className={`inline-flex max-w-full items-start gap-2 border border-primary-fixed/20 bg-[#151918] px-2 py-1 font-mono text-[11px] hover:border-primary-fixed/45 transition-colors ${colorCls}`}
                     >
                       <span className={`mt-0.5 grid h-6 w-6 shrink-0 place-items-center border font-mono text-[9px] font-bold leading-none ${icon.cls}`}>
                         {externalIconUrl ? (
@@ -181,17 +181,17 @@ export function TechStackCard({ techStack }: Props) {
                         )}
                       </span>
                       <span className="min-w-0 flex flex-col gap-0.5">
-                        <span className="flex items-center gap-1">
+                        <span className="flex min-w-0 items-center gap-1">
                           <span className="text-[9px] text-primary-fixed/60">[{prefix}]</span>
-                          <span>{tech.name}</span>
+                          <span className="truncate">{tech.name}</span>
                           {tech.version && (
-                            <span className="text-[9px] text-primary-fixed/55"> v{tech.version}</span>
+                            <span className="shrink-0 text-[9px] text-primary-fixed/55"> v{tech.version}</span>
                           )}
                         </span>
                         {sources.length > 0 && (
                           <span className="flex flex-wrap items-center gap-1">
                             <SourceQualityBadge source={sourceQuality(sources)} />
-                            <span className="text-[9px] text-white/45 leading-none">
+                            <span className="max-w-[140px] truncate text-[9px] leading-none text-white/45" title={sources.join(" + ")}>
                               {sources.join(" + ")}
                             </span>
                           </span>

@@ -16,10 +16,11 @@ _HEADER_RULES: list[dict] = [
         "finding_id": "missing_hsts",
         "finding_title": "HSTS Is Not Enabled",
         "finding_desc": "The site does not send Strict-Transport-Security, so browsers are not told to always use HTTPS.",
-        "finding_impact": "An attacker on the same network could intercept traffic via SSL stripping.",
+        "finding_impact": "Users are not pinned to HTTPS after the first visit, which weakens downgrade protection.",
         "finding_rec": "Send Strict-Transport-Security with a long max-age. Add includeSubDomains and preload only after confirming every subdomain supports HTTPS.",
-        "severity": "high",
-        "fail_status": "fail",
+        "severity": "medium",
+        "fail_status": "warning",
+        "confidence": "best-practice",
     },
     {
         "header": "Content-Security-Policy",
@@ -27,10 +28,11 @@ _HEADER_RULES: list[dict] = [
         "finding_id": "missing_csp",
         "finding_title": "Content Security Policy Is Missing",
         "finding_desc": "The site does not send a Content-Security-Policy header, so browsers have fewer controls against injected content.",
-        "finding_impact": "Attackers can inject malicious scripts that execute in users' browsers (XSS).",
+        "finding_impact": "If an injection bug exists elsewhere, the browser has fewer policy controls to limit script execution.",
         "finding_rec": "Start with a report-only CSP, review violations, then enforce a policy such as default-src 'self' and explicit script/style sources.",
-        "severity": "high",
-        "fail_status": "fail",
+        "severity": "medium",
+        "fail_status": "warning",
+        "confidence": "best-practice",
     },
     {
         "header": "X-Frame-Options",
@@ -40,8 +42,9 @@ _HEADER_RULES: list[dict] = [
         "finding_desc": "The site does not send X-Frame-Options, so pages may be embedded by other sites.",
         "finding_impact": "Clickjacking attacks can trick users into clicking hidden UI elements.",
         "finding_rec": "Send X-Frame-Options: DENY, or SAMEORIGIN if legitimate same-site framing is required.",
-        "severity": "medium",
-        "fail_status": "fail",
+        "severity": "low",
+        "fail_status": "warning",
+        "confidence": "best-practice",
     },
     {
         "header": "X-Content-Type-Options",
@@ -51,8 +54,9 @@ _HEADER_RULES: list[dict] = [
         "finding_desc": "The site does not send X-Content-Type-Options, so browsers may guess content types.",
         "finding_impact": "Browsers may execute files with wrong content types, enabling drive-by download attacks.",
         "finding_rec": "Send X-Content-Type-Options: nosniff on HTML, script, style, and downloadable responses.",
-        "severity": "medium",
-        "fail_status": "fail",
+        "severity": "low",
+        "fail_status": "warning",
+        "confidence": "best-practice",
     },
     {
         "header": "Referrer-Policy",
@@ -64,6 +68,7 @@ _HEADER_RULES: list[dict] = [
         "finding_rec": "Send Referrer-Policy: strict-origin-when-cross-origin for a balanced default.",
         "severity": "low",
         "fail_status": "warning",
+        "confidence": "best-practice",
     },
     {
         "header": "Permissions-Policy",
@@ -75,6 +80,7 @@ _HEADER_RULES: list[dict] = [
         "finding_rec": "Send Permissions-Policy and disable unused features, for example geolocation=(), camera=(), microphone=().",
         "severity": "low",
         "fail_status": "warning",
+        "confidence": "best-practice",
     },
 ]
 
@@ -237,7 +243,7 @@ def _check_headers(
                 impact=rule["finding_impact"],
                 recommendation=rule["finding_rec"],
                 status=rule["fail_status"],  # type: ignore[arg-type]
-                confidence="observed",
+                confidence=rule.get("confidence", "observed"),
                 source="headers",
                 evidence=[f"{rule['header']}: not present in response headers"],
             ))
@@ -248,13 +254,13 @@ def _check_headers(
 def _server_finding(server: str) -> Finding:
     return Finding(
         id="server_exposed",
-        severity="low",
+        severity="info",
         category="Headers",
         title="Server Technology Is Exposed",
         description=f"The Server header reveals web server software: '{server}'.",
-        impact="Attackers can target known vulnerabilities for the identified server version.",
+        impact="This is fingerprinting information only. It is not a confirmed vulnerability by itself.",
         recommendation="Configure the server to suppress or obfuscate the Server header.",
-        status="warning",
+        status="info",
         confidence="observed",
         source="headers",
         evidence=[f"Server: {server}"],

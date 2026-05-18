@@ -47,11 +47,12 @@ def test_all_headers_missing():
     assert hsts.evidence == ["Strict-Transport-Security: not present in response headers"]
 
 
-def test_missing_hsts_produces_fail_finding():
+def test_missing_hsts_produces_best_practice_warning():
     items, findings = _check_headers(_make_headers({}))
     hsts_finding = next(f for f in findings if f.id == "missing_hsts")
-    assert hsts_finding.status == "fail"
-    assert hsts_finding.severity == "high"
+    assert hsts_finding.status == "warning"
+    assert hsts_finding.severity == "medium"
+    assert hsts_finding.confidence == "best-practice"
 
 
 def test_missing_referrer_produces_warning():
@@ -102,7 +103,8 @@ def test_permissive_csp_produces_warning_item_and_finding():
 def test_server_finding():
     finding = _server_finding("nginx/1.18.0")
     assert finding.id == "server_exposed"
-    assert finding.status == "warning"
+    assert finding.status == "info"
+    assert finding.severity == "info"
     assert "nginx/1.18.0" in finding.description
 
 

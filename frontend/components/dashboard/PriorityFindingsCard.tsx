@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useCallback } from "react";
-import type { Finding, FindingConfidence, FindingSeverity, FindingStatus } from "@/types";
+import type { Finding, FindingConfidence, FindingSeverity, FindingSource, FindingStatus } from "@/types";
 import { FindingDrawer } from "./FindingDrawer";
 
 interface Props {
@@ -43,6 +43,17 @@ const CONFIDENCE_LABEL: Record<FindingConfidence, string> = {
   "best-practice": "Best practice",
 };
 
+const SOURCE_LABEL: Record<FindingSource, string> = {
+  dns: "DNS",
+  tls: "TLS",
+  headers: "Headers",
+  http: "HTTP",
+  html: "HTML",
+  cookie: "Cookie",
+  whois: "WHOIS",
+  scanner: "Rule",
+};
+
 function rankFinding(finding: Finding) {
   return STATUS_WEIGHT[finding.status] * 10 + SEVERITY_WEIGHT[finding.severity];
 }
@@ -78,7 +89,7 @@ export function PriorityFindingsCard({ findings }: Props) {
               Priority Observations
             </h2>
             <p className="font-mono text-[13px] text-[#d7e8ff]/70 mt-2 max-w-3xl leading-relaxed">
-              The highest-impact checks that need review. These are posture observations, not confirmed vulnerabilities.
+              Highest-impact checks that need review. Verified transport/DNS failures are weighted above best-practice observations.
             </p>
           </div>
           <div className="flex gap-2 shrink-0">
@@ -120,6 +131,11 @@ export function PriorityFindingsCard({ findings }: Props) {
                       {finding.confidence && (
                         <span className="font-mono text-[10px] text-[#d7e8ff]/45">
                           {CONFIDENCE_LABEL[finding.confidence]}
+                        </span>
+                      )}
+                      {finding.source && (
+                        <span className="font-mono text-[10px] text-[#d7e8ff]/45">
+                          src:{SOURCE_LABEL[finding.source]}
                         </span>
                       )}
                     </div>

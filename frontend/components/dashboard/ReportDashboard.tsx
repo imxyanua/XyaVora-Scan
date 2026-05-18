@@ -62,6 +62,28 @@ function ReportSection({
   );
 }
 
+function BalancedGrid({
+  children,
+  columns = "xl:columns-2 2xl:columns-3",
+}: {
+  children: ReactNode;
+  columns?: string;
+}) {
+  return (
+    <div className={`columns-1 gap-4 md:columns-2 ${columns}`}>
+      {children}
+    </div>
+  );
+}
+
+function BalancedItem({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
+  return (
+    <div className={`mb-4 break-inside-avoid ${wide ? "md:column-span-all" : ""}`}>
+      {children}
+    </div>
+  );
+}
+
 export function ReportDashboard({ domain, report, historyId, guestScanId }: Props) {
   const sections = [
     { id: "overview", label: "Overview" },
@@ -74,7 +96,7 @@ export function ReportDashboard({ domain, report, historyId, guestScanId }: Prop
 
   return (
     <AppShell domain={domain}>
-      <div className="p-4 md:p-6 space-y-6 w-full max-w-[1440px] mx-auto pb-12">
+      <div className="p-4 md:p-6 space-y-6 w-full max-w-[1560px] mx-auto pb-12">
         <div className="md:hidden pb-4 border-b border-primary-fixed/20">
           <span className="font-mono text-[11px] text-primary-fixed/50 uppercase tracking-widest block mb-1">
             TARGET_HOST:
@@ -134,7 +156,7 @@ export function ReportDashboard({ domain, report, historyId, guestScanId }: Prop
 
         <ReportSection id="priorities" title="Risk Priorities" detail="posture observations, then full finding log">
           <PriorityFindingsCard findings={report.findings} />
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-stretch">
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-start">
             <div className="xl:col-span-7">
               <AdvisoryPanel findings={report.findings} />
             </div>
@@ -151,42 +173,64 @@ export function ReportDashboard({ domain, report, historyId, guestScanId }: Prop
             cookies={report.cookies}
             securityTxt={report.securityTxt}
           />
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-stretch">
-            <div className="xl:col-span-2 h-full">
+          <BalancedGrid>
+            <BalancedItem wide>
               <SecurityHeadersCard headers={report.headers} />
-            </div>
-            <SSLCard ssl={report.ssl} />
-            <CookiesCard cookies={report.cookies} />
-            <div className="md:col-span-2 xl:col-span-2 h-full">
+            </BalancedItem>
+            <BalancedItem>
+              <SSLCard ssl={report.ssl} />
+            </BalancedItem>
+            <BalancedItem>
+              <CookiesCard cookies={report.cookies} />
+            </BalancedItem>
+            <BalancedItem>
               <SecurityTxtCard securityTxt={report.securityTxt} />
-            </div>
-          </div>
+            </BalancedItem>
+          </BalancedGrid>
         </ReportSection>
 
         <ReportSection id="network" title="Network And Discovery" detail="dns, mail posture, ownership, crawler hints">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
-            <EmailSecurityCard dns={report.dns} />
-            <WhoisCard whois={report.whois} />
-            <SiteDiscoveryCard discovery={report.siteDiscovery} />
-          </div>
-          <DNSRecordsCard dns={report.dns} />
+          <BalancedGrid>
+            <BalancedItem>
+              <EmailSecurityCard dns={report.dns} />
+            </BalancedItem>
+            <BalancedItem>
+              <WhoisCard whois={report.whois} />
+            </BalancedItem>
+            <BalancedItem>
+              <SiteDiscoveryCard discovery={report.siteDiscovery} />
+            </BalancedItem>
+            <BalancedItem wide>
+              <DNSRecordsCard dns={report.dns} />
+            </BalancedItem>
+          </BalancedGrid>
         </ReportSection>
 
         <ReportSection id="page" title="Page Intelligence" detail="http behavior, redirects, metadata, detected stack">
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 items-stretch">
-            <div className="h-full"><HttpOverviewCard http={report.httpOverview} /></div>
-            <div className="h-full"><RedirectsCard http={report.httpOverview} /></div>
-            <div className="h-full">
+          <BalancedGrid>
+            <BalancedItem>
+              <HttpOverviewCard http={report.httpOverview} />
+            </BalancedItem>
+            <BalancedItem>
+              <RedirectsCard http={report.httpOverview} />
+            </BalancedItem>
+            <BalancedItem>
               <HostNamesCard
                 http={report.httpOverview}
                 metadata={report.pageMetadata}
                 hostname={report.hostname}
               />
-            </div>
-            <div className="h-full"><ServerInfoCard http={report.httpOverview} /></div>
-            <div className="h-full"><PageMetadataCard metadata={report.pageMetadata} /></div>
-            <div className="h-full"><TechStackCard techStack={report.techStack} /></div>
-          </div>
+            </BalancedItem>
+            <BalancedItem>
+              <ServerInfoCard http={report.httpOverview} />
+            </BalancedItem>
+            <BalancedItem>
+              <PageMetadataCard metadata={report.pageMetadata} />
+            </BalancedItem>
+            <BalancedItem>
+              <TechStackCard techStack={report.techStack} />
+            </BalancedItem>
+          </BalancedGrid>
         </ReportSection>
 
         <ReportSection id="appendix" title="Appendix" detail="export and external validation">

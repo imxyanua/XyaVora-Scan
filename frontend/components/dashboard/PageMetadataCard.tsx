@@ -7,13 +7,15 @@ interface Props {
 }
 
 function Row({ label, value }: { label: string; value?: string | null }) {
+  const displayValue = value || "Unknown";
+
   return (
-    <div className="flex justify-between gap-4 px-5 py-1.5 border-b border-primary-fixed/10 last:border-b-0 hover:bg-primary-fixed/[0.04] transition-colors">
+    <div className="flex items-start justify-between gap-4 px-5 py-1.5 border-b border-primary-fixed/10 last:border-b-0 hover:bg-primary-fixed/[0.04] transition-colors">
       <span className="font-mono text-sm text-white font-bold shrink-0">
         {label}
       </span>
-      <span className="font-mono text-sm text-white text-right break-all">
-        {value || "Unknown"}
+      <span className="min-w-0 max-w-[68%] truncate text-right font-mono text-sm text-white" title={displayValue}>
+        {displayValue}
       </span>
     </div>
   );
@@ -71,7 +73,7 @@ export function PageMetadataCard({ metadata }: Props) {
               </div>
             </div>
           </div>
-          <div className="flex-1">
+          <div className="flex-1 overflow-hidden">
             <Row label="Language" value={metadata.language} />
             <Row label="Canonical" value={metadata.canonicalUrl} />
             <Row label="OG Image" value={metadata.ogImage} />

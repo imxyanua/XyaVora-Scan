@@ -80,12 +80,12 @@ export function SecurityHeadersCard({ headers }: Props) {
               </div>
 
               {h.value && (
-                <p className="mt-2 border border-primary-fixed/10 bg-[#070B0F] px-2 py-1.5 text-[#d7e8ff]/75 text-[11px] leading-relaxed break-words">
+                <p className="mt-2 line-clamp-2 border border-primary-fixed/10 bg-[#070B0F] px-2 py-1.5 text-[#d7e8ff]/75 text-[11px] leading-relaxed break-words" title={h.value}>
                   {h.value}
                 </p>
               )}
               {h.evidence && h.evidence.length > 0 && (
-                <p className="text-[#d7e8ff]/45 text-[10px] mt-1.5 break-words" title={h.evidence.join("\n")}>
+                <p className="truncate text-[#d7e8ff]/45 text-[10px] mt-1.5" title={h.evidence.join("\n")}>
                   &gt; {h.evidence[0]}
                 </p>
               )}
@@ -102,7 +102,7 @@ export function SecurityHeadersCard({ headers }: Props) {
                 {headers.server}
               </p>
             </div>
-            <span className="status-badge status-warn text-[10px] shrink-0 mt-0.5">[!!]</span>
+            <span className="status-badge status-missing text-[10px] shrink-0 mt-0.5">[INFO]</span>
           </div>
         )}
         {headers.xPoweredBy && (
@@ -113,7 +113,7 @@ export function SecurityHeadersCard({ headers }: Props) {
                 {headers.xPoweredBy}
               </p>
             </div>
-            <span className="status-badge status-warn text-[10px] shrink-0 mt-0.5">[!!]</span>
+            <span className="status-badge status-missing text-[10px] shrink-0 mt-0.5">[INFO]</span>
           </div>
         )}
       </div>

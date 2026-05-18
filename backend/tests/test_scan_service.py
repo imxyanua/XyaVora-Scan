@@ -29,8 +29,8 @@ def test_score_no_findings():
 def test_score_single_fail():
     findings = [
         Finding(
-            id="missing_hsts", severity="high", category="Headers",
-            title="Missing HSTS", description="x", recommendation="x", status="fail",
+            id="no_https", severity="high", category="SSL",
+            title="HTTPS Unavailable", description="x", recommendation="x", status="fail",
         )
     ]
     score, grade, status, summary = compute_score(findings)
