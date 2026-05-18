@@ -48,7 +48,17 @@ export function SecurityHeadersCard({ headers }: Props) {
                     {h.value}
                   </p>
                 )}
+                {h.evidence && h.evidence.length > 0 && (
+                  <p className="text-[#d7e8ff]/45 text-[10px] mt-0.5 truncate" title={h.evidence.join("\n")}>
+                    &gt; {h.evidence[0]}
+                  </p>
+                )}
               </div>
+              {h.confidence && (
+                <span className="font-mono text-[9px] text-white/45 shrink-0 mt-1">
+                  {h.confidence.toUpperCase()}
+                </span>
+              )}
               <span className={`status-badge ${badge.cls} text-[10px] shrink-0 mt-0.5`}>
                 {badge.text}
               </span>

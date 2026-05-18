@@ -33,12 +33,18 @@ def test_all_headers_present():
     items, findings = _check_headers(raw)
     assert all(i.status == "present" for i in items)
     assert findings == []
+    hsts = next(i for i in items if i.header == "Strict-Transport-Security")
+    assert hsts.confidence == "high"
+    assert hsts.evidence == ["Strict-Transport-Security: max-age=31536000; includeSubDomains"]
 
 
 def test_all_headers_missing():
     items, findings = _check_headers(_make_headers({}))
     assert all(i.status == "missing" for i in items)
     assert len(findings) == 6
+    hsts = next(i for i in items if i.header == "Strict-Transport-Security")
+    assert hsts.confidence == "high"
+    assert hsts.evidence == ["Strict-Transport-Security: not present in response headers"]
 
 
 def test_missing_hsts_produces_fail_finding():
@@ -67,6 +73,30 @@ def test_partial_headers():
     assert "X-Content-Type-Options" in present
     assert "missing_csp" in missing_findings
     assert "missing_hsts" not in missing_findings
+
+
+def test_weak_hsts_produces_warning_item_and_finding():
+    raw = _make_headers({
+        "strict-transport-security": "max-age=300",
+    })
+    items, findings = _check_headers(raw)
+    hsts = next(i for i in items if i.header == "Strict-Transport-Security")
+
+    assert hsts.status == "warning"
+    assert hsts.confidence == "medium"
+    assert "weak_hsts" in {f.id for f in findings}
+
+
+def test_permissive_csp_produces_warning_item_and_finding():
+    raw = _make_headers({
+        "content-security-policy": "default-src * 'unsafe-inline'",
+    })
+    items, findings = _check_headers(raw)
+    csp = next(i for i in items if i.header == "Content-Security-Policy")
+
+    assert csp.status == "warning"
+    assert csp.confidence == "medium"
+    assert "weak_csp" in {f.id for f in findings}
 
 
 def test_server_finding():

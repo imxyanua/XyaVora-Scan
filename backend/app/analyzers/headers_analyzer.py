@@ -1,3 +1,5 @@
+import re
+
 import httpx
 
 from app.schemas.report import HeadersResult, SecurityHeaderItem, Finding
@@ -76,6 +78,123 @@ _HEADER_RULES: list[dict] = [
     },
 ]
 
+_HSTS_MIN_AGE = 15_552_000  # 180 days
+
+
+def _short(value: str, limit: int = 120) -> str:
+    value = " ".join(value.split())
+    return value if len(value) <= limit else f"{value[:limit - 3]}..."
+
+
+def _present_item(rule: dict, value: str) -> tuple[SecurityHeaderItem, Finding | None]:
+    header = rule["header"]
+    confidence = "high"
+    status = "present"
+    warning: Finding | None = None
+    evidence = [f"{header}: {_short(value)}"]
+
+    lower = value.lower()
+    if header == "Strict-Transport-Security":
+        max_age = _hsts_max_age(lower)
+        if max_age is None or max_age < _HSTS_MIN_AGE:
+            status = "warning"
+            confidence = "medium"
+            warning = Finding(
+                id="weak_hsts",
+                severity="medium",
+                category="Headers",
+                title="HSTS Max-Age Is Too Short",
+                description=f"HSTS is present, but max-age is lower than the recommended 180 days: {value}",
+                impact="Browsers may stop enforcing HTTPS sooner than expected.",
+                recommendation="Use Strict-Transport-Security with max-age of at least 15552000 seconds after validating HTTPS coverage.",
+                status="warning",
+            )
+    elif header == "Content-Security-Policy":
+        if "unsafe-inline" in lower or "*" in lower:
+            status = "warning"
+            confidence = "medium"
+            warning = Finding(
+                id="weak_csp",
+                severity="medium",
+                category="Headers",
+                title="Content Security Policy Is Too Permissive",
+                description=f"CSP is present, but contains broad or unsafe directives: {value}",
+                impact="A permissive CSP gives browsers less protection against injected scripts.",
+                recommendation="Remove unsafe-inline and wildcard sources where possible. Prefer explicit trusted sources and nonces/hashes.",
+                status="warning",
+            )
+    elif header == "X-Frame-Options":
+        if lower not in ("deny", "sameorigin"):
+            status = "warning"
+            confidence = "medium"
+            warning = Finding(
+                id="weak_x_frame",
+                severity="low",
+                category="Headers",
+                title="X-Frame-Options Value Is Not Recognized",
+                description=f"X-Frame-Options is present but has an unexpected value: {value}",
+                impact="Browsers may ignore the header and allow framing.",
+                recommendation="Use X-Frame-Options: DENY or SAMEORIGIN.",
+                status="warning",
+            )
+    elif header == "X-Content-Type-Options":
+        if lower != "nosniff":
+            status = "warning"
+            confidence = "medium"
+            warning = Finding(
+                id="weak_xcto",
+                severity="low",
+                category="Headers",
+                title="X-Content-Type-Options Is Not nosniff",
+                description=f"X-Content-Type-Options is present but not set to nosniff: {value}",
+                impact="Browsers may still MIME-sniff responses.",
+                recommendation="Use X-Content-Type-Options: nosniff.",
+                status="warning",
+            )
+    elif header == "Referrer-Policy":
+        if lower in ("unsafe-url", "no-referrer-when-downgrade"):
+            status = "warning"
+            confidence = "medium"
+            warning = Finding(
+                id="weak_referrer_policy",
+                severity="low",
+                category="Headers",
+                title="Referrer Policy May Leak Too Much Detail",
+                description=f"Referrer-Policy is present but permissive: {value}",
+                impact="Full URLs may be sent to third-party origins.",
+                recommendation="Use strict-origin-when-cross-origin, same-origin, or no-referrer depending on product needs.",
+                status="warning",
+            )
+
+    return SecurityHeaderItem(
+        header=header,
+        status=status,  # type: ignore[arg-type]
+        value=value,
+        description=rule["description"],
+        confidence=confidence,  # type: ignore[arg-type]
+        evidence=evidence,
+    ), warning
+
+
+def _missing_item(rule: dict) -> SecurityHeaderItem:
+    return SecurityHeaderItem(
+        header=rule["header"],
+        status="missing",
+        description=rule["description"],
+        confidence="high",
+        evidence=[f"{rule['header']}: not present in response headers"],
+    )
+
+
+def _hsts_max_age(value: str) -> int | None:
+    match = re.search(r"(?:^|;)\s*max-age\s*=\s*(\d+)", value)
+    if not match:
+        return None
+    try:
+        return int(match.group(1))
+    except ValueError:
+        return None
+
 
 def _check_headers(
     raw_headers: httpx.Headers,
@@ -88,18 +207,12 @@ def _check_headers(
         value = raw_headers.get(key)
 
         if value:
-            items.append(SecurityHeaderItem(
-                header=rule["header"],
-                status="present",
-                value=value,
-                description=rule["description"],
-            ))
+            item, warning = _present_item(rule, value)
+            items.append(item)
+            if warning:
+                findings.append(warning)
         else:
-            items.append(SecurityHeaderItem(
-                header=rule["header"],
-                status="missing",
-                description=rule["description"],
-            ))
+            items.append(_missing_item(rule))
             findings.append(Finding(
                 id=rule["finding_id"],
                 severity=rule["severity"],   # type: ignore[arg-type]

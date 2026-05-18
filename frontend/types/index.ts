@@ -95,6 +95,8 @@ export interface SecurityHeaderItem {
   status:      HeaderStatus;
   value?:      string;
   description: string;
+  confidence?: "high" | "medium" | "low";
+  evidence?:   string[];
 }
 
 export interface HeadersResult {

@@ -93,6 +93,8 @@ class SecurityHeaderItem(_Base):
     status:      HeaderStatus
     value:       Optional[str] = None
     description: str
+    confidence:  Optional[TechConfidence] = None
+    evidence:    list[str] = []
 
 
 class HeadersResult(_Base):
