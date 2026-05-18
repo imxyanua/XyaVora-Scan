@@ -1,4 +1,5 @@
 import type { TechStackItem, TechCategory } from "@/types";
+import { DetailPanel } from "./DetailPanel";
 import { SourceQualityBadge, type SourceQuality } from "./SourceQualityBadge";
 
 interface Props {
@@ -120,6 +121,16 @@ export function TechStackCard({ techStack }: Props) {
   );
 
   const categories = Object.keys(grouped) as TechCategory[];
+  const detailItems = techStack.map((tech) => ({
+    label: tech.name,
+    value: [
+      `category: ${tech.category}`,
+      `confidence: ${tech.confidence}`,
+      tech.version ? `version: ${tech.version}` : null,
+      tech.sources?.length ? `sources: ${tech.sources.join(" + ")}` : null,
+      tech.evidence?.length ? `evidence: ${tech.evidence.join(" | ")}` : null,
+    ].filter(Boolean).join("\n"),
+  }));
 
   return (
     <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex flex-col">
@@ -194,6 +205,7 @@ export function TechStackCard({ techStack }: Props) {
           ))}
         </div>
       )}
+      <DetailPanel items={detailItems} />
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import type { SslResult } from "@/types";
+import { DetailPanel } from "./DetailPanel";
 import { SourceQualityBadge } from "./SourceQualityBadge";
 
 interface Props {
@@ -37,6 +38,21 @@ export function SSLCard({ ssl }: Props) {
     { key: "CIPHER",   val: ssl.cipherName          },
     { key: "CIPHER BITS", val: ssl.cipherBits        },
     { key: "TRUSTED",  val: ssl.trusted ? "YES" : "NO" },
+  ];
+
+  const detailItems = [
+    { label: "Issuer", value: ssl.issuer },
+    { label: "Subject", value: ssl.subject },
+    { label: "Valid From", value: ssl.validFrom },
+    { label: "Valid To", value: ssl.validTo },
+    { label: "Days Remaining", value: ssl.daysRemaining },
+    { label: "Trusted", value: ssl.trusted },
+    { label: "Protocol", value: ssl.protocol },
+    { label: "Cipher", value: ssl.cipherName },
+    { label: "Cipher Bits", value: ssl.cipherBits },
+    { label: "SAN Domains", value: ssl.sanDomains?.join("\n") },
+    { label: "Evidence", value: ssl.certificateEvidence?.join("\n") },
+    { label: "Warning", value: ssl.warning },
   ];
 
   return (
@@ -114,6 +130,7 @@ export function SSLCard({ ssl }: Props) {
           </div>
         </div>
       )}
+      {!ssl.error && <DetailPanel items={detailItems} />}
     </div>
   );
 }

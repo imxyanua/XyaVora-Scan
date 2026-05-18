@@ -1,4 +1,5 @@
 import type { HeadersResult, HeaderStatus } from "@/types";
+import { DetailPanel } from "./DetailPanel";
 import { SourceQualityBadge } from "./SourceQualityBadge";
 
 interface Props {
@@ -12,6 +13,23 @@ const STATUS_BADGE: Record<HeaderStatus, { cls: string; text: string }> = {
 };
 
 export function SecurityHeadersCard({ headers }: Props) {
+  const detailItems = [
+    { label: "Status Code", value: headers.statusCode },
+    { label: "Final URL", value: headers.finalUrl },
+    { label: "Redirect Detected", value: headers.redirectDetected },
+    { label: "Server", value: headers.server },
+    { label: "X-Powered-By", value: headers.xPoweredBy },
+    ...headers.securityHeaders.map((header) => ({
+      label: header.header,
+      value: [
+        `status: ${header.status}`,
+        header.confidence ? `confidence: ${header.confidence}` : null,
+        header.value ? `value: ${header.value}` : null,
+        header.evidence?.length ? `evidence: ${header.evidence.join(" | ")}` : null,
+      ].filter(Boolean).join("\n"),
+    })),
+  ];
+
   return (
     <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex flex-col">
       {/* Header */}
@@ -94,6 +112,7 @@ export function SecurityHeadersCard({ headers }: Props) {
           </div>
         )}
       </div>
+      {!headers.error && <DetailPanel items={detailItems} />}
     </div>
   );
 }

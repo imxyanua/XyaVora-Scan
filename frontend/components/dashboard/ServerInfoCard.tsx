@@ -1,4 +1,5 @@
 import type { HttpOverviewResult } from "@/types";
+import { DetailPanel } from "./DetailPanel";
 import { SourceQualityBadge } from "./SourceQualityBadge";
 
 type Props = {
@@ -25,6 +26,33 @@ const CONFIDENCE_STYLE: Record<"high" | "medium" | "low", string> = {
 };
 
 export function ServerInfoCard({ http }: Props) {
+  const detailItems = [
+    { label: "Status Code", value: http.statusCode },
+    { label: "Final URL", value: http.finalUrl },
+    { label: "Initial Host", value: http.initialHost },
+    { label: "Final Host", value: http.finalHost },
+    { label: "Final Protocol", value: http.finalProtocol },
+    { label: "Host Changed", value: http.hostChanged },
+    { label: "Redirect Count", value: http.redirectCount },
+    { label: "Redirect Chain", value: http.redirectChain?.join("\n") },
+    { label: "Server", value: http.server },
+    { label: "Powered By", value: http.poweredBy },
+    { label: "Via", value: http.via },
+    { label: "CDN Provider", value: http.cdnProvider },
+    { label: "CDN Confidence", value: http.cdnConfidence },
+    { label: "CDN Evidence", value: http.cdnEvidence?.join("\n") },
+    { label: "Alt-Svc", value: http.altSvc },
+    { label: "Content Type", value: http.contentType },
+    { label: "Content Length", value: http.contentLength },
+    { label: "Response Bytes", value: http.responseBytes },
+    { label: "Response Time", value: http.responseTimeMs ? `${http.responseTimeMs}ms` : undefined },
+    { label: "Compression", value: http.compression },
+    { label: "Cache Control", value: http.cacheControl },
+    { label: "Expires", value: http.expires },
+    { label: "ETag", value: http.etag },
+    { label: "Last Modified", value: http.lastModified },
+  ];
+
   return (
     <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex flex-col">
       <div className="px-5 pt-5 pb-3 flex justify-between items-start shrink-0">
@@ -74,6 +102,7 @@ export function ServerInfoCard({ http }: Props) {
           <Row label="Cache" value={http.cacheControl} />
         </div>
       )}
+      {!http.error && <DetailPanel items={detailItems} />}
     </div>
   );
 }

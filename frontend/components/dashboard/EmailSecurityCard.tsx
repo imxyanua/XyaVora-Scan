@@ -1,4 +1,5 @@
 import type { DnsResult } from "@/types";
+import { DetailPanel } from "./DetailPanel";
 import { SourceQualityBadge } from "./SourceQualityBadge";
 
 type Props = {
@@ -74,6 +75,26 @@ function describeSpfAll(spfAll?: string) {
 
 export function EmailSecurityCard({ dns }: Props) {
   const mxPreview = dns.mxRecords?.slice(0, 2).join(", ");
+  const detailItems = [
+    { label: "MX Detected", value: dns.mxDetected },
+    { label: "MX Records", value: dns.mxRecords?.join("\n") },
+    { label: "MX Evidence", value: dns.mxEvidence?.join("\n") },
+    { label: "SPF Detected", value: dns.spfDetected },
+    { label: "SPF Record", value: dns.spfRecord },
+    { label: "SPF All Policy", value: describeSpfAll(dns.spfAll) },
+    { label: "SPF Lookups", value: dns.spfLookupCount },
+    { label: "SPF Evidence", value: dns.spfEvidence?.join("\n") },
+    { label: "DMARC Detected", value: dns.dmarcDetected },
+    { label: "DMARC Record", value: dns.dmarcRecord },
+    { label: "DMARC Policy", value: dns.dmarcPolicy },
+    { label: "Subdomain Policy", value: dns.dmarcSubdomainPolicy },
+    { label: "DMARC Percent", value: dns.dmarcPct !== undefined ? `${dns.dmarcPct}%` : undefined },
+    { label: "Aggregate Reports", value: dns.dmarcRua },
+    { label: "Forensic Reports", value: dns.dmarcRuf },
+    { label: "DKIM Alignment", value: dns.dmarcAlignmentDkim },
+    { label: "SPF Alignment", value: dns.dmarcAlignmentSpf },
+    { label: "DMARC Evidence", value: dns.dmarcEvidence?.join("\n") },
+  ];
 
   return (
     <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex flex-col">
@@ -119,6 +140,7 @@ export function EmailSecurityCard({ dns }: Props) {
           <EvidenceBlock title="DMARC Evidence" items={dns.dmarcEvidence} />
         </div>
       )}
+      {!dns.error && <DetailPanel items={detailItems} />}
     </div>
   );
 }
