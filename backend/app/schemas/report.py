@@ -121,6 +121,8 @@ class HttpOverviewResult(_Base):
     poweredBy:       Optional[str] = None
     via:             Optional[str] = None
     cdnProvider:     Optional[str] = None
+    cdnConfidence:   Optional[TechConfidence] = None
+    cdnEvidence:     list[str] = []
     altSvc:          Optional[str] = None
     contentType:     Optional[str] = None
     contentLength:   Optional[int] = None

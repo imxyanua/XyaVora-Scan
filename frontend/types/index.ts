@@ -123,6 +123,8 @@ export interface HttpOverviewResult {
   poweredBy?:      string;
   via?:            string;
   cdnProvider?:    string;
+  cdnConfidence?:  "high" | "medium" | "low";
+  cdnEvidence?:    string[];
   altSvc?:         string;
   contentType?:   string;
   contentLength?: number;

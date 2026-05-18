@@ -104,14 +104,15 @@ _RULES: list[_Rule] = [
     _Rule("Laravel",        "Backend Framework", "high",   html=r'laravel_token|<meta name="csrf-token"'),
     _Rule("Laravel",        "Backend Framework", "high",   cookie=r'laravel_session|XSRF-TOKEN'),
     _Rule("Django",         "Backend Framework", "high",   html=r'csrfmiddlewaretoken|name="csrftoken"'),
-    _Rule("Django",         "Backend Framework", "medium", cookie=r'csrftoken|sessionid'),
+    _Rule("Django",         "Backend Framework", "medium", cookie=r'csrftoken'),
     _Rule("Ruby on Rails",  "Backend Framework", "medium", html=r'rails-ujs|data-turbo-|data-turbolinks'),
     _Rule("Ruby on Rails",  "Backend Framework", "medium", cookie=r'_session_id'),
     _Rule("Spring Boot",    "Backend Framework", "medium", html=r'spring-boot|Whitelabel Error Page'),
     _Rule("CodeIgniter",    "Backend Framework", "medium", html=r'ci_session|CodeIgniter'),
     _Rule("Symfony",        "Backend Framework", "medium", html=r'symfony|Symfony'),
     _Rule("Phoenix",        "Backend Framework", "medium", html=r'phoenix_html|phoenix_live_view|data-phx-'),
-    _Rule("FastAPI",        "Backend Framework", "medium", html=r'/docs/oauth2-redirect|swagger-ui'),
+    _Rule("FastAPI",        "Backend Framework", "medium", html=r'FastAPI|fastapi'),
+    _Rule("Swagger UI",     "Other", "medium", html=r'/docs/oauth2-redirect|swagger-ui|swagger-ui-bundle'),
 
     # ── JS Frameworks ─────────────────────────────────────────────
     _Rule("Next.js",    "JavaScript Framework", "high",   html=r'/_next/(?:static|image|data)|__NEXT_DATA__|next-route-announcer|self\.__next_f'),

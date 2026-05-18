@@ -17,6 +17,12 @@ function Row({ label, value }: { label: string; value?: string | number | null }
   );
 }
 
+const CONFIDENCE_STYLE: Record<"high" | "medium" | "low", string> = {
+  high: "border-primary-fixed/45 text-primary-fixed bg-primary-fixed/10",
+  medium: "border-status-warn/50 text-status-warn bg-status-warn/10",
+  low: "border-white/20 text-white/50 bg-white/[0.03]",
+};
+
 export function ServerInfoCard({ http }: Props) {
   return (
     <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex flex-col">
@@ -36,6 +42,29 @@ export function ServerInfoCard({ http }: Props) {
           <Row label="Server" value={http.server} />
           <Row label="Powered By" value={http.poweredBy} />
           <Row label="CDN" value={http.cdnProvider} />
+          {http.cdnProvider && (
+            <div className="px-5 py-2 border-b border-primary-fixed/10 bg-[#151918]">
+              <div className="flex items-center justify-between gap-3">
+                <span className="font-mono text-sm text-white font-bold">CDN Confidence</span>
+                {http.cdnConfidence ? (
+                  <span className={`font-mono text-[10px] border px-2 py-0.5 ${CONFIDENCE_STYLE[http.cdnConfidence]}`}>
+                    {http.cdnConfidence.toUpperCase()}
+                  </span>
+                ) : (
+                  <span className="font-mono text-sm text-white/50">Unknown</span>
+                )}
+              </div>
+              {(http.cdnEvidence?.length ?? 0) > 0 && (
+                <div className="mt-2 space-y-1">
+                  {http.cdnEvidence?.slice(0, 3).map((item) => (
+                    <p key={item} className="font-mono text-[10px] text-[#d7e8ff]/65 break-all">
+                      &gt; {item}
+                    </p>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
           <Row label="Via" value={http.via} />
           <Row label="Alt-Svc" value={http.altSvc} />
           <Row label="Cache" value={http.cacheControl} />

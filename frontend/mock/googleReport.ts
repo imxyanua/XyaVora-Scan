@@ -116,6 +116,8 @@ export const mockGoogleReport: ScanReport = {
     poweredBy:      undefined,
     via:            undefined,
     cdnProvider:    undefined,
+    cdnConfidence:  undefined,
+    cdnEvidence:    [],
     altSvc:         "h3=\":443\"; ma=2592000",
     contentType:    "text/html; charset=UTF-8",
     contentLength:  18432,

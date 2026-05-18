@@ -55,7 +55,11 @@ function moduleStatuses(report: ScanReport): ModuleStatus[] {
     {
       label: "HTTP",
       status: report.httpOverview.error ? "error" : report.httpOverview.statusCode ? "detected" : "unavailable",
-      detail: report.httpOverview.error ? report.httpOverview.error : `${report.httpOverview.statusCode || "No"} status`,
+      detail: report.httpOverview.error
+        ? report.httpOverview.error
+        : report.httpOverview.cdnProvider
+        ? `${report.httpOverview.statusCode} status, ${report.httpOverview.cdnProvider} CDN (${report.httpOverview.cdnConfidence ?? "unknown"})`
+        : `${report.httpOverview.statusCode || "No"} status`,
     },
     {
       label: "WHOIS",
