@@ -42,24 +42,24 @@ export function TechStackCard({ techStack }: Props) {
   const categories = Object.keys(grouped) as TechCategory[];
 
   return (
-    <div className="bg-[#0D0F10] border border-primary-fixed/15 shadow-[3px_3px_0_#050505] p-4 flex flex-col">
+    <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex flex-col">
       {/* Header */}
-      <div className="flex justify-between items-center border-b border-primary-fixed/20 pb-2 mb-3 shrink-0">
-        <h3 className="font-mono text-[11px] tracking-widest text-white uppercase">
+      <div className="px-5 pt-5 pb-3 flex justify-between items-start shrink-0">
+        <h3 className="font-mono text-2xl font-bold text-primary-fixed leading-none">
           Tech Stack
         </h3>
-        <span className="font-mono text-[11px] text-primary-fixed">[FINGERPRINT]</span>
+        <span className="font-mono text-[11px] text-white/70">[FINGERPRINT]</span>
       </div>
 
       {techStack.length === 0 ? (
-        <p className="font-mono text-sm text-on-surface-variant/40">
+        <p className="font-mono text-sm text-on-surface-variant/40 px-5 pb-5">
           [-] No technologies detected
         </p>
       ) : (
-        <div className="flex flex-col gap-3 max-h-[420px] overflow-y-auto pr-1">
+        <div className="px-5 pb-5 flex flex-col gap-4 max-h-[420px] overflow-y-auto">
           {categories.map((cat) => (
             <div key={cat}>
-              <p className="font-mono text-[9px] tracking-widest text-primary-fixed/65 uppercase mb-1.5">
+              <p className="font-mono text-sm text-white font-bold mb-2">
                 {cat}
               </p>
               <div className="flex flex-wrap gap-1.5">

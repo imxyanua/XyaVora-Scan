@@ -7,12 +7,12 @@ interface Props {
 
 function Row({ label, value }: { label: string; value?: string | null }) {
   return (
-    <div className="flex justify-between gap-4 px-4 py-2.5 border-b border-primary-fixed/10 last:border-b-0 hover:bg-primary-fixed/[0.04] transition-colors">
-      <span className="font-mono text-[10px] text-primary-fixed/65 uppercase tracking-widest shrink-0">
+    <div className="flex justify-between gap-4 px-5 py-1.5 border-b border-primary-fixed/10 last:border-b-0 hover:bg-primary-fixed/[0.04] transition-colors">
+      <span className="font-mono text-sm text-white font-bold shrink-0">
         {label}
       </span>
-      <span className="font-mono text-[11px] text-[#d7e8ff] text-right break-all">
-        {value || "-"}
+      <span className="font-mono text-sm text-white text-right break-all">
+        {value || "Unknown"}
       </span>
     </div>
   );
@@ -23,12 +23,12 @@ export function PageMetadataCard({ metadata }: Props) {
   const description = metadata.ogDescription || metadata.description;
 
   return (
-    <div className="bg-[#0D0F10] border border-primary-fixed/15 shadow-[3px_3px_0_#050505] flex flex-col">
-      <div className="p-3 border-b border-primary-fixed/20 bg-[#151918] flex justify-between items-center shrink-0">
-        <h3 className="font-mono text-[11px] tracking-widest text-white uppercase">
+    <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex flex-col">
+      <div className="px-5 pt-5 pb-3 flex justify-between items-start shrink-0">
+        <h3 className="font-mono text-2xl font-bold text-primary-fixed leading-none">
           Page Metadata
         </h3>
-        <span className="font-mono text-[11px] text-primary-fixed">
+        <span className="font-mono text-[11px] text-white/70">
           {metadata.error ? "[ERR]" : "[META]"}
         </span>
       </div>
@@ -37,11 +37,11 @@ export function PageMetadataCard({ metadata }: Props) {
         <p className="font-mono text-sm text-error/70 px-4 py-4">[-] {metadata.error}</p>
       ) : (
         <>
-          <div className="p-4 space-y-3 border-b border-primary-fixed/10 bg-[#101415]">
+          <div className="px-5 py-4 space-y-3 border-b border-primary-fixed/10 bg-[#151918]">
             <div className="flex gap-3 items-start">
               {metadata.faviconUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={metadata.faviconUrl} alt="" className="w-7 h-7 border border-primary-fixed/20 bg-[#070B0F]" />
+                <img src={metadata.faviconUrl} alt="" className="w-8 h-8 border border-primary-fixed/20 bg-[#070B0F]" />
               ) : (
                 <AppIcon name="http" className="text-2xl text-primary-fixed/70 shrink-0" />
               )}
@@ -50,7 +50,7 @@ export function PageMetadataCard({ metadata }: Props) {
                   {title || "No title detected"}
                 </p>
                 {description && (
-                  <p className="font-mono text-[11px] text-[#d7e8ff]/75 leading-relaxed mt-1">
+                  <p className="font-mono text-xs text-[#d7e8ff]/75 leading-relaxed mt-1">
                     {description}
                   </p>
                 )}

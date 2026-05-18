@@ -14,9 +14,9 @@ const STATUS_CLASS: Record<RiskStatus, string> = {
 };
 
 const STATUS_LABEL: Record<RiskStatus, string> = {
-  "Low Risk":    "[OK] LOW_RISK",
-  "Medium Risk": "[!!] MEDIUM_RISK",
-  "High Risk":   "[!!] HIGH_RISK",
+  "Low Risk":    "[OK] Low risk",
+  "Medium Risk": "[!!] Medium risk",
+  "High Risk":   "[!!] High risk",
 };
 
 export function RiskScoreCard({ score, grade, status, scanTime }: Props) {
@@ -24,13 +24,13 @@ export function RiskScoreCard({ score, grade, status, scanTime }: Props) {
   const elapsed = `${ts.getHours().toString().padStart(2, "0")}:${ts.getMinutes().toString().padStart(2, "0")}:${ts.getSeconds().toString().padStart(2, "0")}`;
 
   return (
-    <div className="bg-[#0D0F10] border border-primary-fixed/15 shadow-[3px_3px_0_#050505] p-5 flex flex-col justify-between relative overflow-hidden h-full group">
+    <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] p-5 flex flex-col justify-between relative overflow-hidden h-full group">
       {/* Header */}
-      <div className="flex justify-between items-start border-b border-primary-fixed/20 pb-2 mb-4">
-        <h2 className="font-mono text-[11px] tracking-widest text-white uppercase">
+      <div className="flex justify-between items-start mb-4">
+        <h2 className="font-mono text-2xl font-bold text-primary-fixed leading-none">
           Risk Score
         </h2>
-        <span className="font-mono text-[11px] text-primary-fixed">[METRIC_01]</span>
+        <span className="font-mono text-[11px] text-white/70">[METRIC]</span>
       </div>
 
       {/* Score + Grade */}

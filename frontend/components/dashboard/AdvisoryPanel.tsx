@@ -21,7 +21,7 @@ interface Group {
 const GROUPS: Group[] = [
   {
     key:        "fail",
-    label:      "CRIT_ERR",
+    label:      "Critical",
     prefix:     "[!!]",
     labelClass: "text-error",
     borderCls:  "border-error",
@@ -29,7 +29,7 @@ const GROUPS: Group[] = [
   },
   {
     key:        "warn",
-    label:      "WARN_LOG",
+    label:      "Warnings",
     prefix:     "[?]",
     labelClass: "text-status-warn",
     borderCls:  "border-status-warn",
@@ -37,7 +37,7 @@ const GROUPS: Group[] = [
   },
   {
     key:        "info",
-    label:      "INFO_LOG",
+    label:      "Info",
     prefix:     "[i]",
     labelClass: "text-primary-fixed/65",
     borderCls:  "border-primary-fixed/30",
@@ -63,10 +63,10 @@ export function AdvisoryPanel({ findings }: Props) {
   return (
     <>
     <FindingDrawer finding={activeFinding} onClose={closeFinding} />
-    <div className="bg-[#0D0F10] border border-primary-fixed/15 shadow-[3px_3px_0_#050505] flex flex-col h-full">
+    <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex flex-col h-full">
       {/* Header */}
-      <div className="p-3 border-b border-primary-fixed/20 flex justify-between items-center bg-[#151918] shrink-0">
-        <h2 className="font-mono text-[11px] tracking-widest text-white uppercase">
+      <div className="px-5 pt-5 pb-3 flex justify-between items-start shrink-0">
+        <h2 className="font-mono text-2xl font-bold text-primary-fixed leading-none">
           Findings
         </h2>
         <span className={`status-badge ${totalIssues > 0 ? "status-warn" : "status-pass"} text-[10px]`}>
@@ -101,7 +101,7 @@ export function AdvisoryPanel({ findings }: Props) {
 
               {/* Group items */}
               {isExpanded && (
-                <div className="border-t border-primary-fixed/10 bg-[#0D0F10] space-y-0">
+                <div className="border-t border-primary-fixed/10 bg-[#151918] space-y-0">
                   {items.map((finding, i) => (
                     <div
                       key={finding.id}

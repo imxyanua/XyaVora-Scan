@@ -32,9 +32,9 @@ export function ScreenshotCard({ screenshot }: Props) {
 
   return (
     <>
-      <div className="bg-[#0D0F10] border border-primary-fixed/15 shadow-[3px_3px_0_#050505] flex flex-col">
-        <div className="p-3 border-b border-primary-fixed/20 bg-[#151918] flex justify-between items-center shrink-0">
-          <h3 className="font-mono text-[11px] tracking-widest text-white uppercase">
+      <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex flex-col">
+        <div className="px-5 pt-5 pb-3 flex justify-between items-start shrink-0">
+          <h3 className="font-mono text-2xl font-bold text-primary-fixed leading-none">
             Screenshot
           </h3>
           <div className="flex items-center gap-3">
@@ -64,7 +64,7 @@ export function ScreenshotCard({ screenshot }: Props) {
                 </button>
               </div>
             )}
-            <span className="font-mono text-[11px] text-primary-fixed">[RENDER]</span>
+            <span className="font-mono text-[11px] text-white/70">[RENDER]</span>
           </div>
         </div>
 
@@ -86,7 +86,7 @@ export function ScreenshotCard({ screenshot }: Props) {
                     className="btn-ghost px-4 py-2 text-xs"
                     onClick={() => setLightbox(true)}
                   >
-                    &gt; VIEW_FULL
+                    View full
                   </button>
                 </div>
               </div>

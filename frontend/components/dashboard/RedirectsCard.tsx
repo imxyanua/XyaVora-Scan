@@ -6,12 +6,12 @@ type Props = {
 
 export function RedirectsCard({ http }: Props) {
   return (
-    <div className="bg-[#0D0F10] border border-primary-fixed/15 shadow-[3px_3px_0_#050505] flex flex-col">
-      <div className="p-3 border-b border-primary-fixed/20 bg-[#151918] flex justify-between items-center shrink-0">
-        <h3 className="font-mono text-[11px] tracking-widest text-white uppercase">
+    <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex flex-col">
+      <div className="px-5 pt-5 pb-3 flex justify-between items-start shrink-0">
+        <h3 className="font-mono text-2xl font-bold text-primary-fixed leading-none">
           Redirects
         </h3>
-        <span className="font-mono text-[11px] text-primary-fixed">
+        <span className="font-mono text-[11px] text-white/70">
           [{http.redirectCount || 0} HOP{http.redirectCount === 1 ? "" : "S"}]
         </span>
       </div>
@@ -25,10 +25,10 @@ export function RedirectsCard({ http }: Props) {
           {http.redirectHops.map((hop, index) => (
             <div
               key={`${hop.fromUrl}-${hop.toUrl}-${index}`}
-              className="px-4 py-3 border-b border-primary-fixed/10 last:border-b-0 hover:bg-primary-fixed/[0.04] transition-colors"
+              className="px-5 py-3 border-b border-primary-fixed/10 last:border-b-0 hover:bg-primary-fixed/[0.04] transition-colors"
             >
               <div className="flex justify-between gap-3 mb-1">
-                <span className="font-mono text-[10px] text-primary-fixed/65 uppercase tracking-widest">
+                <span className="font-mono text-sm text-white font-bold">
                   Hop {index + 1}
                 </span>
                 <span className="status-badge status-warn text-[10px]">
