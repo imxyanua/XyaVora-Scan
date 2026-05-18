@@ -284,24 +284,24 @@ def _detect(
                 sources.append("header")
                 evidence.append(f"header:{rule.header_key}={_short(hval)}")
 
-        if not matched and rule.html:
+        if rule.html:
             m = re.search(rule.html, html_text, re.IGNORECASE)
             if m:
                 matched = True
                 sources.append("html")
                 evidence.append(f"html:{_short(m.group(0))}")
-            else:
-                asset_url_match = _first_regex_match(rule.html, asset_urls or [])
-                if asset_url_match:
-                    matched = True
-                    sources.append("asset-url")
-                    evidence.append(f"asset-url:{_short(asset_url_match)}")
-                else:
-                    asset_body_match = _first_regex_match(rule.html, asset_texts or [])
-                    if asset_body_match:
-                        matched = True
-                        sources.append("asset-body")
-                        evidence.append(f"asset-body:{_short(asset_body_match)}")
+
+            asset_url_match = _first_regex_match(rule.html, asset_urls or [])
+            if asset_url_match:
+                matched = True
+                sources.append("asset-url")
+                evidence.append(f"asset-url:{_short(asset_url_match)}")
+
+            asset_body_match = _first_regex_match(rule.html, asset_texts or [])
+            if asset_body_match:
+                matched = True
+                sources.append("asset-body")
+                evidence.append(f"asset-body:{_short(asset_body_match)}")
 
         if not matched and rule.cookie:
             m = re.search(rule.cookie, cookie_text, re.IGNORECASE)
