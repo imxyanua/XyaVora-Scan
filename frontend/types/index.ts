@@ -50,10 +50,14 @@ export interface DnsResult {
   records:       DnsRecord[];
   mxDetected:    boolean;
   mxRecords:     string[];
+  mxEvidence:    string[];
   spfDetected:   boolean;
   dmarcDetected: boolean;
   spfRecord?:    string;
   dmarcRecord?:  string;
+  spfEvidence:   string[];
+  dmarcEvidence: string[];
+  emailSecurityConfidence?: "high" | "medium" | "low";
   spfAll?:        string;
   spfLookupCount: number;
   dmarcPolicy?:   string;

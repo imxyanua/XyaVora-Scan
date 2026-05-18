@@ -47,10 +47,14 @@ class DnsResult(_Base):
     records:        list[DnsRecord] = []
     mxDetected:     bool = False
     mxRecords:      list[str] = []
+    mxEvidence:     list[str] = []
     spfDetected:    bool = False
     dmarcDetected:  bool = False
     spfRecord:      Optional[str] = None
     dmarcRecord:    Optional[str] = None
+    spfEvidence:    list[str] = []
+    dmarcEvidence:  list[str] = []
+    emailSecurityConfidence: Optional[TechConfidence] = None
     spfAll:         Optional[str] = None
     spfLookupCount: int = 0
     dmarcPolicy:    Optional[str] = None

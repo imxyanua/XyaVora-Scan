@@ -24,6 +24,29 @@ function Row({ label, value, tone = "normal" }: { label: string; value?: string 
   );
 }
 
+const CONFIDENCE_STYLE: Record<"high" | "medium" | "low", string> = {
+  high: "border-primary-fixed/45 text-primary-fixed bg-primary-fixed/10",
+  medium: "border-status-warn/50 text-status-warn bg-status-warn/10",
+  low: "border-white/20 text-white/50 bg-white/[0.03]",
+};
+
+function EvidenceBlock({ title, items }: { title: string; items?: string[] }) {
+  if (!items || items.length === 0) return null;
+
+  return (
+    <div className="px-5 py-2 border-b border-primary-fixed/10 bg-[#151918]">
+      <p className="font-mono text-sm text-white font-bold mb-1">{title}</p>
+      <div className="space-y-1">
+        {items.slice(0, 3).map((item) => (
+          <p key={item} className="font-mono text-[10px] text-[#d7e8ff]/65 break-all">
+            &gt; {item}
+          </p>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function spfTone(spfAll?: string) {
   if (spfAll === "-") return "good";
   if (spfAll === "~") return "warn";
@@ -55,6 +78,11 @@ export function EmailSecurityCard({ dns }: Props) {
           Email Security
         </h3>
         <div className="flex items-center gap-2 pt-0.5">
+          {dns.emailSecurityConfidence && (
+            <span className={`font-mono text-[10px] border px-2 py-0.5 ${CONFIDENCE_STYLE[dns.emailSecurityConfidence]}`}>
+              {dns.emailSecurityConfidence.toUpperCase()}
+            </span>
+          )}
           <span className={`status-badge ${dns.spfDetected ? "status-pass" : "status-fail"} text-[10px]`}>
             {dns.spfDetected ? "[SPF]" : "[-] SPF"}
           </span>
@@ -77,6 +105,9 @@ export function EmailSecurityCard({ dns }: Props) {
           <Row label="Aggregate Reports" value={dns.dmarcRua} />
           <Row label="DKIM Alignment" value={dns.dmarcAlignmentDkim === "s" ? "strict" : dns.dmarcAlignmentDkim === "r" ? "relaxed" : undefined} />
           <Row label="SPF Alignment" value={dns.dmarcAlignmentSpf === "s" ? "strict" : dns.dmarcAlignmentSpf === "r" ? "relaxed" : undefined} />
+          <EvidenceBlock title="MX Evidence" items={dns.mxEvidence} />
+          <EvidenceBlock title="SPF Evidence" items={dns.spfEvidence} />
+          <EvidenceBlock title="DMARC Evidence" items={dns.dmarcEvidence} />
         </div>
       )}
     </div>

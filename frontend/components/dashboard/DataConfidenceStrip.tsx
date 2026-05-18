@@ -40,7 +40,11 @@ function moduleStatuses(report: ScanReport): ModuleStatus[] {
     {
       label: "DNS",
       status: report.dns.error ? "error" : hasAny(report.dns.records) ? "detected" : "unavailable",
-      detail: report.dns.error ? report.dns.error : `${report.dns.records.length} records`,
+      detail: report.dns.error
+        ? report.dns.error
+        : report.dns.emailSecurityConfidence
+        ? `${report.dns.records.length} records, email ${report.dns.emailSecurityConfidence}`
+        : `${report.dns.records.length} records`,
     },
     {
       label: "TLS",

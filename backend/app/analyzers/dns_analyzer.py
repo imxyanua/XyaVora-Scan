@@ -106,6 +106,20 @@ def _parse_dmarc(record: str | None) -> dict:
     }
 
 
+def _email_security_confidence(result: DnsResult) -> str:
+    if result.mxDetected and result.spfDetected and result.dmarcDetected:
+        if result.spfAll == "-" and result.dmarcPolicy in ("quarantine", "reject"):
+            return "high"
+        return "medium"
+    if result.mxDetected or result.spfDetected or result.dmarcDetected:
+        return "low"
+    return "low"
+
+
+def _record_evidence(records: list[DnsRecord]) -> list[str]:
+    return [f"{record.host} {record.type} {record.value}" for record in records]
+
+
 def _build_findings(
     result: DnsResult,
     dmarc_record: str | None,
@@ -213,18 +227,25 @@ async def analyze_dns(hostname: str) -> AnalyzerResult:
     spf_info = _parse_spf(spf_record)
     dmarc_info = _parse_dmarc(dmarc_record)
     mx_records = [r.value for r in all_records if r.type == "MX"]
+    mx_dns_records = [r for r in all_records if r.type == "MX"]
+    spf_dns_records = [r for r in txt_records if spf_record and _clean_txt_value(r.value) == spf_record]
+    dmarc_dns_records = [r for r in dmarc_records if dmarc_record and _clean_txt_value(r.value) == dmarc_record]
 
     dns_result = DnsResult(
         records=all_records + dmarc_records,
         mxDetected=bool(mx_records),
         mxRecords=mx_records,
+        mxEvidence=_record_evidence(mx_dns_records),
         spfDetected=spf_detected,
         dmarcDetected=dmarc_detected,
         spfRecord=spf_record,
         dmarcRecord=dmarc_record,
+        spfEvidence=_record_evidence(spf_dns_records),
+        dmarcEvidence=_record_evidence(dmarc_dns_records),
         **spf_info,
         **dmarc_info,
     )
+    dns_result.emailSecurityConfidence = _email_security_confidence(dns_result)  # type: ignore[assignment]
 
     findings = _build_findings(dns_result, dmarc_record)
 
