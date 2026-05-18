@@ -30,8 +30,8 @@ const SEVERITY_CLASS: Record<FindingSeverity, string> = {
 };
 
 const STATUS_LABEL: Record<FindingStatus, string> = {
-  fail: "Fail",
-  warning: "Warning",
+  fail: "Needs attention",
+  warning: "Review",
   info: "Info",
   pass: "Pass",
 };
@@ -59,7 +59,7 @@ export function PriorityFindingsCard({ findings }: Props) {
   );
 
   const passedCount = findings.filter((finding) => finding.status === "pass").length;
-  const issueCount = priorityFindings.length;
+  const observationCount = priorityFindings.length;
 
   return (
     <>
@@ -68,15 +68,15 @@ export function PriorityFindingsCard({ findings }: Props) {
         <div className="px-5 pt-5 pb-4 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
             <h2 className="font-mono text-2xl font-bold text-primary-fixed leading-none">
-              Priority Findings
+              Priority Observations
             </h2>
             <p className="font-mono text-xs text-[#d7e8ff]/70 mt-2 max-w-3xl">
-              The highest-impact issues detected in this scan, ordered by severity and failure state.
+              The highest-impact checks that need review. These are posture observations, not confirmed vulnerabilities.
             </p>
           </div>
           <div className="flex gap-2 shrink-0">
-            <span className={`status-badge ${issueCount > 0 ? "status-warn" : "status-pass"} text-[10px]`}>
-              {issueCount > 0 ? `[${issueCount} PRIORITY]` : "[CLEAR]"}
+            <span className={`status-badge ${observationCount > 0 ? "status-warn" : "status-pass"} text-[10px]`}>
+              {observationCount > 0 ? `[${observationCount} REVIEW]` : "[CLEAR]"}
             </span>
             <span className="status-badge status-pass text-[10px]">
               [{passedCount} PASS]
@@ -86,9 +86,9 @@ export function PriorityFindingsCard({ findings }: Props) {
 
         {priorityFindings.length === 0 ? (
           <div className="mx-5 mb-5 border border-primary-fixed/15 bg-[#151918] p-4">
-            <p className="font-mono text-sm text-white font-bold">No high-priority issues found</p>
+            <p className="font-mono text-sm text-white font-bold">No priority observations found</p>
             <p className="font-mono text-xs text-[#d7e8ff]/70 mt-1">
-              The scanner did not find failed or warning findings in the current rule set.
+              The scanner did not find failed or review findings in the current rule set.
             </p>
           </div>
         ) : (

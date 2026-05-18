@@ -63,7 +63,7 @@ def compute_score(findings: list[Finding]) -> tuple[int, RiskGrade, RiskStatus, 
     fail_count = sum(1 for f in findings if f.status == "fail")
     warn_count = sum(1 for f in findings if f.status == "warning")
     summary = (
-        f"Found {fail_count} critical issue(s) and {warn_count} warning(s). "
+        f"Found {fail_count} failed check(s) and {warn_count} review item(s). "
         f"Risk grade: {grade} ({score}/100)."
     )
 

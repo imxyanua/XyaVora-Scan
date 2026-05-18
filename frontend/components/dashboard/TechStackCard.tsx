@@ -143,11 +143,11 @@ export function TechStackCard({ techStack }: Props) {
       </div>
 
       {techStack.length === 0 ? (
-        <p className="font-mono text-sm text-on-surface-variant/40 px-5 pb-5">
+        <p className="font-mono text-sm text-on-surface-variant/40 px-5 pb-5 flex-1">
           [-] No technologies detected
         </p>
       ) : (
-        <div className="px-5 pb-5 flex flex-col gap-4 max-h-[420px] overflow-y-auto">
+        <div className="px-5 pb-5 flex flex-1 min-h-0 flex-col gap-4 overflow-y-auto">
           {categories.map((cat) => (
             <div key={cat}>
               <p className="font-mono text-sm text-white font-bold mb-2">

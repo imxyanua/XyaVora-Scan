@@ -71,7 +71,7 @@ export function SecurityPostureSummary({ ssl, headers, cookies, securityTxt }: P
             Security Posture Summary
           </h3>
           <p className="font-mono text-xs text-[#d7e8ff]/70 mt-2">
-            Quick read of transport, browser protections, session cookies, and vulnerability disclosure.
+            Quick read of transport, browser protections, session cookies, and security contact disclosure.
           </p>
         </div>
         <span className="font-mono text-[11px] text-white/70">[POSTURE]</span>

@@ -43,7 +43,7 @@ export function DetailPanel({ items, label = "Details" }: Props) {
 
   return (
     <>
-      <div className="border-t border-primary-fixed/10 bg-[#151918] px-5 py-2">
+      <div className="mt-auto border-t border-primary-fixed/10 bg-[#151918] px-5 py-2">
         <button
           type="button"
           onClick={() => setOpen(true)}

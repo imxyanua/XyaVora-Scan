@@ -21,7 +21,7 @@ interface Group {
 const GROUPS: Group[] = [
   {
     key:        "fail",
-    label:      "Critical",
+    label:      "Needs Attention",
     prefix:     "[!!]",
     labelClass: "text-error",
     borderCls:  "border-error",
@@ -29,7 +29,7 @@ const GROUPS: Group[] = [
   },
   {
     key:        "warn",
-    label:      "Warnings",
+    label:      "Review",
     prefix:     "[?]",
     labelClass: "text-status-warn",
     borderCls:  "border-status-warn",
@@ -56,7 +56,7 @@ export function AdvisoryPanel({ findings }: Props) {
   const groupData = [failFindings, warnFindings, infoFindings];
   const totalIssues = failFindings.length + warnFindings.length;
 
-  // Start with CRIT expanded, others collapsed
+  // Start with attention items expanded, others collapsed
   const [expanded, setExpanded] = useState<Record<string, boolean>>({ fail: true, warn: false, info: false });
   const toggle = (key: string) => setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
 
@@ -122,7 +122,7 @@ export function AdvisoryPanel({ findings }: Props) {
                         onClick={() => setActiveFinding(finding)}
                         className="shrink-0 font-mono text-[10px] text-primary-fixed border border-primary-fixed/50 px-1.5 py-0.5 hover:bg-primary-fixed hover:text-[#070B0F] transition-colors"
                       >
-                        [FIX]
+                        DETAILS
                       </button>
                     </div>
                   ))}

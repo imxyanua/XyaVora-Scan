@@ -35,7 +35,7 @@ def test_score_single_fail():
     ]
     score, grade, status, summary = compute_score(findings)
     assert score < 100
-    assert "1 critical" in summary
+    assert "1 failed check" in summary
 
 
 def test_score_grade_boundaries():

@@ -6,14 +6,18 @@ type Props = {
 };
 
 export function RedirectsCard({ http }: Props) {
-  const detailItems = http.redirectHops.map((hop, index) => ({
-    label: `Hop ${index + 1}`,
-    value: [
-      `status: ${hop.statusCode}`,
-      `from: ${hop.fromUrl}`,
-      `to: ${hop.toUrl}`,
-    ].join("\n"),
-  }));
+  const detailItems = [
+    { label: "Redirect Count", value: http.redirectCount },
+    { label: "Redirect Chain", value: http.redirectChain?.join("\n") || "No redirects detected" },
+    ...http.redirectHops.map((hop, index) => ({
+      label: `Hop ${index + 1}`,
+      value: [
+        `status: ${hop.statusCode}`,
+        `from: ${hop.fromUrl}`,
+        `to: ${hop.toUrl}`,
+      ].join("\n"),
+    })),
+  ];
 
   return (
     <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex h-full flex-col">
@@ -27,9 +31,9 @@ export function RedirectsCard({ http }: Props) {
       </div>
 
       {http.error ? (
-        <p className="font-mono text-sm text-error/70 px-4 py-4">[-] {http.error}</p>
+        <p className="font-mono text-sm text-error/70 px-4 py-4 flex-1">[-] {http.error}</p>
       ) : http.redirectHops.length === 0 ? (
-        <p className="font-mono text-sm text-[#d7e8ff]/65 px-4 py-4">No redirects detected.</p>
+        <p className="font-mono text-sm text-[#d7e8ff]/65 px-5 py-4 flex-1">No redirects detected.</p>
       ) : (
         <div className="flex-1">
           {http.redirectHops.slice(0, 3).map((hop, index) => (
@@ -60,7 +64,7 @@ export function RedirectsCard({ http }: Props) {
           )}
         </div>
       )}
-      {!http.error && http.redirectHops.length > 0 && <DetailPanel items={detailItems} />}
+      {!http.error && <DetailPanel items={detailItems} />}
     </div>
   );
 }
