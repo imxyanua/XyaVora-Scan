@@ -10,7 +10,7 @@ XyaVora-Scan runs a set of defensive analyzers against a public domain and retur
 
 - Fast local-first workflow with a Next.js frontend and FastAPI backend.
 - Quick scans do not require login.
-- Guest scans show the full report but do not save history by default.
+- Guest scans show the full report and keep recent reports in the current browser; backend history remains opt-in.
 - Analyzer pipeline runs modules concurrently and keeps partial results when one module fails.
 - Evidence labels explain whether a result was verified by DNS/TLS/headers or inferred from page signals.
 - Optional Playwright screenshot capture for desktop and mobile previews.

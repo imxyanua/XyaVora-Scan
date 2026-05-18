@@ -1,12 +1,10 @@
-import { PhaseLockedPage } from "@/components/layout/PhaseLockedPage";
+import { GuestHistoryPanel } from "@/components/dashboard/GuestHistoryPanel";
+import { AppShell } from "@/components/layout/AppShell";
 
 export default function HistoryPage() {
   return (
-    <PhaseLockedPage
-      eyebrow="SCAN_HISTORY"
-      title="HISTORY"
-      icon="history"
-      description="Guest scans are shown immediately after completion but are not stored. History will be enabled after account-based storage is added."
-    />
+    <AppShell>
+      <GuestHistoryPanel />
+    </AppShell>
   );
 }

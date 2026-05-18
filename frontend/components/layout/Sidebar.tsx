@@ -6,6 +6,7 @@ import { AppIcon } from "@/components/ui/AppIcon";
 
 const NAV_ITEMS = [
   { label: "New Scan",  icon: "radar",                   href: "/scan"      },
+  { label: "History",   icon: "history",                 href: "/history"   },
 ] as const;
 
 const BOTTOM_ITEMS = [

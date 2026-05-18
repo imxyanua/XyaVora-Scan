@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppIcon } from "@/components/ui/AppIcon";
+import { saveGuestScan } from "@/lib/guestScanStorage";
 import { normalizeScanTarget } from "@/lib/startScan";
 
 const ANALYZERS = [
@@ -100,9 +101,12 @@ function ScanSession({ target, scanId }: ScanSessionProps) {
                 setScanError(data.error ?? "Scan failed — unknown error.");
                 return;
               }
+              if (data.data) {
+                saveGuestScan(scanId, data.data);
+              }
               setScanDone(true);
               setTimeout(() => {
-                router.push(`/report/${encodeURIComponent(target)}?scanId=${encodeURIComponent(scanId)}`);
+                router.push(`/report/${encodeURIComponent(target)}?guestScanId=${encodeURIComponent(scanId)}`);
               }, 800);
             }).catch((err) => {
               if (!cancelled) setScanError(err instanceof Error ? err.message : "Network error");

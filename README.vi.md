@@ -10,7 +10,7 @@ XyaVora-Scan chạy nhiều analyzer phòng thủ trên một domain công khai 
 
 - Chạy local-first với frontend Next.js và backend FastAPI.
 - Scan nhanh không cần đăng nhập.
-- Guest scan vẫn xem được report đầy đủ nhưng mặc định không lưu lịch sử.
+- Guest scan vẫn xem được report đầy đủ và lưu recent report trong browser hiện tại; backend history vẫn chỉ bật khi có chủ đích.
 - Pipeline analyzer chạy song song, một module lỗi không làm mất toàn bộ report.
 - Có nhãn nguồn dữ liệu để biết kết quả được xác minh từ DNS/TLS/header hay chỉ suy luận từ page signal.
 - Hỗ trợ screenshot desktop và mobile bằng Playwright, có thể bật/tắt bằng cấu hình.
