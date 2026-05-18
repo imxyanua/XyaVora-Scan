@@ -1,85 +1,73 @@
-<div align="center">
+# XyaVora-Scan
 
-```
-██╗  ██╗██╗   ██╗ █████╗ ██╗   ██╗ ██████╗ ██████╗  █████╗
-╚██╗██╔╝╚██╗ ██╔╝██╔══██╗██║   ██║██╔═══██╗██╔══██╗██╔══██╗
- ╚███╔╝  ╚████╔╝ ███████║██║   ██║██║   ██║██████╔╝███████║
- ██╔██╗   ╚██╔╝  ██╔══██║╚██╗ ██╔╝██║   ██║██╔══██╗██╔══██║
-██╔╝ ██╗   ██║   ██║  ██║ ╚████╔╝ ╚██████╔╝██║  ██║██║  ██║
-╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝  ╚═══╝   ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝
-                                                    S C A N
-```
+Open-source domain security posture scanner for quick, passive web reconnaissance.
 
-**Analyze your domain security posture in seconds.**
-
-[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)](https://nextjs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-06B6D4?style=flat-square&logo=tailwindcss)](https://tailwindcss.com)
-[![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com)
-[![License](https://img.shields.io/badge/License-MIT-lime?style=flat-square)](LICENSE)
-
-</div>
-
----
-
-### Overview
-
-**XyaVora-Scan** is a domain security analysis tool with an OSINT terminal aesthetic. Enter a domain and the system runs 8 independent analyzers concurrently, returning a comprehensive security report with a risk score, grade, and actionable findings.
-
-Built as a **personal cybersecurity portfolio project** — dark-mode, brutalist UI inspired by hacker/recon tooling.
+XyaVora-Scan runs a set of defensive analyzers against a public domain and returns a structured report covering DNS, TLS, HTTP behavior, security headers, page metadata, technology fingerprints, cookies, security.txt, screenshots, findings, and evidence for detected signals.
 
 > Vietnamese documentation: [README.vi.md](README.vi.md)
 
----
+## Highlights
 
-### Analysis Modules
+- Fast local-first workflow with a Next.js frontend and FastAPI backend.
+- Quick scans do not require login.
+- Guest scans show the full report but do not save history by default.
+- Analyzer pipeline runs modules concurrently and keeps partial results when one module fails.
+- Evidence labels explain whether a result was verified by DNS/TLS/headers or inferred from page signals.
+- Optional Playwright screenshot capture for desktop and mobile previews.
+- Passive-only security model with SSRF protections and bounded timeouts.
+
+## Current Modules
 
 | Module | What it checks |
 |---|---|
-| DNS Records | A, AAAA, MX, NS, TXT — SPF & DMARC detection |
-| SSL Certificate | Issuer, expiry, TLS version, trusted chain, days remaining |
-| HTTP Security Headers | HSTS, CSP, X-Frame-Options, XCTO, Referrer-Policy, Permissions-Policy |
-| WHOIS | Registrar, creation/expiry dates, nameservers, DNSSEC |
-| Tech Stack | Fingerprint frameworks, CDN, web server, CMS, analytics (35 rules) |
-| Cookies | Secure, HttpOnly, SameSite flag audit per cookie |
-| Security.txt | RFC 9116 presence check, Contact/Policy/Expires parsing |
-| Risk Score | Score 0-100, grade A-F, Low/Medium/High Risk classification |
+| Risk Summary | Score, grade, risk status, prioritized findings |
+| DNS Records | A, AAAA, MX, NS, TXT records, TTLs, SPF and DMARC signals |
+| Email Security | MX, SPF policy, DMARC policy, alignment, report URIs, evidence |
+| TLS / SSL | HTTPS availability, issuer, subject, validity, SANs, protocol, cipher |
+| HTTP Overview | Status code, final URL, redirects, compression, cache headers, response size |
+| Security Headers | HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy |
+| WHOIS | Registrar, lifecycle dates, nameservers, DNSSEC when available |
+| Tech Stack | Frameworks, CMS, CDN, hosting, analytics, server hints, source evidence |
+| Cookies | Secure, HttpOnly, SameSite, expiry, warnings |
+| Security.txt | RFC 9116 discovery and Contact/Policy/Encryption/Expires parsing |
+| Page Metadata | Title, description, canonical URL, Open Graph, favicon, robots directives |
+| Site Discovery | robots.txt, sitemap, crawl rules, user agents |
+| Screenshot | Optional desktop and mobile captures |
+| Raw Data | Full JSON report export for further analysis |
+| External Research | Links to third-party tools for manual validation |
 
----
+## Architecture
 
-### Tech Stack
+```text
+frontend/  Next.js 16, React 19, TypeScript, Tailwind CSS v4
+backend/   FastAPI, Python 3.12, Pydantic v2, async analyzers
+```
 
-**Frontend:**
-- [Next.js 16](https://nextjs.org) — App Router, server components
-- [TypeScript 5](https://www.typescriptlang.org) — strict mode
-- [Tailwind CSS v4](https://tailwindcss.com) — `@theme` CSS config, no config file
+The frontend proxies scan requests to the backend API. The backend normalizes and validates the target, runs analyzers concurrently, aggregates findings, and returns a camelCase JSON report shared with the TypeScript types.
 
-**Backend:**
-- [Python 3.12](https://python.org) + [FastAPI](https://fastapi.tiangolo.com)
-- [Pydantic v2](https://docs.pydantic.dev) — schema validation, camelCase JSON output
-- [dnspython](https://www.dnspython.org) — async DNS resolution
-- [httpx](https://www.python-httpx.org) — async HTTP client with streaming
-- [python-whois](https://pypi.org/project/python-whois/) — WHOIS lookups
-- [pytest](https://pytest.org) + [pytest-asyncio](https://github.com/pytest-dev/pytest-asyncio) — 140+ tests
+## Local Development
 
----
-
-### Local Development
-
-**1. Backend API**
+### 1. Backend API
 
 ```bash
 cd backend
 python -m venv .venv
 .\.venv\Scripts\activate
 pip install -r requirements.txt
-python -m playwright install chromium
 copy .env.example .env
 python -m uvicorn app.main:app --reload --port 8000
 ```
 
-**2. Frontend Web**
+Optional screenshot support:
+
+```bash
+cd backend
+python -m playwright install chromium
+```
+
+Screenshots are controlled by `ENABLE_SCREENSHOT` and `SCREENSHOT_TIMEOUT_SECONDS` in `backend/.env`.
+
+### 2. Frontend Web
 
 ```bash
 cd frontend
@@ -88,106 +76,89 @@ copy .env.example .env.local
 npm run dev
 ```
 
-Open the frontend at `http://localhost:3000`.
+Open `http://localhost:3000`.
 
-Quick scans do not require login. Guest scans return the report immediately and do not save history by default.
+## Environment
 
-For deployment, set these environment variables on the hosting provider:
+Backend example:
 
-```bash
-ENV=production
-CORS_ORIGIN=https://your-frontend-domain.example
-API_URL=https://your-backend-domain.example
+```env
+ENV=development
+CORS_ORIGIN=http://localhost:3000
+SCAN_TIMEOUT_SECONDS=90
+ANALYZER_TIMEOUT_SECONDS=8
+SCREENSHOT_TIMEOUT_SECONDS=45
+FETCH_TIMEOUT_SECONDS=8
+MAX_HTML_BYTES=1000000
+ENABLE_SCREENSHOT=true
 ```
 
----
+Frontend example:
 
-### Project Structure
-
-```
-XyaVora-Scan/
-├── frontend/                        # Next.js 16 + TypeScript + Tailwind v4
-│   ├── app/
-│   │   ├── landing/                 # Landing / home page
-│   │   ├── scan/                    # Domain input form
-│   │   ├── scanning/                # Scan progress screen
-│   │   ├── report/[domain]/         # Full security report dashboard
-│   │   └── history/                 # Scan history
-│   ├── components/
-│   │   ├── layout/                  # AppShell, Sidebar, TopBar
-│   │   ├── dashboard/               # RiskScoreCard, SSLCard, DNSRecordsCard,
-│   │   │                            #   WhoisCard, CookiesCard, SecurityTxtCard, ...
-│   │   ├── landing/                 # ScanInput
-│   │   └── scanning/                # ScanProgress
-│   ├── lib/api.ts                   # Server-side API client
-│   └── types/index.ts               # Shared TypeScript types
-│
-└── backend/                         # Python 3.12 + FastAPI
-    ├── app/
-    │   ├── analyzers/               # dns, ssl, headers, whois, tech_stack,
-    │   │                            #   cookies, security_txt, score, screenshot
-    │   ├── core/config.py           # Settings via pydantic-settings
-    │   ├── routes/analyze.py        # POST /api/analyze
-    │   ├── schemas/                 # Pydantic models (report, api, analyzer)
-    │   ├── services/scan_service.py # Concurrent analyzer pipeline
-    │   └── utils/                   # SSRF guard, URL normalizer, safe_fetch
-    ├── tests/                       # 140+ pytest tests
-    ├── requirements.txt
-    └── pyproject.toml
+```env
+API_URL=http://localhost:8000
 ```
 
----
+For hosted deployments, set `API_URL` to the backend origin and `CORS_ORIGIN` to the frontend origin.
 
-### API
+## API
 
-```
+```http
 POST /api/analyze
 Content-Type: application/json
 
-{ "target": "example.com" }
+{
+  "target": "example.com",
+  "save_history": false,
+  "force_refresh": true
+}
 ```
 
-Response shape mirrors `frontend/types/index.ts` — all fields camelCase.
+The response follows the shared report schema in `frontend/types/index.ts` and `backend/app/schemas/report.py`.
 
----
+## Testing
 
-### Development Status
+Backend tests:
 
-| Component | Status |
-|---|---|
-| Frontend UI | Complete |
-| Backend FastAPI setup | Complete |
-| DNS Analyzer | Complete |
-| SSL Analyzer | Complete |
-| HTTP Headers Analyzer | Complete |
-| WHOIS Analyzer | Complete |
-| Tech Stack Analyzer | Complete |
-| Cookies Analyzer | Complete |
-| Security.txt Analyzer | Complete |
-| Risk Score Analyzer | Complete |
-| SSRF Protection | Complete |
-| Test suite (140+ tests) | Complete |
-| History page (persistent) | Planned |
-| Screenshot (Playwright) | Optional |
+```bash
+cd backend
+python -m pytest
+```
 
----
+The default pytest run excludes tests marked `integration`, because those require live DNS/HTTP/TLS/WHOIS access.
 
-### Security Philosophy
+Frontend quality checks:
 
-XyaVora-Scan performs **passive, defensive analysis only**:
-- No exploit, brute force, or aggressive scanning
-- SSRF protection — blocks localhost, private IPs, link-local, cloud metadata endpoints (169.254.x.x)
-- All network operations have enforced timeouts (per-analyzer and global)
-- Analysis limited to publicly available information
+```bash
+cd frontend
+npm run lint
+npm run build
+```
 
----
+## Security Boundaries
 
-### License
+XyaVora-Scan is designed for passive, defensive analysis.
 
-MIT © [imxyanua](https://github.com/imxyanua)
+- It does not exploit, brute force, fuzz, or perform aggressive scanning.
+- Target validation blocks localhost, private IP ranges, link-local addresses, and cloud metadata endpoints.
+- HTTP fetches use bounded timeouts and controlled redirect handling.
+- Screenshot capture is optional and should be treated as a higher-risk network feature.
+- Results can include inferred signals. Review evidence labels before treating a finding as confirmed.
 
----
+Only scan domains you own or are authorized to assess.
 
-<div align="center">
-<sub>XyaVora-Scan — Analyze your domain security posture in seconds.</sub>
-</div>
+## Contributing
+
+Issues and pull requests are welcome. Useful contributions include:
+
+- New analyzer modules with offline tests.
+- Better technology fingerprints with evidence and negative tests.
+- UI improvements that make long evidence easier to inspect.
+- Documentation fixes and deployment notes.
+- Security hardening for URL validation, redirects, and screenshot capture.
+
+When adding analyzers, keep the default test suite offline and deterministic. Mark live-network checks with `@pytest.mark.integration`.
+
+## License
+
+MIT. See [LICENSE](LICENSE).

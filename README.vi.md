@@ -1,85 +1,73 @@
-<div align="center">
+# XyaVora-Scan
 
-```
-██╗  ██╗██╗   ██╗ █████╗ ██╗   ██╗ ██████╗ ██████╗  █████╗
-╚██╗██╔╝╚██╗ ██╔╝██╔══██╗██║   ██║██╔═══██╗██╔══██╗██╔══██╗
- ╚███╔╝  ╚████╔╝ ███████║██║   ██║██║   ██║██████╔╝███████║
- ██╔██╗   ╚██╔╝  ██╔══██║╚██╗ ██╔╝██║   ██║██╔══██╗██╔══██║
-██╔╝ ██╗   ██║   ██║  ██║ ╚████╔╝ ╚██████╔╝██║  ██║██║  ██║
-╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝  ╚═══╝   ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝
-                                                    S C A N
-```
+Công cụ mã nguồn mở để phân tích nhanh tư thế bảo mật của domain bằng các kỹ thuật thụ động.
 
-**Phân tích bảo mật domain trong vài giây.**
+XyaVora-Scan chạy nhiều analyzer phòng thủ trên một domain công khai và trả về báo cáo có cấu trúc: DNS, TLS, HTTP behavior, security headers, metadata, tech stack, cookies, security.txt, screenshot, findings và bằng chứng cho từng tín hiệu phát hiện được.
 
-[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)](https://nextjs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-06B6D4?style=flat-square&logo=tailwindcss)](https://tailwindcss.com)
-[![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com)
-[![License](https://img.shields.io/badge/License-MIT-lime?style=flat-square)](LICENSE)
+> Tài liệu tiếng Anh: [README.md](README.md)
 
-</div>
+## Điểm nổi bật
 
----
+- Chạy local-first với frontend Next.js và backend FastAPI.
+- Scan nhanh không cần đăng nhập.
+- Guest scan vẫn xem được report đầy đủ nhưng mặc định không lưu lịch sử.
+- Pipeline analyzer chạy song song, một module lỗi không làm mất toàn bộ report.
+- Có nhãn nguồn dữ liệu để biết kết quả được xác minh từ DNS/TLS/header hay chỉ suy luận từ page signal.
+- Hỗ trợ screenshot desktop và mobile bằng Playwright, có thể bật/tắt bằng cấu hình.
+- Mô hình bảo mật thụ động: có SSRF guard, timeout và giới hạn dữ liệu tải về.
 
-### Giới thiệu
-
-**XyaVora-Scan** là công cụ phân tích bảo mật domain theo phong cách OSINT terminal. Người dùng nhập một domain, hệ thống sẽ chạy 8 analyzer độc lập đồng thời và trả về dashboard báo cáo toàn diện gồm điểm rủi ro, xếp hạng và các khuyến nghị cụ thể.
-
-Dự án xây dựng như một **portfolio cá nhân về cybersecurity** — giao diện dark-mode, brutalist, lấy cảm hứng từ phong cách hacker/recon tool.
-
-> English documentation: [README.md](README.md)
-
----
-
-### Các module phân tích
+## Các module hiện có
 
 | Module | Nội dung kiểm tra |
 |---|---|
-| DNS Records | A, AAAA, MX, NS, TXT — phát hiện SPF & DMARC |
-| SSL Certificate | Issuer, ngày hết hạn, TLS version, chuỗi tin cậy, số ngày còn lại |
-| HTTP Security Headers | HSTS, CSP, X-Frame-Options, XCTO, Referrer-Policy, Permissions-Policy |
-| WHOIS | Registrar, ngày tạo/hết hạn, nameservers, DNSSEC |
-| Tech Stack | Nhận diện framework, CDN, web server, CMS, analytics (35 rule) |
-| Cookies | Kiểm tra từng cookie: Secure, HttpOnly, SameSite |
-| Security.txt | Kiểm tra theo RFC 9116, parse Contact/Policy/Expires |
-| Risk Score | Chấm điểm 0-100, xếp hạng A-F, phân loại Low/Medium/High Risk |
+| Risk Summary | Điểm số, grade, risk status, finding ưu tiên |
+| DNS Records | A, AAAA, MX, NS, TXT, TTL, tín hiệu SPF và DMARC |
+| Email Security | MX, SPF policy, DMARC policy, alignment, report URI, bằng chứng |
+| TLS / SSL | HTTPS, issuer, subject, thời hạn, SAN, protocol, cipher |
+| HTTP Overview | Status code, final URL, redirect, compression, cache header, kích thước response |
+| Security Headers | HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy |
+| WHOIS | Registrar, ngày tạo/hết hạn, nameserver, DNSSEC nếu có |
+| Tech Stack | Framework, CMS, CDN, hosting, analytics, server hint, source evidence |
+| Cookies | Secure, HttpOnly, SameSite, expiry, cảnh báo |
+| Security.txt | Tìm và parse security.txt theo RFC 9116 |
+| Page Metadata | Title, description, canonical URL, Open Graph, favicon, robots directive |
+| Site Discovery | robots.txt, sitemap, crawl rule, user agent |
+| Screenshot | Ảnh chụp desktop và mobile nếu bật Playwright |
+| Raw Data | Xuất JSON report đầy đủ |
+| External Research | Link tới công cụ bên ngoài để kiểm chứng thủ công |
 
----
+## Kiến trúc
 
-### Tech Stack
+```text
+frontend/  Next.js 16, React 19, TypeScript, Tailwind CSS v4
+backend/   FastAPI, Python 3.12, Pydantic v2, async analyzers
+```
 
-**Frontend:**
-- [Next.js 16](https://nextjs.org) — App Router, server components
-- [TypeScript 5](https://www.typescriptlang.org) — strict mode
-- [Tailwind CSS v4](https://tailwindcss.com) — cấu hình qua `@theme` trong CSS
+Frontend gửi yêu cầu scan tới backend API. Backend chuẩn hóa và kiểm tra target, chạy analyzer song song, gom finding, rồi trả về JSON camelCase dùng chung với TypeScript types.
 
-**Backend:**
-- [Python 3.12](https://python.org) + [FastAPI](https://fastapi.tiangolo.com)
-- [Pydantic v2](https://docs.pydantic.dev) — validation schema, JSON output camelCase
-- [dnspython](https://www.dnspython.org) — truy vấn DNS bất đồng bộ
-- [httpx](https://www.python-httpx.org) — HTTP client bất đồng bộ, hỗ trợ streaming
-- [python-whois](https://pypi.org/project/python-whois/) — tra cứu WHOIS
-- [pytest](https://pytest.org) + [pytest-asyncio](https://github.com/pytest-dev/pytest-asyncio) — hơn 140 test
+## Chạy local
 
----
-
-### Local Development
-
-**1. Backend API**
+### 1. Backend API
 
 ```bash
 cd backend
 python -m venv .venv
 .\.venv\Scripts\activate
 pip install -r requirements.txt
-python -m playwright install chromium
 copy .env.example .env
 python -m uvicorn app.main:app --reload --port 8000
 ```
 
-**2. Frontend Web**
+Bật screenshot tùy chọn:
+
+```bash
+cd backend
+python -m playwright install chromium
+```
+
+Screenshot được điều khiển bằng `ENABLE_SCREENSHOT` và `SCREENSHOT_TIMEOUT_SECONDS` trong `backend/.env`.
+
+### 2. Frontend Web
 
 ```bash
 cd frontend
@@ -88,106 +76,89 @@ copy .env.example .env.local
 npm run dev
 ```
 
-Mở frontend tại `http://localhost:3000`.
+Mở `http://localhost:3000`.
 
-Quick scan không cần đăng nhập. Guest scan trả report ngay và mặc định không lưu history.
+## Biến môi trường
 
-Khi deploy, thiết lập các biến môi trường này trên nền tảng hosting:
+Backend:
 
-```bash
-ENV=production
-CORS_ORIGIN=https://your-frontend-domain.example
-API_URL=https://your-backend-domain.example
+```env
+ENV=development
+CORS_ORIGIN=http://localhost:3000
+SCAN_TIMEOUT_SECONDS=90
+ANALYZER_TIMEOUT_SECONDS=8
+SCREENSHOT_TIMEOUT_SECONDS=45
+FETCH_TIMEOUT_SECONDS=8
+MAX_HTML_BYTES=1000000
+ENABLE_SCREENSHOT=true
 ```
 
----
+Frontend:
 
-### Cấu trúc dự án
-
-```
-XyaVora-Scan/
-├── frontend/                        # Next.js 16 + TypeScript + Tailwind v4
-│   ├── app/
-│   │   ├── landing/                 # Trang chủ
-│   │   ├── scan/                    # Form nhập domain
-│   │   ├── scanning/                # Màn hình chờ scan
-│   │   ├── report/[domain]/         # Dashboard báo cáo
-│   │   └── history/                 # Lịch sử scan
-│   ├── components/
-│   │   ├── layout/                  # AppShell, Sidebar, TopBar
-│   │   ├── dashboard/               # RiskScoreCard, SSLCard, DNSRecordsCard,
-│   │   │                            #   WhoisCard, CookiesCard, SecurityTxtCard, ...
-│   │   ├── landing/                 # ScanInput
-│   │   └── scanning/                # ScanProgress
-│   ├── lib/api.ts                   # API client phía server
-│   └── types/index.ts               # TypeScript types dùng chung
-│
-└── backend/                         # Python 3.12 + FastAPI
-    ├── app/
-    │   ├── analyzers/               # dns, ssl, headers, whois, tech_stack,
-    │   │                            #   cookies, security_txt, score, screenshot
-    │   ├── core/config.py           # Cấu hình qua pydantic-settings
-    │   ├── routes/analyze.py        # POST /api/analyze
-    │   ├── schemas/                 # Pydantic models (report, api, analyzer)
-    │   ├── services/scan_service.py # Pipeline chạy analyzer song song
-    │   └── utils/                   # SSRF guard, URL normalizer, safe_fetch
-    ├── tests/                       # Hơn 140 pytest test
-    ├── requirements.txt
-    └── pyproject.toml
+```env
+API_URL=http://localhost:8000
 ```
 
----
+Khi deploy, đặt `API_URL` thành backend origin và `CORS_ORIGIN` thành frontend origin.
 
-### API
+## API
 
-```
+```http
 POST /api/analyze
 Content-Type: application/json
 
-{ "target": "example.com" }
+{
+  "target": "example.com",
+  "save_history": false,
+  "force_refresh": true
+}
 ```
 
-Cấu trúc response khớp với `frontend/types/index.ts` — tất cả field dạng camelCase.
+Response bám theo schema trong `frontend/types/index.ts` và `backend/app/schemas/report.py`.
 
----
+## Kiểm thử
 
-### Trạng thái phát triển
+Backend:
 
-| Thành phần | Trạng thái |
-|---|---|
-| Giao diện frontend | Hoàn thành |
-| Backend FastAPI | Hoàn thành |
-| DNS Analyzer | Hoàn thành |
-| SSL Analyzer | Hoàn thành |
-| HTTP Headers Analyzer | Hoàn thành |
-| WHOIS Analyzer | Hoàn thành |
-| Tech Stack Analyzer | Hoàn thành |
-| Cookies Analyzer | Hoàn thành |
-| Security.txt Analyzer | Hoàn thành |
-| Risk Score Analyzer | Hoàn thành |
-| Bảo vệ SSRF | Hoàn thành |
-| Bộ test (140+ test) | Hoàn thành |
-| History page (lưu trữ) | Kế hoạch |
-| Screenshot (Playwright) | Tùy chọn |
+```bash
+cd backend
+python -m pytest
+```
 
----
+Mặc định pytest bỏ qua các test có marker `integration`, vì các test này cần DNS/HTTP/TLS/WHOIS thật từ Internet.
 
-### Triết lý bảo mật
+Frontend:
 
-XyaVora-Scan chỉ thực hiện **phân tích thụ động, phòng thủ**:
-- Không exploit, brute force, hoặc quét tấn công
-- Bảo vệ SSRF — chặn localhost, private IP, link-local, metadata endpoint của cloud (169.254.x.x)
-- Tất cả thao tác mạng đều có timeout (per-analyzer và toàn bộ pipeline)
-- Phân tích giới hạn ở thông tin công khai
+```bash
+cd frontend
+npm run lint
+npm run build
+```
 
----
+## Ranh giới bảo mật
 
-### Giấy phép
+XyaVora-Scan được thiết kế cho phân tích thụ động và phòng thủ.
 
-MIT © [imxyanua](https://github.com/imxyanua)
+- Không exploit, brute force, fuzzing hoặc scan tấn công.
+- Target validation chặn localhost, private IP, link-local và cloud metadata endpoint.
+- HTTP fetch có timeout và xử lý redirect có kiểm soát.
+- Screenshot là tính năng tùy chọn và nên được xem là tính năng mạng có rủi ro cao hơn.
+- Một số kết quả là suy luận. Hãy xem nhãn nguồn và evidence trước khi coi là kết luận chắc chắn.
 
----
+Chỉ scan domain bạn sở hữu hoặc được phép đánh giá.
 
-<div align="center">
-<sub>XyaVora-Scan — Phân tích bảo mật domain trong vài giây.</sub>
-</div>
+## Đóng góp
+
+Issue và pull request đều được chào đón. Các hướng đóng góp hữu ích:
+
+- Analyzer mới kèm test offline.
+- Fingerprint tech stack tốt hơn, có evidence và negative test.
+- Cải thiện UI để đọc evidence dài dễ hơn.
+- Sửa tài liệu, thêm hướng dẫn deploy.
+- Tăng cường bảo vệ URL validation, redirect và screenshot capture.
+
+Khi thêm analyzer, hãy giữ test mặc định chạy offline và ổn định. Các kiểm tra cần mạng thật nên đánh dấu `@pytest.mark.integration`.
+
+## Giấy phép
+
+MIT. Xem [LICENSE](LICENSE).
