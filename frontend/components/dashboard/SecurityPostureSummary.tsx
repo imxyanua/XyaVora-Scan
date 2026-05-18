@@ -42,11 +42,11 @@ function Metric({ label, value, status }: { label: string; value: string; status
         <span className="font-mono text-sm font-bold text-white">
           {label}
         </span>
-        <span className={`shrink-0 border px-2 py-0.5 font-mono text-[9px] leading-none ${style.cls}`}>
+        <span className={`shrink-0 border px-2 py-0.5 font-mono text-[10px] leading-none ${style.cls}`}>
           {style.label}
         </span>
       </div>
-      <p className="mt-2 font-mono text-[11px] leading-relaxed text-[#d7e8ff]/70">
+      <p className="mt-2 font-mono text-xs leading-relaxed text-[#d7e8ff]/70">
         {value}
       </p>
     </div>
@@ -70,7 +70,7 @@ export function SecurityPostureSummary({ ssl, headers, cookies, securityTxt }: P
           <h3 className="font-mono text-2xl font-bold text-primary-fixed leading-none">
             Security Posture Summary
           </h3>
-          <p className="font-mono text-xs text-[#d7e8ff]/70 mt-2">
+          <p className="font-mono text-[13px] text-[#d7e8ff]/70 mt-2 max-w-3xl leading-relaxed">
             Quick read of transport, browser protections, session cookies, and security contact disclosure.
           </p>
         </div>

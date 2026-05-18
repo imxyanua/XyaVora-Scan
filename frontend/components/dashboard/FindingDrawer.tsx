@@ -92,10 +92,10 @@ function DrawerContent({ finding, onClose }: { finding: Finding; onClose: () => 
       {/* Header */}
       <div className="p-4 border-b border-primary-fixed/20 bg-[#070B0F] flex items-start justify-between gap-3 shrink-0">
         <div className="min-w-0">
-          <span className="font-mono text-[10px] text-primary-fixed/60 uppercase tracking-widest block mb-1">
+          <span className="font-mono text-[11px] text-primary-fixed/60 uppercase tracking-widest block mb-1">
             Finding Detail
           </span>
-          <h2 className="font-mono text-sm font-bold text-primary-fixed leading-snug">
+          <h2 className="font-mono text-base font-bold text-primary-fixed leading-snug">
             {finding.title}
           </h2>
         </div>
@@ -111,13 +111,13 @@ function DrawerContent({ finding, onClose }: { finding: Finding; onClose: () => 
 
       {/* Meta row */}
       <div className="px-4 py-3 border-b border-primary-fixed/10 flex items-center gap-3 shrink-0 bg-[#0A1018]">
-        <span className={`font-mono text-[10px] uppercase border px-2 py-0.5 ${sevClass}`}>
+        <span className={`font-mono text-[11px] uppercase border px-2 py-0.5 ${sevClass}`}>
           {finding.severity.toUpperCase()}
         </span>
         <span className={STATUS_CLASS[finding.status]}>
           [{STATUS_LABEL[finding.status]}]
         </span>
-        <span className="font-mono text-[10px] text-primary-fixed/65 uppercase tracking-widest ml-auto">
+        <span className="font-mono text-[11px] text-primary-fixed/65 uppercase tracking-widest ml-auto">
           {finding.category}
         </span>
       </div>
@@ -125,14 +125,14 @@ function DrawerContent({ finding, onClose }: { finding: Finding; onClose: () => 
       {(finding.confidence || finding.source) && (
         <div className="px-4 py-3 border-b border-primary-fixed/10 grid grid-cols-2 gap-2 shrink-0 bg-[#101720]">
           <div>
-            <p className="font-mono text-[9px] text-primary-fixed/45 uppercase tracking-widest">Confidence</p>
-            <p className="font-mono text-xs text-[#d7e8ff]/75 mt-1">
+            <p className="font-mono text-[10px] text-primary-fixed/45 uppercase tracking-widest">Confidence</p>
+            <p className="font-mono text-[13px] text-[#d7e8ff]/75 mt-1">
               {finding.confidence ? CONFIDENCE_LABEL[finding.confidence] : "Unknown"}
             </p>
           </div>
           <div>
-            <p className="font-mono text-[9px] text-primary-fixed/45 uppercase tracking-widest">Source</p>
-            <p className="font-mono text-xs text-[#d7e8ff]/75 mt-1">
+            <p className="font-mono text-[10px] text-primary-fixed/45 uppercase tracking-widest">Source</p>
+            <p className="font-mono text-[13px] text-[#d7e8ff]/75 mt-1">
               {finding.source ? SOURCE_LABEL[finding.source] : "Unknown"}
             </p>
           </div>
@@ -144,22 +144,22 @@ function DrawerContent({ finding, onClose }: { finding: Finding; onClose: () => 
 
         {/* Description */}
         <section>
-          <p className="font-mono text-[10px] text-primary-fixed/65 uppercase tracking-widest mb-2">
+          <p className="font-mono text-[11px] text-primary-fixed/65 uppercase tracking-widest mb-2">
             Description
           </p>
-          <p className="font-mono text-sm text-primary-fixed/70 leading-relaxed">
+          <p className="font-mono text-[14px] text-primary-fixed/70 leading-relaxed">
             {finding.description}
           </p>
         </section>
 
         {finding.evidence && finding.evidence.length > 0 && (
           <section>
-            <p className="font-mono text-[10px] text-primary-fixed/65 uppercase tracking-widest mb-2">
+            <p className="font-mono text-[11px] text-primary-fixed/65 uppercase tracking-widest mb-2">
               Evidence
             </p>
             <div className="bg-[#070B0F] border border-primary-fixed/15 p-3 space-y-1">
               {finding.evidence.map((item) => (
-                <p key={item} className="font-mono text-[11px] text-[#d7e8ff]/75 leading-relaxed break-words">
+                <p key={item} className="font-mono text-xs text-[#d7e8ff]/75 leading-relaxed break-words">
                   &gt; {item}
                 </p>
               ))}
@@ -170,11 +170,11 @@ function DrawerContent({ finding, onClose }: { finding: Finding; onClose: () => 
         {/* Impact */}
         {finding.impact && (
           <section>
-            <p className="font-mono text-[10px] text-primary-fixed/65 uppercase tracking-widest mb-2">
+            <p className="font-mono text-[11px] text-primary-fixed/65 uppercase tracking-widest mb-2">
               Impact
             </p>
             <div className="border-l-2 border-status-warn pl-3">
-              <p className="font-mono text-sm text-status-warn/80 leading-relaxed">
+              <p className="font-mono text-[14px] text-status-warn/80 leading-relaxed">
                 {finding.impact}
               </p>
             </div>
@@ -183,11 +183,11 @@ function DrawerContent({ finding, onClose }: { finding: Finding; onClose: () => 
 
         {/* Recommendation */}
         <section>
-          <p className="font-mono text-[10px] text-primary-fixed/65 uppercase tracking-widest mb-2">
+          <p className="font-mono text-[11px] text-primary-fixed/65 uppercase tracking-widest mb-2">
             Recommendation
           </p>
           <div className="bg-primary-fixed/[0.04] border border-primary-fixed/15 p-3">
-            <p className="font-mono text-sm text-primary-fixed/80 leading-relaxed whitespace-pre-wrap">
+            <p className="font-mono text-[14px] text-primary-fixed/80 leading-relaxed whitespace-pre-wrap">
               {finding.recommendation}
             </p>
           </div>
@@ -200,7 +200,7 @@ function DrawerContent({ finding, onClose }: { finding: Finding; onClose: () => 
         <button
           type="button"
           onClick={onClose}
-          className="btn-ghost w-full py-2 text-xs"
+          className="btn-ghost w-full py-2 text-[13px]"
         >
           &gt; CLOSE_PANEL
         </button>

@@ -47,10 +47,10 @@ export function DetailPanel({ items, label = "Details" }: Props) {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex w-full items-center justify-between gap-3 border border-primary-fixed/20 bg-[#070B0F] px-3 py-2 font-mono text-xs font-bold text-primary-fixed transition-colors hover:border-primary-fixed/55 hover:bg-primary-fixed/[0.06]"
+          className="inline-flex w-full items-center justify-between gap-3 border border-primary-fixed/20 bg-[#070B0F] px-3 py-2 font-mono text-[13px] font-bold text-primary-fixed transition-colors hover:border-primary-fixed/55 hover:bg-primary-fixed/[0.06]"
         >
           <span>{label}</span>
-          <span className="text-[10px] text-[#d7e8ff]/55">
+          <span className="text-[11px] text-[#d7e8ff]/55">
             OPEN {visibleItems.length} ITEMS
           </span>
         </button>
@@ -76,7 +76,7 @@ export function DetailPanel({ items, label = "Details" }: Props) {
                 <h3 className="break-words font-mono text-xl font-bold leading-tight text-primary-fixed">
                   {label}
                 </h3>
-                <p className="mt-1 font-mono text-[11px] text-[#d7e8ff]/60">
+                <p className="mt-1 font-mono text-xs text-[#d7e8ff]/60">
                   Full scan values and evidence
                 </p>
               </div>
@@ -95,10 +95,10 @@ export function DetailPanel({ items, label = "Details" }: Props) {
                   key={`${item.label}:${formatValue(item.value)}`}
                   className="grid gap-2 border-b border-primary-fixed/10 px-5 py-3 last:border-b-0 md:grid-cols-[150px_minmax(0,1fr)]"
                 >
-                  <span className="font-mono text-[11px] font-bold uppercase tracking-wide text-white">
+                  <span className="font-mono text-xs font-bold uppercase tracking-wide text-white">
                     {item.label}
                   </span>
-                  <span className="whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-[#d7e8ff]/75">
+                  <span className="whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-[#d7e8ff]/75">
                     {formatValue(item.value)}
                   </span>
                 </div>

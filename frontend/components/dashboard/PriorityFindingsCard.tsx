@@ -77,7 +77,7 @@ export function PriorityFindingsCard({ findings }: Props) {
             <h2 className="font-mono text-2xl font-bold text-primary-fixed leading-none">
               Priority Observations
             </h2>
-            <p className="font-mono text-xs text-[#d7e8ff]/70 mt-2 max-w-3xl">
+            <p className="font-mono text-[13px] text-[#d7e8ff]/70 mt-2 max-w-3xl leading-relaxed">
               The highest-impact checks that need review. These are posture observations, not confirmed vulnerabilities.
             </p>
           </div>
@@ -94,7 +94,7 @@ export function PriorityFindingsCard({ findings }: Props) {
         {priorityFindings.length === 0 ? (
           <div className="mx-5 mb-5 border border-primary-fixed/15 bg-[#151918] p-4">
             <p className="font-mono text-sm text-white font-bold">No priority observations found</p>
-            <p className="font-mono text-xs text-[#d7e8ff]/70 mt-1">
+            <p className="font-mono text-[13px] text-[#d7e8ff]/70 mt-1">
               The scanner did not find failed or review findings in the current rule set.
             </p>
           </div>
@@ -123,20 +123,20 @@ export function PriorityFindingsCard({ findings }: Props) {
                         </span>
                       )}
                     </div>
-                    <h3 className="font-mono text-base text-white font-bold leading-snug">
+                    <h3 className="font-mono text-[17px] text-white font-bold leading-snug">
                       {finding.title}
                     </h3>
                   </div>
                   <button
                     type="button"
                     onClick={() => setActiveFinding(finding)}
-                    className="shrink-0 font-mono text-[10px] text-primary-fixed border border-primary-fixed/45 px-2 py-1 hover:bg-primary-fixed hover:text-[#070B0F] transition-colors"
+                    className="shrink-0 font-mono text-[11px] text-primary-fixed border border-primary-fixed/45 px-2 py-1 hover:bg-primary-fixed hover:text-[#070B0F] transition-colors"
                   >
                     Details
                   </button>
                 </div>
 
-                <p className="font-mono text-xs text-[#d7e8ff]/75 leading-relaxed mt-3">
+                <p className="font-mono text-[13px] text-[#d7e8ff]/75 leading-relaxed mt-3">
                   {compactText(finding.description)}
                 </p>
 
@@ -144,20 +144,20 @@ export function PriorityFindingsCard({ findings }: Props) {
                   <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2">
                     {finding.impact && (
                       <div className="border-l-2 border-status-warn/70 pl-3">
-                        <p className="font-mono text-[10px] text-status-warn uppercase mb-1">
+                        <p className="font-mono text-[11px] text-status-warn uppercase mb-1">
                           Impact
                         </p>
-                        <p className="font-mono text-[11px] text-[#d7e8ff]/70 leading-relaxed">
+                        <p className="font-mono text-xs text-[#d7e8ff]/70 leading-relaxed">
                           {compactText(finding.impact, 100)}
                         </p>
                       </div>
                     )}
                     {finding.recommendation && (
                       <div className="border-l-2 border-primary-fixed/50 pl-3">
-                        <p className="font-mono text-[10px] text-primary-fixed uppercase mb-1">
+                        <p className="font-mono text-[11px] text-primary-fixed uppercase mb-1">
                           Next Step
                         </p>
-                        <p className="font-mono text-[11px] text-[#d7e8ff]/70 leading-relaxed">
+                        <p className="font-mono text-xs text-[#d7e8ff]/70 leading-relaxed">
                           {compactText(finding.recommendation, 100)}
                         </p>
                       </div>

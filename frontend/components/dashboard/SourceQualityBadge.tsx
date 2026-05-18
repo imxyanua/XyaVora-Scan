@@ -37,7 +37,7 @@ const SOURCE_STYLE: Record<SourceQuality, string> = {
 
 export function SourceQualityBadge({ source, className = "" }: Props) {
   return (
-    <span className={`inline-flex shrink-0 border px-2 py-0.5 font-mono text-[9px] leading-none ${SOURCE_STYLE[source]} ${className}`}>
+    <span className={`inline-flex shrink-0 border px-2 py-0.5 font-mono text-[10px] leading-none ${SOURCE_STYLE[source]} ${className}`}>
       {SOURCE_LABEL[source]}
     </span>
   );
