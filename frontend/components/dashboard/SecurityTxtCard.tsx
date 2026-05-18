@@ -1,4 +1,6 @@
 import type { SecurityTxtResult } from "@/types";
+import { DetailPanel } from "./DetailPanel";
+import { SourceQualityBadge } from "./SourceQualityBadge";
 
 interface Props {
   securityTxt: SecurityTxtResult;
@@ -16,14 +18,25 @@ export function SecurityTxtCard({ securityTxt }: Props) {
     { key: "ENCRYPTION", val: securityTxt.encryption ?? "Unknown" },
     { key: "EXPIRES", val: securityTxt.expires ?? "Unknown" },
   ];
+  const detailItems = [
+    { label: "Location", value: securityTxt.location },
+    { label: "Contact", value: securityTxt.contact },
+    { label: "Policy", value: securityTxt.policy },
+    { label: "Encryption", value: securityTxt.encryption },
+    { label: "Expires", value: securityTxt.expires },
+    { label: "Raw", value: securityTxt.raw },
+  ];
 
   return (
-    <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex flex-col">
+    <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex h-full flex-col">
       <div className="px-5 pt-5 pb-3 flex justify-between items-start shrink-0">
         <h3 className="font-mono text-2xl font-bold text-primary-fixed leading-none">
           Security.txt
         </h3>
-        <span className={`${statusCls} text-[10px]`}>{statusLabel}</span>
+        <div className="flex items-center gap-2">
+          <SourceQualityBadge source={securityTxt.present ? "page" : "missing"} />
+          <span className={`${statusCls} text-[10px]`}>{statusLabel}</span>
+        </div>
       </div>
 
       {securityTxt.error ? (
@@ -40,7 +53,7 @@ export function SecurityTxtCard({ securityTxt }: Props) {
       ) : (
         <div className="font-mono text-sm flex-1">
           {securityTxt.location && (
-            <div className="px-5 py-2 text-[11px] text-[#d7e8ff]/70 border-y border-primary-fixed/10 bg-[#151918] truncate">
+            <div className="px-5 py-2 text-[11px] text-[#d7e8ff]/70 border-y border-primary-fixed/10 bg-[#151918] break-all">
               &gt; {securityTxt.location}
             </div>
           )}
@@ -50,13 +63,14 @@ export function SecurityTxtCard({ securityTxt }: Props) {
               className="flex justify-between gap-4 px-5 py-1.5 border-b border-primary-fixed/10 last:border-b-0 hover:bg-primary-fixed/[0.04] transition-colors"
             >
               <span className="text-white font-bold shrink-0">{row.key}</span>
-              <span className="text-white text-right truncate max-w-[65%]">
+              <span className="text-white text-right break-words max-w-[70%]">
                 {row.val}
               </span>
             </div>
           ))}
         </div>
       )}
+      {!securityTxt.error && securityTxt.present && <DetailPanel items={detailItems} />}
     </div>
   );
 }

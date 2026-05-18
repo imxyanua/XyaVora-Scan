@@ -1,5 +1,6 @@
 import type { PageMetadataResult } from "@/types";
 import { AppIcon } from "@/components/ui/AppIcon";
+import { DetailPanel } from "./DetailPanel";
 
 interface Props {
   metadata: PageMetadataResult;
@@ -21,9 +22,22 @@ function Row({ label, value }: { label: string; value?: string | null }) {
 export function PageMetadataCard({ metadata }: Props) {
   const title = metadata.ogTitle || metadata.title;
   const description = metadata.ogDescription || metadata.description;
+  const detailItems = [
+    { label: "Title", value: metadata.title },
+    { label: "Description", value: metadata.description },
+    { label: "Canonical URL", value: metadata.canonicalUrl },
+    { label: "Open Graph Title", value: metadata.ogTitle },
+    { label: "Open Graph Description", value: metadata.ogDescription },
+    { label: "Open Graph Image", value: metadata.ogImage },
+    { label: "Favicon", value: metadata.faviconUrl },
+    { label: "Language", value: metadata.language },
+    { label: "Robots", value: metadata.robots },
+    { label: "Noindex", value: metadata.noindex },
+    { label: "Nofollow", value: metadata.nofollow },
+  ];
 
   return (
-    <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex flex-col">
+    <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex h-full flex-col">
       <div className="px-5 pt-5 pb-3 flex justify-between items-start shrink-0">
         <h3 className="font-mono text-2xl font-bold text-primary-fixed leading-none">
           Page Metadata
@@ -46,18 +60,18 @@ export function PageMetadataCard({ metadata }: Props) {
                 <AppIcon name="http" className="text-2xl text-primary-fixed/70 shrink-0" />
               )}
               <div className="min-w-0">
-                <p className="font-mono text-sm text-white font-bold leading-snug">
+                <p className="font-mono text-sm text-white font-bold leading-snug line-clamp-2">
                   {title || "No title detected"}
                 </p>
                 {description && (
-                  <p className="font-mono text-xs text-[#d7e8ff]/75 leading-relaxed mt-1">
+                  <p className="font-mono text-xs text-[#d7e8ff]/75 leading-relaxed mt-1 line-clamp-3">
                     {description}
                   </p>
                 )}
               </div>
             </div>
           </div>
-          <div>
+          <div className="flex-1">
             <Row label="Language" value={metadata.language} />
             <Row label="Canonical" value={metadata.canonicalUrl} />
             <Row label="OG Image" value={metadata.ogImage} />
@@ -65,6 +79,7 @@ export function PageMetadataCard({ metadata }: Props) {
             <Row label="Noindex" value={metadata.noindex ? "YES" : "NO"} />
             <Row label="Nofollow" value={metadata.nofollow ? "YES" : "NO"} />
           </div>
+          <DetailPanel items={detailItems} />
         </>
       )}
     </div>

@@ -1,12 +1,22 @@
 import type { HttpOverviewResult } from "@/types";
+import { DetailPanel } from "./DetailPanel";
 
 type Props = {
   http: HttpOverviewResult;
 };
 
 export function RedirectsCard({ http }: Props) {
+  const detailItems = http.redirectHops.map((hop, index) => ({
+    label: `Hop ${index + 1}`,
+    value: [
+      `status: ${hop.statusCode}`,
+      `from: ${hop.fromUrl}`,
+      `to: ${hop.toUrl}`,
+    ].join("\n"),
+  }));
+
   return (
-    <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex flex-col">
+    <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex h-full flex-col">
       <div className="px-5 pt-5 pb-3 flex justify-between items-start shrink-0">
         <h3 className="font-mono text-2xl font-bold text-primary-fixed leading-none">
           Redirects
@@ -21,8 +31,8 @@ export function RedirectsCard({ http }: Props) {
       ) : http.redirectHops.length === 0 ? (
         <p className="font-mono text-sm text-[#d7e8ff]/65 px-4 py-4">No redirects detected.</p>
       ) : (
-        <div>
-          {http.redirectHops.map((hop, index) => (
+        <div className="flex-1">
+          {http.redirectHops.slice(0, 3).map((hop, index) => (
             <div
               key={`${hop.fromUrl}-${hop.toUrl}-${index}`}
               className="px-5 py-3 border-b border-primary-fixed/10 last:border-b-0 hover:bg-primary-fixed/[0.04] transition-colors"
@@ -43,8 +53,14 @@ export function RedirectsCard({ http }: Props) {
               </p>
             </div>
           ))}
+          {http.redirectHops.length > 3 && (
+            <p className="px-5 py-2 font-mono text-[10px] text-[#d7e8ff]/55">
+              + {http.redirectHops.length - 3} more redirect hops
+            </p>
+          )}
         </div>
       )}
+      {!http.error && http.redirectHops.length > 0 && <DetailPanel items={detailItems} />}
     </div>
   );
 }
