@@ -82,6 +82,10 @@ export interface SslResult {
   sanDomains:      string[];
   trusted:         boolean;
   protocol?:       string;
+  cipherName?:     string;
+  cipherBits?:     number;
+  tlsConfidence?:  "high" | "medium" | "low";
+  certificateEvidence?: string[];
   warning?:        string;
   error?:          string;
 }

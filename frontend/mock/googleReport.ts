@@ -55,6 +55,16 @@ export const mockGoogleReport: ScanReport = {
     sanDomains:     ["*.google.com", "google.com"],
     trusted:        true,
     protocol:       "TLS 1.3",
+    cipherName:     "TLS_AES_256_GCM_SHA384",
+    cipherBits:     256,
+    tlsConfidence:  "high",
+    certificateEvidence: [
+      "issuer: Google Trust Services",
+      "subject: *.google.com",
+      "valid_to: 2026-07-13T00:00:00.000Z",
+      "protocol: TLS 1.3",
+      "cipher: TLS_AES_256_GCM_SHA384",
+    ],
   },
 
   headers: {

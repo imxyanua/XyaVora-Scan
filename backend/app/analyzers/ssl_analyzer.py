@@ -64,13 +64,27 @@ def _parse_cert(hostname: str, info: dict) -> SslResult:
     ]
 
     # TLS version from cipher tuple: cipher[1] is the protocol string
+    cipher_name = cipher[0] if cipher else None
     protocol = cipher[1] if cipher else None
+    cipher_bits = cipher[2] if cipher and len(cipher) > 2 else None
 
     warning = None
     if days_remaining < 0:
         warning = f"Certificate expired {abs(days_remaining)} day(s) ago."
     elif days_remaining < _EXPIRY_WARN_DAYS:
         warning = f"Certificate expires in {days_remaining} day(s)."
+
+    evidence = [
+        f"issuer: {issuer_o or 'Unknown'}",
+        f"subject: {subject_cn or hostname}",
+        f"valid_from: {valid_from.isoformat()}",
+        f"valid_to: {valid_to.isoformat()}",
+        f"protocol: {protocol or 'Unknown'}",
+    ]
+    if cipher_name:
+        evidence.append(f"cipher: {cipher_name}")
+    if san_domains:
+        evidence.append(f"san_count: {len(san_domains)}")
 
     return SslResult(
         httpsAvailable=True,
@@ -82,6 +96,10 @@ def _parse_cert(hostname: str, info: dict) -> SslResult:
         sanDomains=san_domains,
         trusted=True,   # ssl.create_default_context() validates chain — if we got here, it's trusted
         protocol=protocol,
+        cipherName=cipher_name,
+        cipherBits=cipher_bits,
+        tlsConfidence="high",
+        certificateEvidence=evidence,
         warning=warning,
     )
 
@@ -147,12 +165,24 @@ async def analyze_ssl(hostname: str) -> AnalyzerResult:
         result = SslResult(
             httpsAvailable=True,
             trusted=False,
+            tlsConfidence="medium",
+            certificateEvidence=[f"certificate verification failed: {exc}"],
             error=f"Certificate verification failed: {exc}",
         )
     except (ConnectionRefusedError, TimeoutError, OSError) as exc:
-        result = SslResult(httpsAvailable=False, error=str(exc))
+        result = SslResult(
+            httpsAvailable=False,
+            tlsConfidence="low",
+            certificateEvidence=[f"tls connection failed: {exc}"],
+            error=str(exc),
+        )
     except Exception as exc:
-        result = SslResult(httpsAvailable=False, error=str(exc))
+        result = SslResult(
+            httpsAvailable=False,
+            tlsConfidence="low",
+            certificateEvidence=[f"tls analyzer error: {exc}"],
+            error=str(exc),
+        )
 
     findings = _build_findings(result)
     return AnalyzerResult(key="ssl", status="success", data=result, findings=findings)

@@ -5,6 +5,11 @@ interface Props {
 }
 
 const CERT_SEGMENTS = 10;
+const CONFIDENCE_STYLE: Record<"high" | "medium" | "low", string> = {
+  high: "border-primary-fixed/45 text-primary-fixed bg-primary-fixed/10",
+  medium: "border-status-warn/50 text-status-warn bg-status-warn/10",
+  low: "border-white/20 text-white/50 bg-white/[0.03]",
+};
 
 export function SSLCard({ ssl }: Props) {
   const isExpiring  = ssl.daysRemaining < 30;
@@ -28,6 +33,8 @@ export function SSLCard({ ssl }: Props) {
     { key: "ISSUER",   val: ssl.issuer              },
     { key: "SUBJECT",  val: ssl.subject             },
     { key: "PROTOCOL", val: ssl.protocol ?? "TLS"   },
+    { key: "CIPHER",   val: ssl.cipherName          },
+    { key: "CIPHER BITS", val: ssl.cipherBits        },
     { key: "TRUSTED",  val: ssl.trusted ? "YES" : "NO" },
   ];
 
@@ -52,6 +59,15 @@ export function SSLCard({ ssl }: Props) {
               <span className="text-white text-right truncate">{row.val || "Unknown"}</span>
             </div>
           ))}
+
+          {ssl.tlsConfidence && (
+            <div className="flex justify-between gap-4 px-5 py-1.5 border-b border-primary-fixed/10 bg-[#151918]">
+              <span className="text-white font-bold shrink-0">CONFIDENCE</span>
+              <span className={`font-mono text-[10px] border px-2 py-0.5 ${CONFIDENCE_STYLE[ssl.tlsConfidence]}`}>
+                {ssl.tlsConfidence.toUpperCase()}
+              </span>
+            </div>
+          )}
 
           <div className="px-5 pt-3 pb-4 space-y-2.5">
             <div className="flex justify-between gap-2">
@@ -78,6 +94,16 @@ export function SSLCard({ ssl }: Props) {
               <span className="text-primary-fixed/55">CERTIFICATE TTL</span>
               <span>{ttlDays}_DAYS REMAINING</span>
             </div>
+            {(ssl.certificateEvidence?.length ?? 0) > 0 && (
+              <div className="border-t border-primary-fixed/10 pt-2 space-y-1">
+                <p className="text-white font-bold text-xs">EVIDENCE</p>
+                {ssl.certificateEvidence?.slice(0, 5).map((item) => (
+                  <p key={item} className="font-mono text-[10px] text-[#d7e8ff]/65 break-all">
+                    &gt; {item}
+                  </p>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

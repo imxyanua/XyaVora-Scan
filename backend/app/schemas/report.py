@@ -79,6 +79,10 @@ class SslResult(_Base):
     sanDomains:     list[str] = []
     trusted:        bool = False
     protocol:       Optional[str] = None
+    cipherName:     Optional[str] = None
+    cipherBits:     Optional[int] = None
+    tlsConfidence:  Optional[TechConfidence] = None
+    certificateEvidence: list[str] = []
     warning:        Optional[str] = None
     error:          Optional[str] = None
 
