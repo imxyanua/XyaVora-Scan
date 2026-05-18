@@ -40,7 +40,11 @@ function moduleStatuses(report: ScanReport): ModuleStatus[] {
     {
       label: "DNS",
       status: report.dns.error ? "error" : hasAny(report.dns.records) ? "detected" : "unavailable",
-      detail: report.dns.error ? report.dns.error : `${report.dns.records.length} records`,
+      detail: report.dns.error
+        ? report.dns.error
+        : report.dns.emailSecurityConfidence
+        ? `${report.dns.records.length} records, email ${report.dns.emailSecurityConfidence}`
+        : `${report.dns.records.length} records`,
     },
     {
       label: "TLS",
@@ -55,7 +59,11 @@ function moduleStatuses(report: ScanReport): ModuleStatus[] {
     {
       label: "HTTP",
       status: report.httpOverview.error ? "error" : report.httpOverview.statusCode ? "detected" : "unavailable",
-      detail: report.httpOverview.error ? report.httpOverview.error : `${report.httpOverview.statusCode || "No"} status`,
+      detail: report.httpOverview.error
+        ? report.httpOverview.error
+        : report.httpOverview.cdnProvider
+        ? `${report.httpOverview.statusCode} status, ${report.httpOverview.cdnProvider} CDN (${report.httpOverview.cdnConfidence ?? "unknown"})`
+        : `${report.httpOverview.statusCode || "No"} status`,
     },
     {
       label: "WHOIS",

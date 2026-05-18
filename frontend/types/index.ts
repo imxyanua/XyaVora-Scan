@@ -50,10 +50,14 @@ export interface DnsResult {
   records:       DnsRecord[];
   mxDetected:    boolean;
   mxRecords:     string[];
+  mxEvidence:    string[];
   spfDetected:   boolean;
   dmarcDetected: boolean;
   spfRecord?:    string;
   dmarcRecord?:  string;
+  spfEvidence:   string[];
+  dmarcEvidence: string[];
+  emailSecurityConfidence?: "high" | "medium" | "low";
   spfAll?:        string;
   spfLookupCount: number;
   dmarcPolicy?:   string;
@@ -78,6 +82,10 @@ export interface SslResult {
   sanDomains:      string[];
   trusted:         boolean;
   protocol?:       string;
+  cipherName?:     string;
+  cipherBits?:     number;
+  tlsConfidence?:  "high" | "medium" | "low";
+  certificateEvidence?: string[];
   warning?:        string;
   error?:          string;
 }
@@ -91,6 +99,8 @@ export interface SecurityHeaderItem {
   status:      HeaderStatus;
   value?:      string;
   description: string;
+  confidence?: "high" | "medium" | "low";
+  evidence?:   string[];
 }
 
 export interface HeadersResult {
@@ -123,6 +133,8 @@ export interface HttpOverviewResult {
   poweredBy?:      string;
   via?:            string;
   cdnProvider?:    string;
+  cdnConfidence?:  "high" | "medium" | "low";
+  cdnEvidence?:    string[];
   altSvc?:         string;
   contentType?:   string;
   contentLength?: number;

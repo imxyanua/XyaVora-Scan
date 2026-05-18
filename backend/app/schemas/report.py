@@ -47,10 +47,14 @@ class DnsResult(_Base):
     records:        list[DnsRecord] = []
     mxDetected:     bool = False
     mxRecords:      list[str] = []
+    mxEvidence:     list[str] = []
     spfDetected:    bool = False
     dmarcDetected:  bool = False
     spfRecord:      Optional[str] = None
     dmarcRecord:    Optional[str] = None
+    spfEvidence:    list[str] = []
+    dmarcEvidence:  list[str] = []
+    emailSecurityConfidence: Optional[TechConfidence] = None
     spfAll:         Optional[str] = None
     spfLookupCount: int = 0
     dmarcPolicy:    Optional[str] = None
@@ -75,6 +79,10 @@ class SslResult(_Base):
     sanDomains:     list[str] = []
     trusted:        bool = False
     protocol:       Optional[str] = None
+    cipherName:     Optional[str] = None
+    cipherBits:     Optional[int] = None
+    tlsConfidence:  Optional[TechConfidence] = None
+    certificateEvidence: list[str] = []
     warning:        Optional[str] = None
     error:          Optional[str] = None
 
@@ -89,6 +97,8 @@ class SecurityHeaderItem(_Base):
     status:      HeaderStatus
     value:       Optional[str] = None
     description: str
+    confidence:  Optional[TechConfidence] = None
+    evidence:    list[str] = []
 
 
 class HeadersResult(_Base):
@@ -121,6 +131,8 @@ class HttpOverviewResult(_Base):
     poweredBy:       Optional[str] = None
     via:             Optional[str] = None
     cdnProvider:     Optional[str] = None
+    cdnConfidence:   Optional[TechConfidence] = None
+    cdnEvidence:     list[str] = []
     altSvc:          Optional[str] = None
     contentType:     Optional[str] = None
     contentLength:   Optional[int] = None

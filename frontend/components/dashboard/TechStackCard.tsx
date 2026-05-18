@@ -1,4 +1,6 @@
 import type { TechStackItem, TechCategory } from "@/types";
+import { DetailPanel } from "./DetailPanel";
+import { SourceQualityBadge, type SourceQuality } from "./SourceQualityBadge";
 
 interface Props {
   techStack: TechStackItem[];
@@ -99,6 +101,15 @@ function iconUrl(icon: TechIconMeta) {
     : null;
 }
 
+function sourceQuality(sources?: string[]): SourceQuality {
+  if (!sources || sources.length === 0) return "estimated";
+  if (sources.includes("header")) return "header";
+  if (sources.includes("html") || sources.includes("asset-url") || sources.includes("asset-body") || sources.includes("meta")) return "page";
+  if (sources.includes("cookie")) return "cookie";
+  if (sources.includes("inferred")) return "inferred";
+  return "estimated";
+}
+
 export function TechStackCard({ techStack }: Props) {
   const grouped = CATEGORY_ORDER.reduce<Record<string, TechStackItem[]>>(
     (acc, cat) => {
@@ -110,9 +121,19 @@ export function TechStackCard({ techStack }: Props) {
   );
 
   const categories = Object.keys(grouped) as TechCategory[];
+  const detailItems = techStack.map((tech) => ({
+    label: tech.name,
+    value: [
+      `category: ${tech.category}`,
+      `confidence: ${tech.confidence}`,
+      tech.version ? `version: ${tech.version}` : null,
+      tech.sources?.length ? `sources: ${tech.sources.join(" + ")}` : null,
+      tech.evidence?.length ? `evidence: ${tech.evidence.join(" | ")}` : null,
+    ].filter(Boolean).join("\n"),
+  }));
 
   return (
-    <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex flex-col">
+    <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex h-full flex-col">
       {/* Header */}
       <div className="px-5 pt-5 pb-3 flex justify-between items-start shrink-0">
         <h3 className="font-mono text-2xl font-bold text-primary-fixed leading-none">
@@ -168,8 +189,11 @@ export function TechStackCard({ techStack }: Props) {
                           )}
                         </span>
                         {sources.length > 0 && (
-                          <span className="text-[9px] text-white/45 leading-none">
-                            {sources.join(" + ")}
+                          <span className="flex flex-wrap items-center gap-1">
+                            <SourceQualityBadge source={sourceQuality(sources)} />
+                            <span className="text-[9px] text-white/45 leading-none">
+                              {sources.join(" + ")}
+                            </span>
                           </span>
                         )}
                       </span>
@@ -181,6 +205,7 @@ export function TechStackCard({ techStack }: Props) {
           ))}
         </div>
       )}
+      <DetailPanel items={detailItems} />
     </div>
   );
 }

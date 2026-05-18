@@ -1,4 +1,5 @@
 import type { HttpOverviewResult } from "@/types";
+import { DetailPanel } from "./DetailPanel";
 
 interface Props {
   http: HttpOverviewResult;
@@ -25,8 +26,22 @@ function Row({ label, value }: { label: string; value?: string | number | null }
 }
 
 export function HttpOverviewCard({ http }: Props) {
+  const detailItems = [
+    { label: "Status", value: http.statusCode },
+    { label: "Final URL", value: http.finalUrl },
+    { label: "Content Type", value: http.contentType },
+    { label: "Content Length", value: http.contentLength },
+    { label: "Bytes Read", value: http.responseBytes },
+    { label: "Response Time", value: http.responseTimeMs ? `${http.responseTimeMs}ms` : undefined },
+    { label: "Compression", value: http.compression },
+    { label: "ETag", value: http.etag },
+    { label: "Last Modified", value: http.lastModified },
+    { label: "Cache Control", value: http.cacheControl },
+    { label: "Expires", value: http.expires },
+  ];
+
   return (
-    <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex flex-col">
+    <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex h-full flex-col">
       <div className="px-5 pt-5 pb-3 flex justify-between items-start shrink-0">
         <h3 className="font-mono text-2xl font-bold text-primary-fixed leading-none">
           HTTP Overview
@@ -39,7 +54,7 @@ export function HttpOverviewCard({ http }: Props) {
       {http.error ? (
         <p className="font-mono text-sm text-error/70 px-4 py-4">[-] {http.error}</p>
       ) : (
-        <div>
+        <div className="flex-1">
           <Row label="Status" value={http.statusCode} />
           <Row label="Final URL" value={http.finalUrl} />
           <Row label="Content Type" value={http.contentType} />
@@ -50,6 +65,7 @@ export function HttpOverviewCard({ http }: Props) {
           <Row label="Last Modified" value={http.lastModified} />
         </div>
       )}
+      {!http.error && <DetailPanel items={detailItems} />}
     </div>
   );
 }

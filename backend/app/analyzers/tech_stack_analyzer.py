@@ -104,14 +104,15 @@ _RULES: list[_Rule] = [
     _Rule("Laravel",        "Backend Framework", "high",   html=r'laravel_token|<meta name="csrf-token"'),
     _Rule("Laravel",        "Backend Framework", "high",   cookie=r'laravel_session|XSRF-TOKEN'),
     _Rule("Django",         "Backend Framework", "high",   html=r'csrfmiddlewaretoken|name="csrftoken"'),
-    _Rule("Django",         "Backend Framework", "medium", cookie=r'csrftoken|sessionid'),
+    _Rule("Django",         "Backend Framework", "medium", cookie=r'csrftoken'),
     _Rule("Ruby on Rails",  "Backend Framework", "medium", html=r'rails-ujs|data-turbo-|data-turbolinks'),
     _Rule("Ruby on Rails",  "Backend Framework", "medium", cookie=r'_session_id'),
     _Rule("Spring Boot",    "Backend Framework", "medium", html=r'spring-boot|Whitelabel Error Page'),
     _Rule("CodeIgniter",    "Backend Framework", "medium", html=r'ci_session|CodeIgniter'),
     _Rule("Symfony",        "Backend Framework", "medium", html=r'symfony|Symfony'),
     _Rule("Phoenix",        "Backend Framework", "medium", html=r'phoenix_html|phoenix_live_view|data-phx-'),
-    _Rule("FastAPI",        "Backend Framework", "medium", html=r'/docs/oauth2-redirect|swagger-ui'),
+    _Rule("FastAPI",        "Backend Framework", "medium", html=r'FastAPI|fastapi'),
+    _Rule("Swagger UI",     "Other", "medium", html=r'/docs/oauth2-redirect|swagger-ui|swagger-ui-bundle'),
 
     # ── JS Frameworks ─────────────────────────────────────────────
     _Rule("Next.js",    "JavaScript Framework", "high",   html=r'/_next/(?:static|image|data)|__NEXT_DATA__|next-route-announcer|self\.__next_f'),
@@ -283,24 +284,24 @@ def _detect(
                 sources.append("header")
                 evidence.append(f"header:{rule.header_key}={_short(hval)}")
 
-        if not matched and rule.html:
+        if rule.html:
             m = re.search(rule.html, html_text, re.IGNORECASE)
             if m:
                 matched = True
                 sources.append("html")
                 evidence.append(f"html:{_short(m.group(0))}")
-            else:
-                asset_url_match = _first_regex_match(rule.html, asset_urls or [])
-                if asset_url_match:
-                    matched = True
-                    sources.append("asset-url")
-                    evidence.append(f"asset-url:{_short(asset_url_match)}")
-                else:
-                    asset_body_match = _first_regex_match(rule.html, asset_texts or [])
-                    if asset_body_match:
-                        matched = True
-                        sources.append("asset-body")
-                        evidence.append(f"asset-body:{_short(asset_body_match)}")
+
+            asset_url_match = _first_regex_match(rule.html, asset_urls or [])
+            if asset_url_match:
+                matched = True
+                sources.append("asset-url")
+                evidence.append(f"asset-url:{_short(asset_url_match)}")
+
+            asset_body_match = _first_regex_match(rule.html, asset_texts or [])
+            if asset_body_match:
+                matched = True
+                sources.append("asset-body")
+                evidence.append(f"asset-body:{_short(asset_body_match)}")
 
         if not matched and rule.cookie:
             m = re.search(rule.cookie, cookie_text, re.IGNORECASE)

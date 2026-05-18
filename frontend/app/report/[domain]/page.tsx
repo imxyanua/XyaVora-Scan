@@ -19,6 +19,7 @@ import { EmailSecurityCard }    from "@/components/dashboard/EmailSecurityCard";
 import { WhoisCard }            from "@/components/dashboard/WhoisCard";
 import { CookiesCard }          from "@/components/dashboard/CookiesCard";
 import { SecurityTxtCard }      from "@/components/dashboard/SecurityTxtCard";
+import { SecurityPostureSummary } from "@/components/dashboard/SecurityPostureSummary";
 import { ScreenshotCard }       from "@/components/dashboard/ScreenshotCard";
 import { RawDataCard }          from "@/components/dashboard/RawDataCard";
 import { ResearchToolsCard }    from "@/components/dashboard/ResearchToolsCard";
@@ -166,13 +167,21 @@ export default async function ReportPage({ params, searchParams }: Props) {
         </ReportSection>
 
         <ReportSection id="security" title="Security Posture" detail="transport, headers, cookies, disclosure">
+          <SecurityPostureSummary
+            ssl={report.ssl}
+            headers={report.headers}
+            cookies={report.cookies}
+            securityTxt={report.securityTxt}
+          />
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-stretch">
-            <div className="xl:col-span-2">
+            <div className="xl:col-span-2 h-full">
               <SecurityHeadersCard headers={report.headers} />
             </div>
             <SSLCard ssl={report.ssl} />
             <CookiesCard cookies={report.cookies} />
-            <SecurityTxtCard securityTxt={report.securityTxt} />
+            <div className="md:col-span-2 xl:col-span-2 h-full">
+              <SecurityTxtCard securityTxt={report.securityTxt} />
+            </div>
           </div>
         </ReportSection>
 
@@ -187,16 +196,18 @@ export default async function ReportPage({ params, searchParams }: Props) {
 
         <ReportSection id="page" title="Page Intelligence" detail="http behavior, redirects, metadata, detected stack">
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 items-stretch">
-            <HttpOverviewCard http={report.httpOverview} />
-            <RedirectsCard http={report.httpOverview} />
-            <HostNamesCard
-              http={report.httpOverview}
-              metadata={report.pageMetadata}
-              hostname={report.hostname}
-            />
-            <ServerInfoCard http={report.httpOverview} />
-            <PageMetadataCard metadata={report.pageMetadata} />
-            <TechStackCard techStack={report.techStack} />
+            <div className="h-full"><HttpOverviewCard http={report.httpOverview} /></div>
+            <div className="h-full"><RedirectsCard http={report.httpOverview} /></div>
+            <div className="h-full">
+              <HostNamesCard
+                http={report.httpOverview}
+                metadata={report.pageMetadata}
+                hostname={report.hostname}
+              />
+            </div>
+            <div className="h-full"><ServerInfoCard http={report.httpOverview} /></div>
+            <div className="h-full"><PageMetadataCard metadata={report.pageMetadata} /></div>
+            <div className="h-full"><TechStackCard techStack={report.techStack} /></div>
           </div>
         </ReportSection>
 

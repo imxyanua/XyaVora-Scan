@@ -5,8 +5,10 @@ from app.analyzers.dns_analyzer import (
     _build_findings,
     _detect_dmarc,
     _detect_spf,
+    _email_security_confidence,
     _parse_dmarc,
     _parse_spf,
+    _record_evidence,
 )
 from app.schemas.report import DnsRecord, DnsResult
 
@@ -62,6 +64,33 @@ def test_parse_dmarc_extracts_policy_tags():
     assert parsed["dmarcRua"] == "mailto:d@example.com"
     assert parsed["dmarcAlignmentDkim"] == "s"
     assert parsed["dmarcAlignmentSpf"] == "r"
+
+
+def test_record_evidence_includes_host_type_and_value():
+    records = [DnsRecord(type="MX", host="example.com", value="10 mail.example.com", ttl=300)]
+    assert _record_evidence(records) == ["example.com MX 10 mail.example.com"]
+
+
+def test_email_security_confidence_high_requires_strict_spf_and_enforced_dmarc():
+    result = DnsResult(
+        mxDetected=True,
+        spfDetected=True,
+        dmarcDetected=True,
+        spfAll="-",
+        dmarcPolicy="reject",
+    )
+    assert _email_security_confidence(result) == "high"
+
+
+def test_email_security_confidence_medium_when_records_exist_but_not_enforced():
+    result = DnsResult(
+        mxDetected=True,
+        spfDetected=True,
+        dmarcDetected=True,
+        spfAll="~",
+        dmarcPolicy="none",
+    )
+    assert _email_security_confidence(result) == "medium"
 
 
 def test_build_findings_missing_both():

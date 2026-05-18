@@ -1,4 +1,5 @@
 import type { HttpOverviewResult, PageMetadataResult } from "@/types";
+import { DetailPanel } from "./DetailPanel";
 
 type Props = {
   http: HttpOverviewResult;
@@ -36,9 +37,18 @@ function hostFromUrl(url?: string | null) {
 
 export function HostNamesCard({ http, metadata, hostname }: Props) {
   const canonicalHost = hostFromUrl(metadata.canonicalUrl);
+  const detailItems = [
+    { label: "Input Host", value: hostname },
+    { label: "Initial Host", value: http.initialHost },
+    { label: "Final Host", value: http.finalHost },
+    { label: "Final Protocol", value: http.finalProtocol },
+    { label: "Host Changed", value: http.hostChanged },
+    { label: "Canonical URL", value: metadata.canonicalUrl },
+    { label: "Canonical Host", value: canonicalHost },
+  ];
 
   return (
-    <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex flex-col">
+    <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex h-full flex-col">
       <div className="px-5 pt-5 pb-3 flex justify-between items-start shrink-0">
         <h3 className="font-mono text-2xl font-bold text-primary-fixed leading-none">
           Host Names
@@ -51,7 +61,7 @@ export function HostNamesCard({ http, metadata, hostname }: Props) {
       {http.error ? (
         <p className="font-mono text-sm text-error/70 px-4 py-4">[-] {http.error}</p>
       ) : (
-        <div>
+        <div className="flex-1">
           <Row label="Input Host" value={hostname} />
           <Row label="Initial Host" value={http.initialHost} />
           <Row label="Final Host" value={http.finalHost} tone={http.hostChanged ? "warn" : "good"} />
@@ -60,6 +70,7 @@ export function HostNamesCard({ http, metadata, hostname }: Props) {
           <Row label="Canonical Host" value={canonicalHost} />
         </div>
       )}
+      {!http.error && <DetailPanel items={detailItems} />}
     </div>
   );
 }

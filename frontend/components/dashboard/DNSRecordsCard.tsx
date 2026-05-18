@@ -1,4 +1,5 @@
 import type { DnsResult } from "@/types";
+import { DetailPanel } from "./DetailPanel";
 
 interface Props {
   dns: DnsResult;
@@ -15,8 +16,17 @@ const TYPE_COLOR: Record<string, string> = {
 };
 
 export function DNSRecordsCard({ dns }: Props) {
+  const detailItems = dns.records.map((record, index) => ({
+    label: `${record.type} #${index + 1}`,
+    value: [
+      `host: ${record.host}`,
+      `value: ${record.value}`,
+      `ttl: ${record.ttl ?? "Unknown"}`,
+    ].join("\n"),
+  }));
+
   return (
-    <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] overflow-hidden flex flex-col">
+    <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] overflow-hidden flex h-full flex-col">
       <div className="px-5 pt-5 pb-3 flex justify-between items-start shrink-0">
         <h3 className="font-mono text-2xl font-bold text-primary-fixed leading-none">
           DNS Records
@@ -77,6 +87,7 @@ export function DNSRecordsCard({ dns }: Props) {
           </>
         )}
       </div>
+      {!dns.error && <DetailPanel items={detailItems} label="All DNS Records" />}
     </div>
   );
 }

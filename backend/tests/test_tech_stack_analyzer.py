@@ -97,6 +97,11 @@ def test_detect_laravel_from_cookie():
     assert any(i.name == "Laravel" for i in items)
 
 
+def test_does_not_detect_django_from_generic_sessionid_cookie():
+    items = _detect({"set-cookie": "sessionid=abc; Path=/; HttpOnly"}, b"")
+    assert not any(i.name == "Django" for i in items)
+
+
 def test_detect_cloudflare_from_cookie():
     items = _detect({"set-cookie": "__cf_bm=abc; Path=/; HttpOnly"}, b"")
     assert any(i.name == "Cloudflare" for i in items)
@@ -181,6 +186,22 @@ def test_detect_from_fetched_asset_text():
     assert "Vue.js" in names
     nuxt = next(i for i in items if i.name == "Nuxt.js")
     assert "asset-body" in nuxt.sources
+
+
+def test_swagger_ui_does_not_claim_fastapi_without_fastapi_signal():
+    html = b'<script src="/swagger-ui-bundle.js"></script><a href="/docs/oauth2-redirect">oauth</a>'
+    items = _detect({}, html)
+    names = [i.name for i in items]
+
+    assert "Swagger UI" in names
+    assert "FastAPI" not in names
+
+
+def test_plain_react_text_does_not_detect_react_framework():
+    html = b"<html><body>Reactive content and reaction icons only.</body></html>"
+    items = _detect({}, html)
+
+    assert not any(i.name == "React" for i in items)
 
 
 def test_detect_merges_evidence_for_duplicate_tech():

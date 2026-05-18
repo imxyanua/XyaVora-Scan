@@ -23,20 +23,63 @@ def _content_length(headers: httpx.Headers) -> int | None:
         return None
 
 
-def _detect_cdn(headers: httpx.Headers) -> str | None:
+def _detect_cdn(headers: httpx.Headers) -> tuple[str | None, str | None, list[str]]:
+    evidence: list[str] = []
     server = (headers.get("server") or "").lower()
     via = (headers.get("via") or "").lower()
-    if headers.get("cf-ray") or "cloudflare" in server:
-        return "Cloudflare"
-    if headers.get("x-amz-cf-id") or "cloudfront" in via:
-        return "Amazon CloudFront"
-    if headers.get("x-served-by") or headers.get("x-cache-hits"):
-        return "Fastly"
-    if headers.get("x-akamai-transformed") or "akamai" in server:
-        return "Akamai"
-    if headers.get("x-vercel-id") or "vercel" in server:
-        return "Vercel"
-    return None
+
+    def _header(name: str) -> str | None:
+        value = headers.get(name)
+        if value:
+            evidence.append(f"{name}: {_short(value)}")
+        return value
+
+    cf_ray = _header("cf-ray")
+    cf_cache = _header("cf-cache-status")
+    if cf_ray or cf_cache:
+        return "Cloudflare", "high", evidence
+    if "cloudflare" in server:
+        evidence.append(f"server: {_short(headers.get('server', ''))}")
+        return "Cloudflare", "medium", evidence
+
+    if _header("x-amz-cf-id"):
+        return "Amazon CloudFront", "high", evidence
+    if "cloudfront" in via:
+        evidence.append(f"via: {_short(headers.get('via', ''))}")
+        return "Amazon CloudFront", "medium", evidence
+
+    if _header("x-fastly-request-id") or _header("fastly-debug-digest"):
+        return "Fastly", "high", evidence
+    if _header("x-served-by") or _header("x-cache-hits"):
+        return "Fastly", "medium", evidence
+
+    if _header("x-akamai-transformed") or _header("akamai-cache-status"):
+        return "Akamai", "high", evidence
+    if "akamai" in server:
+        evidence.append(f"server: {_short(headers.get('server', ''))}")
+        return "Akamai", "medium", evidence
+
+    if _header("x-vercel-id") or _header("x-vercel-cache"):
+        return "Vercel", "high", evidence
+    if "vercel" in server:
+        evidence.append(f"server: {_short(headers.get('server', ''))}")
+        return "Vercel", "medium", evidence
+
+    if _header("x-nf-request-id"):
+        return "Netlify", "high", evidence
+    if _header("x-sucuri-id"):
+        return "Sucuri", "high", evidence
+    if _header("x-qc-cache"):
+        return "QUIC.cloud", "high", evidence
+    if _header("cdn-requestid"):
+        return "BunnyCDN", "medium", evidence
+
+    return None, None, []
+
+
+def _short(value: str, limit: int = 96) -> str:
+    value = " ".join(value.split())
+    return value if len(value) <= limit else f"{value[:limit - 3]}..."
 
 
 async def analyze_http_overview(normalized_url: str) -> AnalyzerResult:
@@ -75,6 +118,7 @@ async def analyze_http_overview(normalized_url: str) -> AnalyzerResult:
 
                     elapsed_ms = int((time.perf_counter() - start) * 1000)
                     headers = response.headers
+                    cdn_provider, cdn_confidence, cdn_evidence = _detect_cdn(headers)
                     final_url = str(response.url)
                     parsed_final = urlparse(final_url)
                     result = HttpOverviewResult(
@@ -90,7 +134,9 @@ async def analyze_http_overview(normalized_url: str) -> AnalyzerResult:
                         server=headers.get("server"),
                         poweredBy=headers.get("x-powered-by"),
                         via=headers.get("via"),
-                        cdnProvider=_detect_cdn(headers),
+                        cdnProvider=cdn_provider,
+                        cdnConfidence=cdn_confidence,  # type: ignore[arg-type]
+                        cdnEvidence=cdn_evidence,
                         altSvc=headers.get("alt-svc"),
                         contentType=headers.get("content-type"),
                         contentLength=_content_length(headers),

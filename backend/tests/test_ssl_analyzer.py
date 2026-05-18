@@ -36,6 +36,11 @@ def test_parse_cert_basic():
     assert result.issuer == "Let's Encrypt"
     assert result.subject == "example.com"
     assert result.protocol == "TLSv1.3"
+    assert result.cipherName == "TLS_AES_256_GCM_SHA384"
+    assert result.cipherBits == 256
+    assert result.tlsConfidence == "high"
+    assert "protocol: TLSv1.3" in result.certificateEvidence
+    assert "cipher: TLS_AES_256_GCM_SHA384" in result.certificateEvidence
     assert result.daysRemaining >= 89  # floor division means up to 1 day variance
     assert "example.com" in result.sanDomains
 
@@ -139,6 +144,8 @@ async def test_analyze_ssl_cert_verification_failed():
     assert result.status == "success"
     assert result.data.trusted is False
     assert result.data.httpsAvailable is True
+    assert result.data.tlsConfidence == "medium"
+    assert result.data.certificateEvidence
 
 
 # ── Integration: real TLS ─────────────────────────────────────────
