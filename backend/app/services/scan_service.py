@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 from app.core.config import settings
 from app.schemas.report import (
-    ScanReport, DnsResult, SslResult, HeadersResult,
+    ScanReport, DnsResult, SslResult, HeadersResult, Finding,
     HttpOverviewResult, PageMetadataResult, SiteDiscoveryResult,
     WhoisResult, SecurityTxtResult, ScreenshotResult,
 )
@@ -28,6 +28,20 @@ from app.analyzers.score_analyzer       import analyze_score
 _SCAN_CACHE: dict[str, tuple["ScanReport", float]] = {}
 _CACHE_TTL = 5.0  # seconds
 
+_STATUS_PRIORITY = {
+    "fail": 0,
+    "warning": 1,
+    "info": 2,
+    "pass": 3,
+}
+
+_SEVERITY_PRIORITY = {
+    "high": 0,
+    "medium": 1,
+    "low": 2,
+    "info": 3,
+}
+
 
 def is_cached(hostname: str) -> bool:
     entry = _SCAN_CACHE.get(hostname)
@@ -44,6 +58,37 @@ def _cache_get(hostname: str) -> "ScanReport | None":
 
 def _cache_set(hostname: str, report: "ScanReport") -> None:
     _SCAN_CACHE[hostname] = (report, time.monotonic() + _CACHE_TTL)
+
+
+def normalize_findings(findings: list[Finding]) -> list[Finding]:
+    """
+    Produces a stable, reader-friendly finding list for report display and scoring.
+    Analyzer modules can emit findings independently, so this step removes exact
+    duplicates and places actionable issues before informational/pass findings.
+    """
+    deduped: dict[tuple[str, str, str], Finding] = {}
+
+    for finding in findings:
+        key = (finding.id, finding.category, finding.status)
+        existing = deduped.get(key)
+        if existing is None:
+            deduped[key] = finding
+            continue
+
+        existing_rank = (_STATUS_PRIORITY[existing.status], _SEVERITY_PRIORITY[existing.severity])
+        candidate_rank = (_STATUS_PRIORITY[finding.status], _SEVERITY_PRIORITY[finding.severity])
+        if candidate_rank < existing_rank:
+            deduped[key] = finding
+
+    return sorted(
+        deduped.values(),
+        key=lambda finding: (
+            _STATUS_PRIORITY[finding.status],
+            _SEVERITY_PRIORITY[finding.severity],
+            finding.category,
+            finding.title.lower(),
+        ),
+    )
 
 
 async def _run(coro, timeout: float | None = None) -> AnalyzerResult:
@@ -94,11 +139,11 @@ async def run_scan(
         )
 
         # Collect all findings from every analyzer
-        all_findings = [
+        all_findings = normalize_findings([
             f
             for result in (dns_r, ssl_r, headers_r, http_r, meta_r, discovery_r, whois_r, tech_r, cookies_r, sectxt_r, shot_r)
             for f in result.findings
-        ]
+        ])
 
         # Score is computed last — it depends on the combined findings list
         score_r = await _run(analyze_score(all_findings))

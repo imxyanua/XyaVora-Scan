@@ -117,10 +117,10 @@ def _build_findings(
             id="missing_spf",
             severity="medium",
             category="DNS",
-            title="Missing SPF Record",
-            description="No SPF (Sender Policy Framework) TXT record was found for this domain.",
+            title="SPF Record Is Missing",
+            description="The domain does not publish an SPF TXT record to define allowed mail senders.",
             impact="Without SPF, anyone can send email that appears to come from this domain, enabling phishing attacks.",
-            recommendation="Add a TXT record: 'v=spf1 include:<your-mail-provider> -all'",
+            recommendation="Add an SPF TXT record listing legitimate mail providers, then end with -all after validation.",
             status="fail",
         ))
 
@@ -129,10 +129,10 @@ def _build_findings(
             id="missing_dmarc",
             severity="medium",
             category="DNS",
-            title="Missing DMARC Record",
-            description="No DMARC policy record was found at _dmarc.<domain>.",
+            title="DMARC Policy Is Missing",
+            description="The domain does not publish a DMARC policy at _dmarc.<domain>.",
             impact="Without DMARC, email spoofing attempts go unreported and unenforced.",
-            recommendation="Add a TXT record at _dmarc.<domain>: 'v=DMARC1; p=quarantine; rua=mailto:dmarc@<domain>'",
+            recommendation="Publish a DMARC TXT record. Start with p=none for monitoring, then move to quarantine or reject once legitimate senders align.",
             status="fail",
         ))
     elif result.dmarcPolicy == "none":
@@ -141,10 +141,10 @@ def _build_findings(
             id="dmarc_not_strict",
             severity="medium",
             category="DNS",
-            title="DMARC Policy Not Enforced (p=none)",
-            description=f"DMARC record found but policy is set to 'p=none': {dmarc_record}",
+            title="DMARC Is Monitoring Only",
+            description=f"DMARC exists, but the policy is p=none and does not enforce failures: {dmarc_record}",
             impact="Email that fails DMARC checks is still delivered. The policy offers no protection, only reporting.",
-            recommendation="Change DMARC policy to 'p=quarantine' or 'p=reject'.",
+            recommendation="Review DMARC reports, fix sender alignment, then change policy to p=quarantine or p=reject.",
             status="warning",
         ))
 
@@ -156,7 +156,7 @@ def _build_findings(
             title="SPF Policy Is Too Permissive",
             description=f"SPF record ends with '{result.spfAll}all', which does not strongly reject unauthorized senders.",
             impact="Spoofed mail may pass SPF or fail without meaningful enforcement.",
-            recommendation="Use '-all' after validating all legitimate mail sources. '~all' is acceptable during transition.",
+            recommendation="Use -all after validating legitimate mail sources. Use ~all only as a temporary transition state.",
             status="warning",
         ))
     elif result.spfLookupCount > 10:
