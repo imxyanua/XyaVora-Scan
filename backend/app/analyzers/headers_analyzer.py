@@ -108,6 +108,9 @@ def _present_item(rule: dict, value: str) -> tuple[SecurityHeaderItem, Finding |
                 impact="Browsers may stop enforcing HTTPS sooner than expected.",
                 recommendation="Use Strict-Transport-Security with max-age of at least 15552000 seconds after validating HTTPS coverage.",
                 status="warning",
+                confidence="observed",
+                source="headers",
+                evidence=evidence,
             )
     elif header == "Content-Security-Policy":
         if "unsafe-inline" in lower or "*" in lower:
@@ -122,6 +125,9 @@ def _present_item(rule: dict, value: str) -> tuple[SecurityHeaderItem, Finding |
                 impact="A permissive CSP gives browsers less protection against injected scripts.",
                 recommendation="Remove unsafe-inline and wildcard sources where possible. Prefer explicit trusted sources and nonces/hashes.",
                 status="warning",
+                confidence="observed",
+                source="headers",
+                evidence=evidence,
             )
     elif header == "X-Frame-Options":
         if lower not in ("deny", "sameorigin"):
@@ -136,6 +142,9 @@ def _present_item(rule: dict, value: str) -> tuple[SecurityHeaderItem, Finding |
                 impact="Browsers may ignore the header and allow framing.",
                 recommendation="Use X-Frame-Options: DENY or SAMEORIGIN.",
                 status="warning",
+                confidence="observed",
+                source="headers",
+                evidence=evidence,
             )
     elif header == "X-Content-Type-Options":
         if lower != "nosniff":
@@ -150,6 +159,9 @@ def _present_item(rule: dict, value: str) -> tuple[SecurityHeaderItem, Finding |
                 impact="Browsers may still MIME-sniff responses.",
                 recommendation="Use X-Content-Type-Options: nosniff.",
                 status="warning",
+                confidence="observed",
+                source="headers",
+                evidence=evidence,
             )
     elif header == "Referrer-Policy":
         if lower in ("unsafe-url", "no-referrer-when-downgrade"):
@@ -164,6 +176,9 @@ def _present_item(rule: dict, value: str) -> tuple[SecurityHeaderItem, Finding |
                 impact="Full URLs may be sent to third-party origins.",
                 recommendation="Use strict-origin-when-cross-origin, same-origin, or no-referrer depending on product needs.",
                 status="warning",
+                confidence="observed",
+                source="headers",
+                evidence=evidence,
             )
 
     return SecurityHeaderItem(
@@ -222,6 +237,9 @@ def _check_headers(
                 impact=rule["finding_impact"],
                 recommendation=rule["finding_rec"],
                 status=rule["fail_status"],  # type: ignore[arg-type]
+                confidence="observed",
+                source="headers",
+                evidence=[f"{rule['header']}: not present in response headers"],
             ))
 
     return items, findings
@@ -237,6 +255,9 @@ def _server_finding(server: str) -> Finding:
         impact="Attackers can target known vulnerabilities for the identified server version.",
         recommendation="Configure the server to suppress or obfuscate the Server header.",
         status="warning",
+        confidence="observed",
+        source="headers",
+        evidence=[f"Server: {server}"],
     )
 
 

@@ -136,6 +136,9 @@ def _build_findings(
             impact="Without SPF, anyone can send email that appears to come from this domain, enabling phishing attacks.",
             recommendation="Add an SPF TXT record listing legitimate mail providers, then end with -all after validation.",
             status="fail",
+            confidence="observed",
+            source="dns",
+            evidence=["No TXT record starting with v=spf1 was returned for the domain."],
         ))
 
     if not result.dmarcDetected:
@@ -148,6 +151,9 @@ def _build_findings(
             impact="Without DMARC, email spoofing attempts go unreported and unenforced.",
             recommendation="Publish a DMARC TXT record. Start with p=none for monitoring, then move to quarantine or reject once legitimate senders align.",
             status="fail",
+            confidence="observed",
+            source="dns",
+            evidence=["No TXT record starting with v=DMARC1 was returned at _dmarc.<domain>."],
         ))
     elif result.dmarcPolicy == "none":
         # p=none means the policy exists but takes no action on failures — reports only
@@ -160,6 +166,9 @@ def _build_findings(
             impact="Email that fails DMARC checks is still delivered. The policy offers no protection, only reporting.",
             recommendation="Review DMARC reports, fix sender alignment, then change policy to p=quarantine or p=reject.",
             status="warning",
+            confidence="verified",
+            source="dns",
+            evidence=[dmarc_record] if dmarc_record else [],
         ))
 
     if result.spfAll in ("+", "?"):
@@ -172,6 +181,9 @@ def _build_findings(
             impact="Spoofed mail may pass SPF or fail without meaningful enforcement.",
             recommendation="Use -all after validating legitimate mail sources. Use ~all only as a temporary transition state.",
             status="warning",
+            confidence="verified",
+            source="dns",
+            evidence=[result.spfRecord] if result.spfRecord else [],
         ))
     elif result.spfLookupCount > 10:
         findings.append(Finding(
@@ -183,6 +195,9 @@ def _build_findings(
             impact="SPF evaluation fails with PermError if more than 10 DNS lookups are required.",
             recommendation="Flatten or simplify SPF includes to keep DNS lookups at 10 or fewer.",
             status="warning",
+            confidence="verified",
+            source="dns",
+            evidence=[result.spfRecord] if result.spfRecord else [],
         ))
 
     if result.dmarcDetected and result.dmarcPct is not None and result.dmarcPct < 100:
@@ -195,6 +210,9 @@ def _build_findings(
             impact="Some spoofed mail may not receive the configured DMARC enforcement action.",
             recommendation="Move pct to 100 after validating reports and legitimate sender alignment.",
             status="warning",
+            confidence="verified",
+            source="dns",
+            evidence=[result.dmarcRecord] if result.dmarcRecord else [],
         ))
 
     return findings

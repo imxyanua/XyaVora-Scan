@@ -52,6 +52,9 @@ def _build_findings(result: SecurityTxtResult) -> list[Finding]:
                 "Include at minimum a Contact field."
             ),
             status="warning",
+            confidence="observed",
+            source="http",
+            evidence=["Checked /.well-known/security.txt and /security.txt without a usable response."],
         )]
 
     findings = [Finding(
@@ -62,6 +65,9 @@ def _build_findings(result: SecurityTxtResult) -> list[Finding]:
         description=f"Found at {result.location}.",
         recommendation="Keep the file up-to-date, especially the Expires field.",
         status="pass",
+        confidence="verified",
+        source="http",
+        evidence=[f"location: {result.location}"] if result.location else [],
     )]
 
     if not result.contact:
@@ -74,6 +80,9 @@ def _build_findings(result: SecurityTxtResult) -> list[Finding]:
             impact="Researchers cannot identify where to report vulnerabilities.",
             recommendation="Add 'Contact: mailto:security@example.com' or a URL to your security policy.",
             status="warning",
+            confidence="observed",
+            source="http",
+            evidence=[f"location: {result.location}", "Contact field not present in parsed security.txt"],
         ))
 
     return findings

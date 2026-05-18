@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useCallback } from "react";
-import type { Finding, FindingSeverity, FindingStatus } from "@/types";
+import type { Finding, FindingConfidence, FindingSeverity, FindingStatus } from "@/types";
 import { FindingDrawer } from "./FindingDrawer";
 
 interface Props {
@@ -34,6 +34,13 @@ const STATUS_LABEL: Record<FindingStatus, string> = {
   warning: "Review",
   info: "Info",
   pass: "Pass",
+};
+
+const CONFIDENCE_LABEL: Record<FindingConfidence, string> = {
+  verified: "Verified",
+  observed: "Observed",
+  inferred: "Inferred",
+  "best-practice": "Best practice",
 };
 
 function rankFinding(finding: Finding) {
@@ -110,6 +117,11 @@ export function PriorityFindingsCard({ findings }: Props) {
                       <span className="font-mono text-[10px] text-white/60">
                         {STATUS_LABEL[finding.status]} / {finding.category}
                       </span>
+                      {finding.confidence && (
+                        <span className="font-mono text-[10px] text-[#d7e8ff]/45">
+                          {CONFIDENCE_LABEL[finding.confidence]}
+                        </span>
+                      )}
                     </div>
                     <h3 className="font-mono text-base text-white font-bold leading-snug">
                       {finding.title}

@@ -7,6 +7,8 @@
 
 export type FindingSeverity = "info" | "low" | "medium" | "high";
 export type FindingStatus   = "pass" | "warning" | "fail" | "info";
+export type FindingConfidence = "verified" | "observed" | "inferred" | "best-practice";
+export type FindingSource = "dns" | "tls" | "headers" | "http" | "html" | "cookie" | "whois" | "scanner";
 export type FindingCategory =
   | "DNS"
   | "SSL"
@@ -35,6 +37,9 @@ export interface Finding {
   impact?:        string;
   recommendation: string;
   status:         FindingStatus;
+  confidence?:    FindingConfidence;
+  source?:        FindingSource;
+  evidence?:      string[];
 }
 
 // ── DNS ──────────────────────────────────────

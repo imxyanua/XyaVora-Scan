@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import type { Finding, FindingSeverity, FindingStatus } from "@/types";
+import type { Finding, FindingConfidence, FindingSeverity, FindingSource, FindingStatus } from "@/types";
 import { AppIcon } from "@/components/ui/AppIcon";
 
 interface Props {
@@ -28,6 +28,24 @@ const STATUS_LABEL: Record<FindingStatus, string> = {
   warning: "WARN",
   pass:    "PASS",
   info:    "INFO",
+};
+
+const CONFIDENCE_LABEL: Record<FindingConfidence, string> = {
+  verified: "Verified",
+  observed: "Observed",
+  inferred: "Inferred",
+  "best-practice": "Best practice",
+};
+
+const SOURCE_LABEL: Record<FindingSource, string> = {
+  dns: "DNS",
+  tls: "TLS",
+  headers: "HTTP headers",
+  http: "HTTP fetch",
+  html: "HTML",
+  cookie: "Cookie",
+  whois: "WHOIS",
+  scanner: "Scanner rule",
 };
 
 export function FindingDrawer({ finding, onClose }: Props) {
@@ -104,6 +122,23 @@ function DrawerContent({ finding, onClose }: { finding: Finding; onClose: () => 
         </span>
       </div>
 
+      {(finding.confidence || finding.source) && (
+        <div className="px-4 py-3 border-b border-primary-fixed/10 grid grid-cols-2 gap-2 shrink-0 bg-[#101720]">
+          <div>
+            <p className="font-mono text-[9px] text-primary-fixed/45 uppercase tracking-widest">Confidence</p>
+            <p className="font-mono text-xs text-[#d7e8ff]/75 mt-1">
+              {finding.confidence ? CONFIDENCE_LABEL[finding.confidence] : "Unknown"}
+            </p>
+          </div>
+          <div>
+            <p className="font-mono text-[9px] text-primary-fixed/45 uppercase tracking-widest">Source</p>
+            <p className="font-mono text-xs text-[#d7e8ff]/75 mt-1">
+              {finding.source ? SOURCE_LABEL[finding.source] : "Unknown"}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Body — scrollable */}
       <div className="flex-1 overflow-y-auto p-4 space-y-5">
 
@@ -116,6 +151,21 @@ function DrawerContent({ finding, onClose }: { finding: Finding; onClose: () => 
             {finding.description}
           </p>
         </section>
+
+        {finding.evidence && finding.evidence.length > 0 && (
+          <section>
+            <p className="font-mono text-[10px] text-primary-fixed/65 uppercase tracking-widest mb-2">
+              Evidence
+            </p>
+            <div className="bg-[#070B0F] border border-primary-fixed/15 p-3 space-y-1">
+              {finding.evidence.map((item) => (
+                <p key={item} className="font-mono text-[11px] text-[#d7e8ff]/75 leading-relaxed break-words">
+                  &gt; {item}
+                </p>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Impact */}
         {finding.impact && (

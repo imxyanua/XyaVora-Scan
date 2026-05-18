@@ -13,6 +13,8 @@ class _Base(BaseModel):
 
 FindingSeverity = Literal["info", "low", "medium", "high"]
 FindingStatus   = Literal["pass", "warning", "fail", "info"]
+FindingConfidence = Literal["verified", "observed", "inferred", "best-practice"]
+FindingSource = Literal["dns", "tls", "headers", "http", "html", "cookie", "whois", "scanner"]
 FindingCategory = Literal[
     "DNS", "SSL", "Headers", "WHOIS",
     "Tech Stack", "Cookies", "Security.txt", "Screenshot",
@@ -29,6 +31,9 @@ class Finding(_Base):
     impact:         Optional[str] = None
     recommendation: str
     status:         FindingStatus
+    confidence:     FindingConfidence = "best-practice"
+    source:         FindingSource = "scanner"
+    evidence:       list[str] = []
 
 
 # ── DNS ───────────────────────────────────────────────────────────

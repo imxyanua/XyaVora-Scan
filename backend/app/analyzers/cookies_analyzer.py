@@ -58,6 +58,9 @@ def _build_findings(cookies: list[CookieResult]) -> list[Finding]:
             description="The server did not set any cookies on the initial request.",
             recommendation="No action required.",
             status="info",
+            confidence="observed",
+            source="headers",
+            evidence=["No Set-Cookie headers were returned on the initial response."],
         ))
         return findings
 
@@ -76,6 +79,9 @@ def _build_findings(cookies: list[CookieResult]) -> list[Finding]:
             impact="These cookies can be transmitted over unencrypted HTTP connections.",
             recommendation="Add the Secure flag to all cookies that do not need to work over HTTP.",
             status="fail",
+            confidence="observed",
+            source="headers",
+            evidence=[f"{cookie.name}: Secure={cookie.secure}" for cookie in no_secure[:5]],
         ))
 
     if no_httponly:
@@ -89,6 +95,9 @@ def _build_findings(cookies: list[CookieResult]) -> list[Finding]:
             impact="JavaScript can read these cookies — a successful XSS attack can steal session tokens.",
             recommendation="Add the HttpOnly flag to all session and authentication cookies.",
             status="fail",
+            confidence="observed",
+            source="headers",
+            evidence=[f"{cookie.name}: HttpOnly={cookie.httpOnly}" for cookie in no_httponly[:5]],
         ))
 
     if no_samesite:
@@ -102,6 +111,9 @@ def _build_findings(cookies: list[CookieResult]) -> list[Finding]:
             impact="Without SameSite, cookies are sent on cross-site requests, enabling CSRF attacks.",
             recommendation="Set SameSite=Lax (or Strict for sensitive cookies) on all cookies.",
             status="warning",
+            confidence="observed",
+            source="headers",
+            evidence=[f"{cookie.name}: SameSite={cookie.sameSite or 'missing'}" for cookie in no_samesite[:5]],
         ))
 
     if not findings:
@@ -113,6 +125,9 @@ def _build_findings(cookies: list[CookieResult]) -> list[Finding]:
             description=f"All {len(cookies)} cookie(s) have Secure, HttpOnly, and SameSite set.",
             recommendation="No action required.",
             status="pass",
+            confidence="observed",
+            source="headers",
+            evidence=[f"{cookie.name}: Secure={cookie.secure}, HttpOnly={cookie.httpOnly}, SameSite={cookie.sameSite}" for cookie in cookies[:5]],
         ))
 
     return findings

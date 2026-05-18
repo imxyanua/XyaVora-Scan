@@ -117,6 +117,9 @@ def _build_findings(result: SslResult) -> list[Finding]:
             impact="All traffic is sent in plaintext and can be intercepted or modified.",
             recommendation="Obtain an SSL/TLS certificate and configure HTTPS. Consider Let's Encrypt for free certificates.",
             status="fail",
+            confidence="observed",
+            source="tls",
+            evidence=result.certificateEvidence,
         ))
         return findings
 
@@ -130,6 +133,9 @@ def _build_findings(result: SslResult) -> list[Finding]:
             impact="Browsers will show a security warning and block access for most users.",
             recommendation="Renew the SSL certificate immediately.",
             status="fail",
+            confidence="verified",
+            source="tls",
+            evidence=result.certificateEvidence,
         ))
     elif result.daysRemaining < _EXPIRY_WARN_DAYS:
         findings.append(Finding(
@@ -141,6 +147,9 @@ def _build_findings(result: SslResult) -> list[Finding]:
             impact="If not renewed, users will see browser security warnings.",
             recommendation="Renew the certificate before expiry. Enable auto-renewal if using Let's Encrypt.",
             status="warning",
+            confidence="verified",
+            source="tls",
+            evidence=result.certificateEvidence,
         ))
     else:
         findings.append(Finding(
@@ -151,6 +160,9 @@ def _build_findings(result: SslResult) -> list[Finding]:
             description=f"Certificate is trusted, valid for {result.daysRemaining} more day(s). Protocol: {result.protocol}.",
             recommendation="No action required. Monitor expiration date.",
             status="pass",
+            confidence="verified",
+            source="tls",
+            evidence=result.certificateEvidence,
         ))
 
     return findings
