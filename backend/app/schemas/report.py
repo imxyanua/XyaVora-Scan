@@ -45,10 +45,21 @@ class DnsRecord(_Base):
 
 class DnsResult(_Base):
     records:        list[DnsRecord] = []
+    mxDetected:     bool = False
+    mxRecords:      list[str] = []
     spfDetected:    bool = False
     dmarcDetected:  bool = False
     spfRecord:      Optional[str] = None
     dmarcRecord:    Optional[str] = None
+    spfAll:         Optional[str] = None
+    spfLookupCount: int = 0
+    dmarcPolicy:    Optional[str] = None
+    dmarcSubdomainPolicy: Optional[str] = None
+    dmarcPct:       Optional[int] = None
+    dmarcRua:       Optional[str] = None
+    dmarcRuf:       Optional[str] = None
+    dmarcAlignmentDkim: Optional[str] = None
+    dmarcAlignmentSpf:  Optional[str] = None
     error:          Optional[str] = None
 
 
@@ -90,11 +101,27 @@ class HeadersResult(_Base):
     error:            Optional[str] = None
 
 
+class RedirectHop(_Base):
+    fromUrl:    str
+    toUrl:      str
+    statusCode: int
+
+
 class HttpOverviewResult(_Base):
     statusCode:      int = 0
     finalUrl:        str = ""
     redirectChain:   list[str] = []
+    redirectHops:    list[RedirectHop] = []
     redirectCount:   int = 0
+    initialHost:     Optional[str] = None
+    finalHost:       Optional[str] = None
+    finalProtocol:   Optional[str] = None
+    hostChanged:     bool = False
+    server:          Optional[str] = None
+    poweredBy:       Optional[str] = None
+    via:             Optional[str] = None
+    cdnProvider:     Optional[str] = None
+    altSvc:          Optional[str] = None
     contentType:     Optional[str] = None
     contentLength:   Optional[int] = None
     responseBytes:   int = 0
@@ -167,6 +194,8 @@ class TechStackItem(_Base):
     category:   TechCategory
     confidence: TechConfidence
     version:    Optional[str] = None
+    sources:    list[str] = []
+    evidence:   list[str] = []
 
 
 # ── Cookies ───────────────────────────────────────────────────────

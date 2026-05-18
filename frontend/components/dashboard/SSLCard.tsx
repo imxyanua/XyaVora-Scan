@@ -16,7 +16,7 @@ export function SSLCard({ ssl }: Props) {
     ? { cls: "status-warn",    label: "[!!] EXPIRING"   }
     : { cls: "status-pass",    label: "[OK] VALID"       };
 
-  const validUntil  = ssl.validTo ? new Date(ssl.validTo).toLocaleDateString("en-GB") : "—";
+  const validUntil  = ssl.validTo ? new Date(ssl.validTo).toLocaleDateString("en-GB") : "Unknown";
   const maxDays     = 365;
   const ttlDays     = Math.max(ssl.daysRemaining ?? 0, 0);
   const fillRatio   = Math.min(ttlDays / maxDays, 1);
@@ -32,10 +32,9 @@ export function SSLCard({ ssl }: Props) {
   ];
 
   return (
-    <div className="bg-[#0D0F10] border border-primary-fixed/15 shadow-[3px_3px_0_#050505] p-4 flex flex-col">
-      {/* Header */}
-      <div className="flex justify-between items-center border-b border-primary-fixed/20 pb-2 mb-3 shrink-0">
-        <h3 className="font-mono text-[11px] tracking-widest text-white uppercase">
+    <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex flex-col">
+      <div className="px-5 pt-5 pb-3 flex justify-between items-start shrink-0">
+        <h3 className="font-mono text-2xl font-bold text-primary-fixed leading-none">
           SSL Certificate
         </h3>
         <span className={`status-badge ${overallStatus.cls} text-[10px]`}>
@@ -44,21 +43,19 @@ export function SSLCard({ ssl }: Props) {
       </div>
 
       {ssl.error ? (
-        <p className="font-mono text-sm text-error/70">[-] {ssl.error}</p>
+        <p className="font-mono text-sm text-error/70 px-5 py-4">[-] {ssl.error}</p>
       ) : (
-        /* Data rows */
-        <div className="space-y-2 font-mono text-sm flex-1">
+        <div className="font-mono text-sm flex-1">
           {rows.map((row) => (
-            <div key={row.key} className="flex justify-between gap-2">
-              <span className="text-primary-fixed/65 shrink-0">{row.key}:</span>
-              <span className="text-[#d7e8ff] text-right truncate">{row.val}</span>
+            <div key={row.key} className="flex justify-between gap-4 px-5 py-1.5 border-b border-primary-fixed/10 hover:bg-primary-fixed/[0.04] transition-colors">
+              <span className="text-white font-bold shrink-0">{row.key}</span>
+              <span className="text-white text-right truncate">{row.val || "Unknown"}</span>
             </div>
           ))}
 
-          {/* Expiry + progress */}
-          <div className="pt-3 border-t border-primary-fixed/15 border-dashed space-y-2.5">
+          <div className="px-5 pt-3 pb-4 space-y-2.5">
             <div className="flex justify-between gap-2">
-              <span className="text-primary-fixed/65 shrink-0">EXPIRY:</span>
+              <span className="text-white font-bold shrink-0">EXPIRY</span>
               <span className="text-white">{validUntil}</span>
             </div>
             <div className="border border-primary-fixed/20 bg-[#070B0F] p-1">

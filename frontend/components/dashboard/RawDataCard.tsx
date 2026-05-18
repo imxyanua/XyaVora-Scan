@@ -42,17 +42,17 @@ export function RawDataCard({ report }: Props) {
   }
 
   return (
-    <section className="bg-[#0D0F10] border border-primary-fixed/15 shadow-[3px_3px_0_#050505]">
-      <div className="p-3 border-b border-primary-fixed/20 bg-[#151918] flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+    <section className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505]">
+      <div className="px-5 pt-5 pb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h3 className="font-mono text-[11px] tracking-widest text-white uppercase">
+          <h3 className="font-mono text-2xl font-bold text-primary-fixed leading-none">
             Raw Data
           </h3>
-          <p className="font-mono text-[10px] text-primary-fixed/65 uppercase tracking-widest mt-1">
-            VIEW_OR_DOWNLOAD_SCAN_PAYLOAD
+          <p className="font-mono text-xs text-[#d7e8ff]/70 mt-2">
+            View or download scan payload
           </p>
         </div>
-        <span className="font-mono text-[10px] text-primary-fixed break-all">
+        <span className="font-mono text-[11px] text-white/70 break-all">
           {hostname}
         </span>
       </div>
@@ -65,7 +65,7 @@ export function RawDataCard({ report }: Props) {
             className="btn-ghost px-3 py-2 text-xs flex items-center justify-center gap-2"
           >
             <AppIcon name="code" className="text-[15px]" />
-            {showRaw ? "HIDE_RAW_DATA" : "VIEW_RAW_DATA"}
+            {showRaw ? "Hide raw data" : "View raw data"}
           </button>
           <button
             type="button"
@@ -73,7 +73,7 @@ export function RawDataCard({ report }: Props) {
             className="btn-primary px-3 py-2 text-xs flex items-center justify-center gap-2"
           >
             <AppIcon name="download" className="text-[15px]" />
-            DOWNLOAD_JSON
+            Download JSON
           </button>
         </div>
 

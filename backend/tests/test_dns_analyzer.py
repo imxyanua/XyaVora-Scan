@@ -1,6 +1,13 @@
 import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
-from app.analyzers.dns_analyzer import analyze_dns, _detect_spf, _detect_dmarc, _build_findings
+from app.analyzers.dns_analyzer import (
+    analyze_dns,
+    _build_findings,
+    _detect_dmarc,
+    _detect_spf,
+    _parse_dmarc,
+    _parse_spf,
+)
 from app.schemas.report import DnsRecord, DnsResult
 
 
@@ -29,6 +36,12 @@ def test_detect_spf_empty():
     assert found is False
 
 
+def test_parse_spf_extracts_all_policy_and_lookup_count():
+    parsed = _parse_spf("v=spf1 include:_spf.example.com mx a -all")
+    assert parsed["spfAll"] == "-"
+    assert parsed["spfLookupCount"] == 3
+
+
 def test_detect_dmarc_found():
     records = [_txt("v=DMARC1; p=reject; rua=mailto:dmarc@example.com")]
     found, val = _detect_dmarc(records)
@@ -41,6 +54,16 @@ def test_detect_dmarc_not_found():
     assert found is False
 
 
+def test_parse_dmarc_extracts_policy_tags():
+    parsed = _parse_dmarc("v=DMARC1; p=quarantine; sp=reject; pct=50; rua=mailto:d@example.com; adkim=s; aspf=r")
+    assert parsed["dmarcPolicy"] == "quarantine"
+    assert parsed["dmarcSubdomainPolicy"] == "reject"
+    assert parsed["dmarcPct"] == 50
+    assert parsed["dmarcRua"] == "mailto:d@example.com"
+    assert parsed["dmarcAlignmentDkim"] == "s"
+    assert parsed["dmarcAlignmentSpf"] == "r"
+
+
 def test_build_findings_missing_both():
     result = DnsResult(spfDetected=False, dmarcDetected=False)
     findings = _build_findings(result, None)
@@ -51,7 +74,7 @@ def test_build_findings_missing_both():
 
 
 def test_build_findings_dmarc_none_policy():
-    result = DnsResult(spfDetected=True, dmarcDetected=True)
+    result = DnsResult(spfDetected=True, dmarcDetected=True, dmarcPolicy="none")
     findings = _build_findings(result, "v=DMARC1; p=none")
     ids = [f.id for f in findings]
     assert "dmarc_not_strict" in ids
@@ -59,9 +82,21 @@ def test_build_findings_dmarc_none_policy():
 
 
 def test_build_findings_all_good():
-    result = DnsResult(spfDetected=True, dmarcDetected=True)
+    result = DnsResult(spfDetected=True, dmarcDetected=True, spfAll="-", dmarcPolicy="reject")
     findings = _build_findings(result, "v=DMARC1; p=reject")
     assert findings == []
+
+
+def test_build_findings_warns_on_weak_spf_all():
+    result = DnsResult(spfDetected=True, dmarcDetected=True, spfAll="+", dmarcPolicy="reject")
+    findings = _build_findings(result, "v=DMARC1; p=reject")
+    assert "spf_weak_all_policy" in [f.id for f in findings]
+
+
+def test_build_findings_warns_on_partial_dmarc_pct():
+    result = DnsResult(spfDetected=True, dmarcDetected=True, spfAll="-", dmarcPolicy="reject", dmarcPct=50)
+    findings = _build_findings(result, "v=DMARC1; p=reject; pct=50")
+    assert "dmarc_partial_enforcement" in [f.id for f in findings]
 
 
 # ── Integration tests — real DNS (requires network) ───────────────

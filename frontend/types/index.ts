@@ -48,10 +48,21 @@ export interface DnsRecord {
 
 export interface DnsResult {
   records:       DnsRecord[];
+  mxDetected:    boolean;
+  mxRecords:     string[];
   spfDetected:   boolean;
   dmarcDetected: boolean;
   spfRecord?:    string;
   dmarcRecord?:  string;
+  spfAll?:        string;
+  spfLookupCount: number;
+  dmarcPolicy?:   string;
+  dmarcSubdomainPolicy?: string;
+  dmarcPct?:      number;
+  dmarcRua?:      string;
+  dmarcRuf?:      string;
+  dmarcAlignmentDkim?: string;
+  dmarcAlignmentSpf?:  string;
   error?:        string;
 }
 
@@ -92,11 +103,27 @@ export interface HeadersResult {
   error?:           string;
 }
 
+export interface RedirectHop {
+  fromUrl:    string;
+  toUrl:      string;
+  statusCode: number;
+}
+
 export interface HttpOverviewResult {
   statusCode:     number;
   finalUrl:       string;
   redirectChain:  string[];
+  redirectHops:   RedirectHop[];
   redirectCount:  number;
+  initialHost?:    string;
+  finalHost?:      string;
+  finalProtocol?:  string;
+  hostChanged:    boolean;
+  server?:         string;
+  poweredBy?:      string;
+  via?:            string;
+  cdnProvider?:    string;
+  altSvc?:         string;
   contentType?:   string;
   contentLength?: number;
   responseBytes:  number;
@@ -173,6 +200,8 @@ export interface TechStackItem {
   category:   TechCategory;
   confidence: "high" | "medium" | "low";
   version?:   string;
+  sources?:   string[];
+  evidence?:  string[];
 }
 
 // ── Cookies ──────────────────────────────────

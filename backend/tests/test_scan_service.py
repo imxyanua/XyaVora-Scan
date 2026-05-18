@@ -1,6 +1,6 @@
 import pytest
 from app.services import scan_service
-from app.services.scan_service import run_scan
+from app.services.scan_service import normalize_findings, run_scan
 from app.analyzers.score_analyzer import compute_score
 from app.schemas.analyzer import AnalyzerResult
 from app.schemas.report import (
@@ -66,6 +66,35 @@ def test_score_never_negative():
     ]
     score, *_ = compute_score(findings)
     assert score >= 0
+
+
+def test_normalize_findings_dedupes_and_sorts_by_actionability():
+    findings = [
+        Finding(
+            id="info-only", severity="info", category="Discovery",
+            title="Sitemap Found", description="x", recommendation="x", status="pass",
+        ),
+        Finding(
+            id="missing_csp", severity="high", category="Headers",
+            title="Missing CSP", description="x", recommendation="x", status="fail",
+        ),
+        Finding(
+            id="missing_csp", severity="high", category="Headers",
+            title="Missing CSP", description="x", recommendation="x", status="fail",
+        ),
+        Finding(
+            id="missing_referrer", severity="low", category="Headers",
+            title="Missing Referrer Policy", description="x", recommendation="x", status="warning",
+        ),
+    ]
+
+    normalized = normalize_findings(findings)
+
+    assert [finding.id for finding in normalized] == [
+        "missing_csp",
+        "missing_referrer",
+        "info-only",
+    ]
 
 
 # ── scan_service integration ──────────────────────────────────────
