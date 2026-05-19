@@ -1,18 +1,21 @@
 # XyaVora-Scan
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 Công cụ mã nguồn mở để phân tích nhanh tư thế bảo mật của domain bằng các kỹ thuật thụ động.
 
 XyaVora-Scan chạy nhiều analyzer phòng thủ trên một domain công khai và trả về báo cáo có cấu trúc: DNS, TLS, HTTP behavior, security headers, metadata, tech stack, cookies, security.txt, screenshot, findings và bằng chứng cho từng tín hiệu phát hiện được.
 
-> Tài liệu tiếng Anh: [README.md](README.md)
+> English documentation: [README.md](README.md)
 
 ## Điểm nổi bật
 
 - Chạy local-first với frontend Next.js và backend FastAPI.
 - Scan nhanh không cần đăng nhập.
-- Guest scan vẫn xem được report đầy đủ và lưu recent report trong browser hiện tại; backend history vẫn chỉ bật khi có chủ đích.
+- Guest scan vẫn xem được report đầy đủ và lưu recent report trong browser hiện tại; backend history chỉ bật khi có chủ đích.
 - Pipeline analyzer chạy song song, một module lỗi không làm mất toàn bộ report.
-- Có nhãn nguồn dữ liệu để biết kết quả được xác minh từ DNS/TLS/header hay chỉ suy luận từ page signal.
+- Report Quality Summary tách rõ dữ liệu verified, observed và inferred.
+- Evidence label cho biết kết quả được xác minh từ DNS/TLS/header, quan sát từ HTTP/page data, hay suy luận từ heuristic signal.
 - Hỗ trợ screenshot desktop và mobile bằng Playwright, có thể bật/tắt bằng cấu hình.
 - Mô hình bảo mật thụ động: có SSRF guard, timeout và giới hạn dữ liệu tải về.
 
@@ -21,6 +24,8 @@ XyaVora-Scan chạy nhiều analyzer phòng thủ trên một domain công khai 
 | Module | Nội dung kiểm tra |
 |---|---|
 | Risk Summary | Điểm số, grade, risk status, finding ưu tiên |
+| Report Quality Summary | Nhóm tín hiệu verified, observed và inferred |
+| Data Confidence | Trạng thái module: complete, partial, unavailable hoặc error |
 | DNS Records | A, AAAA, MX, NS, TXT, TTL, tín hiệu SPF và DMARC |
 | Email Security | MX, SPF policy, DMARC policy, alignment, report URI, bằng chứng |
 | TLS / SSL | HTTPS, issuer, subject, thời hạn, SAN, protocol, cipher |
@@ -35,6 +40,18 @@ XyaVora-Scan chạy nhiều analyzer phòng thủ trên một domain công khai 
 | Screenshot | Ảnh chụp desktop và mobile nếu bật Playwright |
 | Raw Data | Xuất JSON report đầy đủ |
 | External Research | Link tới công cụ bên ngoài để kiểm chứng thủ công |
+
+## Mô hình bằng chứng
+
+XyaVora-Scan tách dữ liệu theo mức độ tin cậy để UI không diễn giải quá mạnh các tín hiệu chưa chắc chắn.
+
+| Nhóm | Ý nghĩa | Ví dụ |
+|---|---|---|
+| Verified | Bằng chứng trực tiếp từ protocol hoặc resolver | DNS records, TLS handshake, response headers, CDN header có độ tin cậy cao |
+| Observed | Dữ liệu quan sát được từ response hoặc page | HTTP status, redirects, cookies, metadata, security.txt, screenshots |
+| Inferred | Suy luận heuristic hoặc best-practice observation | Tech stack từ tín hiệu yếu, framework suy ra từ stack khác, header hardening bị thiếu |
+
+Findings là các quan sát về tư thế bảo mật. Một mục `warning` không có nghĩa scanner đã xác nhận có lỗ hổng khai thác được. Hãy xem source, confidence và evidence trước khi coi kết quả là kết luận chắc chắn.
 
 ## Kiến trúc
 
@@ -143,7 +160,7 @@ XyaVora-Scan được thiết kế cho phân tích thụ động và phòng th�
 - Target validation chặn localhost, private IP, link-local và cloud metadata endpoint.
 - HTTP fetch có timeout và xử lý redirect có kiểm soát.
 - Screenshot là tính năng tùy chọn và nên được xem là tính năng mạng có rủi ro cao hơn.
-- Một số kết quả là suy luận. Hãy xem nhãn nguồn và evidence trước khi coi là kết luận chắc chắn.
+- Một số kết quả là suy luận. Hãy xem source label và evidence trước khi coi là kết luận chắc chắn.
 
 Chỉ scan domain bạn sở hữu hoặc được phép đánh giá.
 
@@ -153,7 +170,7 @@ Issue và pull request đều được chào đón. Các hướng đóng góp h�
 
 - Analyzer mới kèm test offline.
 - Fingerprint tech stack tốt hơn, có evidence và negative test.
-- Cải thiện UI để đọc evidence dài dễ hơn.
+- UI cải thiện khả năng đọc evidence dài.
 - Sửa tài liệu, thêm hướng dẫn deploy.
 - Tăng cường bảo vệ URL validation, redirect và screenshot capture.
 

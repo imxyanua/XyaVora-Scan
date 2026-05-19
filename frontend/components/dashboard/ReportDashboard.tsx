@@ -6,6 +6,7 @@ import { AppShell }             from "@/components/layout/AppShell";
 import { RiskScoreCard }        from "@/components/dashboard/RiskScoreCard";
 import { KeySignalsOverview }   from "@/components/dashboard/KeySignalsOverview";
 import { DataConfidenceStrip }  from "@/components/dashboard/DataConfidenceStrip";
+import { ReportQualitySummary } from "@/components/dashboard/ReportQualitySummary";
 import { PriorityFindingsCard } from "@/components/dashboard/PriorityFindingsCard";
 import { AdvisoryPanel }        from "@/components/dashboard/AdvisoryPanel";
 import { SSLCard }              from "@/components/dashboard/SSLCard";
@@ -152,6 +153,7 @@ export function ReportDashboard({ domain, report, historyId, guestScanId }: Prop
             </div>
           </div>
           <DataConfidenceStrip report={report} />
+          <ReportQualitySummary report={report} />
         </ReportSection>
 
         <ReportSection id="priorities" title="Risk Priorities" detail="posture observations, then full finding log">

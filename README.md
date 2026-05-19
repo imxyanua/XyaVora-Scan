@@ -1,5 +1,7 @@
 # XyaVora-Scan
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 Open-source domain security posture scanner for quick, passive web reconnaissance.
 
 XyaVora-Scan runs a set of defensive analyzers against a public domain and returns a structured report covering DNS, TLS, HTTP behavior, security headers, page metadata, technology fingerprints, cookies, security.txt, screenshots, findings, and evidence for detected signals.
@@ -12,7 +14,8 @@ XyaVora-Scan runs a set of defensive analyzers against a public domain and retur
 - Quick scans do not require login.
 - Guest scans show the full report and keep recent reports in the current browser; backend history remains opt-in.
 - Analyzer pipeline runs modules concurrently and keeps partial results when one module fails.
-- Evidence labels explain whether a result was verified by DNS/TLS/headers or inferred from page signals.
+- Report Quality Summary separates verified evidence, observed page data, and inferred fingerprints.
+- Evidence labels explain whether a result was verified by DNS/TLS/headers, observed from HTTP/page data, or inferred from heuristic signals.
 - Optional Playwright screenshot capture for desktop and mobile previews.
 - Passive-only security model with SSRF protections and bounded timeouts.
 
@@ -21,6 +24,8 @@ XyaVora-Scan runs a set of defensive analyzers against a public domain and retur
 | Module | What it checks |
 |---|---|
 | Risk Summary | Score, grade, risk status, prioritized findings |
+| Report Quality Summary | Verified, observed, and inferred signal grouping |
+| Data Confidence | Module-level complete, partial, unavailable, or error status |
 | DNS Records | A, AAAA, MX, NS, TXT records, TTLs, SPF and DMARC signals |
 | Email Security | MX, SPF policy, DMARC policy, alignment, report URIs, evidence |
 | TLS / SSL | HTTPS availability, issuer, subject, validity, SANs, protocol, cipher |
@@ -35,6 +40,18 @@ XyaVora-Scan runs a set of defensive analyzers against a public domain and retur
 | Screenshot | Optional desktop and mobile captures |
 | Raw Data | Full JSON report export for further analysis |
 | External Research | Links to third-party tools for manual validation |
+
+## Evidence Model
+
+XyaVora-Scan separates report data by confidence so the UI does not overstate uncertain signals.
+
+| Group | Meaning | Examples |
+|---|---|---|
+| Verified | Direct protocol or resolver evidence | DNS records, TLS handshake, response headers, high-confidence CDN headers |
+| Observed | Data seen in the fetched page or response | HTTP status, redirects, cookies, metadata, security.txt, screenshots |
+| Inferred | Heuristic or best-practice observations | Tech stack fingerprints from weak signals, inferred framework relationships, missing hardening headers |
+
+Findings are posture observations. A `warning` does not mean the scanner confirmed an exploitable vulnerability. Review the source, confidence, and evidence fields before treating a result as confirmed.
 
 ## Architecture
 
