@@ -175,6 +175,8 @@ def test_detect_from_asset_urls_without_fetching_bundle():
     assert "Create React App" in names
     nextjs = next(i for i in items if i.name == "Next.js")
     assert "asset-url" in nextjs.sources
+    assert nextjs.confidence == "medium"
+    assert any("asset-only signal" in item for item in nextjs.evidence)
 
 
 def test_detect_from_fetched_asset_text():
@@ -186,6 +188,16 @@ def test_detect_from_fetched_asset_text():
     assert "Vue.js" in names
     nuxt = next(i for i in items if i.name == "Nuxt.js")
     assert "asset-body" in nuxt.sources
+    assert nuxt.confidence == "medium"
+
+
+def test_detect_inferred_tech_caps_confidence():
+    items = _detect({}, b'<script id="__NEXT_DATA__" type="application/json">{}</script>')
+    react = next(i for i in items if i.name == "React")
+
+    assert react.sources == ["inferred"]
+    assert react.confidence == "medium"
+    assert any("inferred from another detected technology" in item for item in react.evidence)
 
 
 def test_swagger_ui_does_not_claim_fastapi_without_fastapi_signal():

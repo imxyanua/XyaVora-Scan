@@ -19,7 +19,7 @@ def test_detect_cdn_from_common_headers():
     assert evidence == ["cf-ray: abc"]
 
     provider, confidence, evidence = _detect_cdn(httpx.Headers({"x-amz-cf-id": "abc"}))
-    assert provider == "Amazon CloudFront"
+    assert provider == "AWS CloudFront"
     assert confidence == "high"
     assert evidence == ["x-amz-cf-id: abc"]
 
@@ -37,3 +37,11 @@ def test_detect_cdn_distinguishes_weaker_server_header_evidence():
     assert provider == "Cloudflare"
     assert confidence == "medium"
     assert evidence == ["server: cloudflare"]
+
+
+def test_detect_cdn_does_not_treat_generic_served_by_as_fastly():
+    provider, confidence, evidence = _detect_cdn(httpx.Headers({"x-served-by": "origin-app-01"}))
+
+    assert provider is None
+    assert confidence is None
+    assert evidence == []

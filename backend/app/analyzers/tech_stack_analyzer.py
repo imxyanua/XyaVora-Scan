@@ -334,6 +334,9 @@ def _detect(
             ))
 
     _add_implied_tech(detected)
+    for name, item in list(detected.items()):
+        detected[name] = _calibrate_confidence(item)
+
     items = list(detected.values())
     items.sort(key=lambda x: (_CATEGORY_ORDER.get(x.category, 99), x.name))
     return items
@@ -370,6 +373,53 @@ def _first_regex_match(pattern: str, values: list[str]) -> str | None:
 def _short(value: str, limit: int = 96) -> str:
     value = " ".join(value.split())
     return value if len(value) <= limit else f"{value[:limit - 3]}..."
+
+
+def _calibrate_confidence(item: TechStackItem) -> TechStackItem:
+    source_set = set(item.sources)
+    if not source_set:
+        return _with_confidence(item, "low", "confidence-calibrated: no detection source recorded")
+
+    if source_set <= {"asset-url", "asset-body"}:
+        return _downgrade_item(
+            item,
+            "confidence-calibrated: asset-only signal, capped below direct page/header evidence",
+        )
+
+    if source_set == {"inferred"}:
+        return _downgrade_item(
+            item,
+            "confidence-calibrated: inferred from another detected technology",
+        )
+
+    if source_set == {"html"} and item.confidence == "medium":
+        return _with_confidence(
+            item,
+            "low",
+            "confidence-calibrated: single medium-strength HTML signal",
+        )
+
+    return item
+
+
+def _downgrade_item(item: TechStackItem, note: str) -> TechStackItem:
+    if item.confidence == "high":
+        return _with_confidence(item, "medium", note)
+    if item.confidence == "medium":
+        return _with_confidence(item, "low", note)
+    return item
+
+
+def _with_confidence(item: TechStackItem, confidence: TechConfidence, note: str) -> TechStackItem:
+    evidence = item.evidence if note in item.evidence else [*item.evidence, note]
+    return TechStackItem(
+        name=item.name,
+        category=item.category,
+        confidence=confidence,
+        version=item.version,
+        sources=item.sources,
+        evidence=evidence,
+    )
 
 
 def _extract_asset_urls(base_url: str, html_text: str) -> list[str]:

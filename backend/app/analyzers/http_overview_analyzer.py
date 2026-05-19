@@ -28,6 +28,9 @@ def _detect_cdn(headers: httpx.Headers) -> tuple[str | None, str | None, list[st
     server = (headers.get("server") or "").lower()
     via = (headers.get("via") or "").lower()
 
+    def _peek(name: str) -> str | None:
+        return headers.get(name)
+
     def _header(name: str) -> str | None:
         value = headers.get(name)
         if value:
@@ -43,14 +46,25 @@ def _detect_cdn(headers: httpx.Headers) -> tuple[str | None, str | None, list[st
         return "Cloudflare", "medium", evidence
 
     if _header("x-amz-cf-id"):
-        return "Amazon CloudFront", "high", evidence
+        return "AWS CloudFront", "high", evidence
     if "cloudfront" in via:
         evidence.append(f"via: {_short(headers.get('via', ''))}")
-        return "Amazon CloudFront", "medium", evidence
+        return "AWS CloudFront", "medium", evidence
 
     if _header("x-fastly-request-id") or _header("fastly-debug-digest"):
         return "Fastly", "high", evidence
-    if _header("x-served-by") or _header("x-cache-hits"):
+    x_served_by = (_peek("x-served-by") or "").lower()
+    x_cache_hits = _peek("x-cache-hits")
+    if "fastly" in via or "fastly" in server:
+        if via:
+            evidence.append(f"via: {_short(headers.get('via', ''))}")
+        elif server:
+            evidence.append(f"server: {_short(headers.get('server', ''))}")
+        return "Fastly", "medium", evidence
+    if x_served_by and ("fastly" in x_served_by or "cache-" in x_served_by):
+        evidence.append(f"x-served-by: {_short(headers.get('x-served-by', ''))}")
+        if x_cache_hits:
+            evidence.append(f"x-cache-hits: {_short(x_cache_hits)}")
         return "Fastly", "medium", evidence
 
     if _header("x-akamai-transformed") or _header("akamai-cache-status"):
