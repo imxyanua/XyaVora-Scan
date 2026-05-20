@@ -34,6 +34,8 @@ class Finding(_Base):
     confidence:     FindingConfidence = "best-practice"
     source:         FindingSource = "scanner"
     evidence:       list[str] = []
+    analysis:       Optional[str] = None
+    verification:   Optional[str] = None
 
 
 # ── DNS ───────────────────────────────────────────────────────────

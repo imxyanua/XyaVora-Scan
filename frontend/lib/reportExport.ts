@@ -36,7 +36,9 @@ function summarizeFindings(findings: Finding[]) {
       `  - Category: ${finding.category}`,
       `  - Confidence: ${finding.confidence ?? "Unknown"}`,
       `  - Source: ${finding.source ?? "Unknown"}`,
+      finding.analysis ? `  - Why it appears: ${finding.analysis}` : null,
       `  - Recommendation: ${finding.recommendation}`,
+      finding.verification ? `  - Manual verification: ${finding.verification}` : null,
       finding.evidence?.length ? `  - Evidence: ${finding.evidence.slice(0, 3).join(" | ")}` : null,
     ].filter(Boolean).join("\n"))
     .join("\n");

@@ -164,6 +164,19 @@ function DrawerContent({ finding, onClose }: { finding: Finding; onClose: () => 
           </p>
         </section>
 
+        {finding.analysis && (
+          <section>
+            <p className="font-mono text-[11px] text-primary-fixed/65 uppercase tracking-widest mb-2">
+              Why It Appears
+            </p>
+            <div className="bg-[#070B0F] border border-primary-fixed/15 p-3">
+              <p className="font-mono text-[14px] text-[#d7e8ff]/75 leading-relaxed">
+                {finding.analysis}
+              </p>
+            </div>
+          </section>
+        )}
+
         {finding.evidence && finding.evidence.length > 0 && (
           <section>
             <p className="font-mono text-[11px] text-primary-fixed/65 uppercase tracking-widest mb-2">
@@ -204,6 +217,19 @@ function DrawerContent({ finding, onClose }: { finding: Finding; onClose: () => 
             </p>
           </div>
         </section>
+
+        {finding.verification && (
+          <section>
+            <p className="font-mono text-[11px] text-primary-fixed/65 uppercase tracking-widest mb-2">
+              Manual Verification
+            </p>
+            <div className="bg-primary-fixed/[0.04] border border-primary-fixed/15 p-3">
+              <p className="font-mono text-[14px] text-[#d7e8ff]/80 leading-relaxed whitespace-pre-wrap">
+                {finding.verification}
+              </p>
+            </div>
+          </section>
+        )}
 
       </div>
 

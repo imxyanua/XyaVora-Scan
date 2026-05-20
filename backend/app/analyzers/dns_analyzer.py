@@ -129,11 +129,22 @@ def _record_evidence(records: list[DnsRecord]) -> list[str]:
     return [f"{record.host} {record.type} {record.value} ttl={record.ttl if record.ttl is not None else 'unknown'}" for record in records]
 
 
+def _dns_hostname(result: DnsResult, hostname: str | None = None) -> str:
+    if hostname:
+        return hostname
+    if result.records:
+        return result.records[0].host
+    return "<domain>"
+
+
 def _build_findings(
     result: DnsResult,
     dmarc_record: str | None,
+    hostname: str | None = None,
 ) -> list[Finding]:
     findings: list[Finding] = []
+    target = _dns_hostname(result, hostname)
+    dmarc_target = f"_dmarc.{target}"
 
     if result.spfRecordCount > 1:
         findings.append(Finding(
@@ -148,6 +159,8 @@ def _build_findings(
             confidence="verified",
             source="dns",
             evidence=result.spfEvidence,
+            analysis="More than one TXT record beginning with v=spf1 was observed for the same domain.",
+            verification=f"Run dig TXT {target} and confirm only one TXT value starts with v=spf1.",
         ))
 
     if result.dmarcRecordCount > 1:
@@ -163,6 +176,8 @@ def _build_findings(
             confidence="verified",
             source="dns",
             evidence=result.dmarcEvidence,
+            analysis="More than one TXT record beginning with v=DMARC1 was observed at the _dmarc host.",
+            verification=f"Run dig TXT {dmarc_target} and confirm exactly one TXT value starts with v=DMARC1.",
         ))
 
     if not result.spfDetected:
@@ -178,6 +193,8 @@ def _build_findings(
             confidence="observed",
             source="dns",
             evidence=["No TXT record starting with v=spf1 was returned for the domain."],
+            analysis="TXT records were queried for the domain, but none of the returned TXT values started with v=spf1.",
+            verification=f"Run dig TXT {target} and check whether a TXT value begins with v=spf1.",
         ))
 
     if not result.dmarcDetected:
@@ -193,6 +210,8 @@ def _build_findings(
             confidence="observed",
             source="dns",
             evidence=["No TXT record starting with v=DMARC1 was returned at _dmarc.<domain>."],
+            analysis="TXT records were queried at the _dmarc host, but no returned TXT value started with v=DMARC1.",
+            verification=f"Run dig TXT {dmarc_target} and check whether a TXT value begins with v=DMARC1.",
         ))
     elif result.dmarcPolicy == "none":
         # p=none means the policy exists but takes no action on failures — reports only
@@ -208,6 +227,8 @@ def _build_findings(
             confidence="verified",
             source="dns",
             evidence=[dmarc_record] if dmarc_record else [],
+            analysis="The DMARC record was found, and its p= tag is set to none, which means monitoring without enforcement.",
+            verification=f"Run dig TXT {dmarc_target} and inspect the p= tag in the DMARC record.",
         ))
     elif result.dmarcDetected and result.dmarcPolicy not in ("none", "quarantine", "reject"):
         findings.append(Finding(
@@ -222,6 +243,8 @@ def _build_findings(
             confidence="verified",
             source="dns",
             evidence=[dmarc_record] if dmarc_record else [],
+            analysis="The DMARC record was found, but the p= tag was missing or outside the recognized values none, quarantine, and reject.",
+            verification=f"Run dig TXT {dmarc_target} and validate the p= tag syntax.",
         ))
 
     if result.spfAll in ("+", "?"):
@@ -237,6 +260,8 @@ def _build_findings(
             confidence="verified",
             source="dns",
             evidence=[result.spfRecord] if result.spfRecord else [],
+            analysis="The SPF record was found, and its all mechanism is permissive rather than a hard fail.",
+            verification=f"Run dig TXT {target} and inspect whether the SPF record ends with +all, ?all, ~all, or -all.",
         ))
     elif result.spfLookupCount > 10:
         findings.append(Finding(
@@ -251,6 +276,8 @@ def _build_findings(
             confidence="verified",
             source="dns",
             evidence=[result.spfRecord] if result.spfRecord else [],
+            analysis="The SPF record contains more DNS-lookup mechanisms than the SPF limit allows.",
+            verification=f"Run an SPF validator against {target} and count include, a, mx, exists, ptr, and redirect lookups.",
         ))
 
     if result.dmarcDetected and result.dmarcPct is not None and result.dmarcPct < 100:
@@ -266,6 +293,8 @@ def _build_findings(
             confidence="verified",
             source="dns",
             evidence=[result.dmarcRecord] if result.dmarcRecord else [],
+            analysis="The DMARC record was found, and its pct tag applies enforcement to less than all matching mail.",
+            verification=f"Run dig TXT {dmarc_target} and inspect the pct= tag.",
         ))
 
     return findings
@@ -326,6 +355,6 @@ async def analyze_dns(hostname: str) -> AnalyzerResult:
     )
     dns_result.emailSecurityConfidence = _email_security_confidence(dns_result)  # type: ignore[assignment]
 
-    findings = _build_findings(dns_result, dmarc_record)
+    findings = _build_findings(dns_result, dmarc_record, hostname)
 
     return AnalyzerResult(key="dns", status="success", data=dns_result, findings=findings)

@@ -40,6 +40,8 @@ export interface Finding {
   confidence?:    FindingConfidence;
   source?:        FindingSource;
   evidence?:      string[];
+  analysis?:      string;
+  verification?:  string;
 }
 
 // ── DNS ──────────────────────────────────────

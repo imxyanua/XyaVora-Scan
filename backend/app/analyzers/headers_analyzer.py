@@ -96,6 +96,10 @@ def _has_broad_csp_source(value: str) -> bool:
     return bool(re.search(r"(?:^|[\s;])\*(?:[\s;]|$)", value))
 
 
+def _header_verification(header: str) -> str:
+    return f"Run curl -I against the final URL and inspect the {header} response header after redirects."
+
+
 def _present_item(rule: dict, value: str) -> tuple[SecurityHeaderItem, Finding | None]:
     header = rule["header"]
     confidence = "high"
@@ -124,6 +128,8 @@ def _present_item(rule: dict, value: str) -> tuple[SecurityHeaderItem, Finding |
                 confidence="observed",
                 source="headers",
                 evidence=evidence,
+                analysis="The header is present, but the observed max-age is missing or below the scanner's 180-day baseline.",
+                verification=_header_verification(header),
             )
     elif header == "Content-Security-Policy":
         has_unsafe_inline = "'unsafe-inline'" in lower
@@ -145,6 +151,8 @@ def _present_item(rule: dict, value: str) -> tuple[SecurityHeaderItem, Finding |
                 confidence="observed",
                 source="headers",
                 evidence=evidence,
+                analysis="The header is present, but the observed policy allows wildcard sources or unsafe inline script/style execution.",
+                verification=_header_verification(header),
             )
     elif header == "X-Frame-Options":
         if lower not in ("deny", "sameorigin"):
@@ -162,6 +170,8 @@ def _present_item(rule: dict, value: str) -> tuple[SecurityHeaderItem, Finding |
                 confidence="observed",
                 source="headers",
                 evidence=evidence,
+                analysis="The header is present, but the observed value is not DENY or SAMEORIGIN.",
+                verification=_header_verification(header),
             )
     elif header == "X-Content-Type-Options":
         if lower != "nosniff":
@@ -179,6 +189,8 @@ def _present_item(rule: dict, value: str) -> tuple[SecurityHeaderItem, Finding |
                 confidence="observed",
                 source="headers",
                 evidence=evidence,
+                analysis="The header is present, but the observed value is not nosniff.",
+                verification=_header_verification(header),
             )
     elif header == "Referrer-Policy":
         if lower in ("unsafe-url", "no-referrer-when-downgrade"):
@@ -196,6 +208,8 @@ def _present_item(rule: dict, value: str) -> tuple[SecurityHeaderItem, Finding |
                 confidence="observed",
                 source="headers",
                 evidence=evidence,
+                analysis="The header is present, but the observed value may send full URLs to other origins.",
+                verification=_header_verification(header),
             )
 
     return SecurityHeaderItem(
@@ -257,6 +271,11 @@ def _check_headers(
                 confidence=rule.get("confidence", "observed"),
                 source="headers",
                 evidence=[f"{rule['header']}: not present in response headers"],
+                analysis=(
+                    f"{rule['header']} was not present in the final HTTP response headers captured by the scanner. "
+                    "For some apps this can be intentional, but it means the browser does not receive this hardening control from this response."
+                ),
+                verification=_header_verification(rule["header"]),
             ))
 
     return items, findings
@@ -290,6 +309,8 @@ def _server_finding(server: str) -> Finding:
         confidence="observed",
         source="headers",
         evidence=[f"Server: {server}"],
+        analysis="The Server header was present in the final HTTP response.",
+        verification="Run curl -I against the final URL and inspect the Server response header.",
     )
 
 

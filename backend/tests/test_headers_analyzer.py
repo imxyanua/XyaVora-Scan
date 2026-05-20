@@ -54,6 +54,8 @@ def test_missing_hsts_produces_best_practice_warning():
     assert hsts_finding.status == "warning"
     assert hsts_finding.severity == "medium"
     assert hsts_finding.confidence == "best-practice"
+    assert "not present" in hsts_finding.analysis
+    assert "curl -I" in hsts_finding.verification
 
 
 def test_missing_referrer_produces_warning():
@@ -86,7 +88,9 @@ def test_weak_hsts_produces_warning_item_and_finding():
 
     assert hsts.status == "warning"
     assert hsts.confidence == "medium"
-    assert "weak_hsts" in {f.id for f in findings}
+    finding = next(f for f in findings if f.id == "weak_hsts")
+    assert "180-day" in finding.analysis
+    assert "curl -I" in finding.verification
 
 
 def test_permissive_csp_produces_warning_item_and_finding():
