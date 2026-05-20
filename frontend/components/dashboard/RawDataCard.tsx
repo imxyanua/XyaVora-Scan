@@ -3,16 +3,11 @@
 import { useMemo, useState } from "react";
 import type { ScanReport } from "@/types";
 import { AppIcon } from "@/components/ui/AppIcon";
+import { downloadTextFile, generateMarkdownReport, makeReportFileName } from "@/lib/reportExport";
 
 type Props = {
   report: ScanReport;
 };
-
-function makeFileName(hostname: string) {
-  const safeHost = hostname.toLowerCase().replace(/[^a-z0-9.-]+/g, "-");
-  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-  return `${safeHost || "scan"}-${stamp}.json`;
-}
 
 function redactLargePreview(report: ScanReport) {
   return {
@@ -29,16 +24,15 @@ export function RawDataCard({ report }: Props) {
   const [showRaw, setShowRaw] = useState(false);
   const hostname = report.hostname || report.target;
   const rawJson = useMemo(() => JSON.stringify(report, null, 2), [report]);
+  const markdownReport = useMemo(() => generateMarkdownReport(report), [report]);
   const previewJson = useMemo(() => JSON.stringify(redactLargePreview(report), null, 2), [report]);
 
   function downloadRawData() {
-    const blob = new Blob([rawJson], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = makeFileName(hostname);
-    link.click();
-    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    downloadTextFile(makeReportFileName(hostname, "json"), rawJson, "application/json");
+  }
+
+  function downloadMarkdown() {
+    downloadTextFile(makeReportFileName(hostname, "md"), markdownReport, "text/markdown");
   }
 
   return (
@@ -75,10 +69,18 @@ export function RawDataCard({ report }: Props) {
             <AppIcon name="download" className="text-[15px]" />
             Download JSON
           </button>
+          <button
+            type="button"
+            onClick={downloadMarkdown}
+            className="btn-primary px-3 py-2 text-xs flex items-center justify-center gap-2"
+          >
+            <AppIcon name="download" className="text-[15px]" />
+            Download Markdown
+          </button>
         </div>
 
         <p className="font-mono text-[10px] text-[#d7e8ff]/55 leading-relaxed">
-          RAW preview omits screenshot base64 to keep the page responsive. Download includes the full scan payload.
+          RAW preview omits screenshot base64 to keep the page responsive. JSON includes the full scan payload; Markdown is a shareable summary.
         </p>
 
         {showRaw && (
