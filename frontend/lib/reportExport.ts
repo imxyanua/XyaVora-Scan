@@ -61,6 +61,38 @@ function screenshotStatus(report: ScanReport) {
   return "Not captured";
 }
 
+function sourceReliability(report: ScanReport) {
+  const verifiedSignals = [
+    !report.dns.error && report.dns.records.length > 0 ? `DNS records (${report.dns.records.length})` : null,
+    !report.ssl.error && report.ssl.httpsAvailable ? `TLS certificate (${report.ssl.protocol ?? "TLS"})` : null,
+    !report.headers.error && report.headers.securityHeaders.length > 0 ? `HTTP security headers (${report.headers.securityHeaders.length})` : null,
+  ].filter(Boolean);
+
+  const observedSignals = [
+    !report.httpOverview.error && report.httpOverview.statusCode ? `HTTP response (${report.httpOverview.statusCode})` : null,
+    !report.pageMetadata.error && (report.pageMetadata.title || report.pageMetadata.description) ? "Page metadata" : null,
+    !report.whois.error && (report.whois.registrar || report.whois.nameServers.length > 0) ? "WHOIS registry data" : null,
+    report.cookies.length > 0 ? `Cookies (${report.cookies.length})` : null,
+    report.securityTxt.present ? "security.txt" : null,
+    report.siteDiscovery.robotsPresent || report.siteDiscovery.sitemapPresent ? "Crawl discovery files" : null,
+  ].filter(Boolean);
+
+  const heuristicSignals = [
+    report.techStack.some((item) => item.confidence === "low" || item.sources?.includes("inferred"))
+      ? "Low-confidence or inferred tech fingerprints"
+      : null,
+    report.findings.some((finding) => finding.confidence === "best-practice")
+      ? "Best-practice posture checks"
+      : null,
+  ].filter(Boolean);
+
+  return table([
+    ["Verified direct evidence", verifiedSignals.length ? verifiedSignals.join(", ") : "None"],
+    ["Observed page/network data", observedSignals.length ? observedSignals.join(", ") : "None"],
+    ["Heuristic or policy checks", heuristicSignals.length ? heuristicSignals.join(", ") : "None"],
+  ]);
+}
+
 export function makeReportFileName(hostname: string, extension: "json" | "md") {
   const safeHost = hostname.toLowerCase().replace(/[^a-z0-9.-]+/g, "-");
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -117,6 +149,10 @@ export function generateMarkdownReport(report: ScanReport) {
       ["Tech stack", `${report.techStack.length} fingerprints`],
       ["Screenshot", screenshotStatus(report)],
     ]),
+    "",
+    "## Source Reliability",
+    "",
+    sourceReliability(report),
     "",
     "## TLS / SSL",
     "",

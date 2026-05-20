@@ -97,6 +97,43 @@ def test_normalize_findings_dedupes_and_sorts_by_actionability():
     ]
 
 
+def test_normalize_findings_merges_duplicate_evidence_and_strongest_confidence():
+    findings = [
+        Finding(
+            id="missing_csp",
+            severity="medium",
+            category="Headers",
+            title="Missing CSP",
+            description="x",
+            recommendation="x",
+            status="fail",
+            confidence="best-practice",
+            source="scanner",
+            evidence=["header:missing"],
+        ),
+        Finding(
+            id="missing_csp",
+            severity="high",
+            category="Headers",
+            title="Missing CSP",
+            description="x",
+            recommendation="x",
+            status="fail",
+            confidence="observed",
+            source="headers",
+            evidence=["header:missing", "status:200"],
+        ),
+    ]
+
+    normalized = normalize_findings(findings)
+
+    assert len(normalized) == 1
+    assert normalized[0].severity == "high"
+    assert normalized[0].confidence == "observed"
+    assert normalized[0].source == "headers"
+    assert normalized[0].evidence == ["header:missing", "status:200"]
+
+
 # ── scan_service integration ──────────────────────────────────────
 
 @pytest.mark.asyncio

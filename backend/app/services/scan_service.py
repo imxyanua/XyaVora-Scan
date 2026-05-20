@@ -42,6 +42,37 @@ _SEVERITY_PRIORITY = {
     "info": 3,
 }
 
+_CONFIDENCE_PRIORITY = {
+    "verified": 0,
+    "observed": 1,
+    "best-practice": 2,
+    "inferred": 3,
+}
+
+
+def _merge_unique(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    merged: list[str] = []
+
+    for value in values:
+        if value in seen:
+            continue
+        seen.add(value)
+        merged.append(value)
+
+    return merged
+
+
+def _merge_finding_evidence(primary: Finding, secondary: Finding) -> Finding:
+    merged = primary.model_copy(deep=True)
+    merged.evidence = _merge_unique([*primary.evidence, *secondary.evidence])
+
+    if _CONFIDENCE_PRIORITY[secondary.confidence] < _CONFIDENCE_PRIORITY[merged.confidence]:
+        merged.confidence = secondary.confidence
+        merged.source = secondary.source
+
+    return merged
+
 
 def is_cached(hostname: str) -> bool:
     entry = _SCAN_CACHE.get(hostname)
@@ -72,13 +103,15 @@ def normalize_findings(findings: list[Finding]) -> list[Finding]:
         key = (finding.id, finding.category, finding.status)
         existing = deduped.get(key)
         if existing is None:
-            deduped[key] = finding
+            deduped[key] = finding.model_copy(deep=True)
             continue
 
         existing_rank = (_STATUS_PRIORITY[existing.status], _SEVERITY_PRIORITY[existing.severity])
         candidate_rank = (_STATUS_PRIORITY[finding.status], _SEVERITY_PRIORITY[finding.severity])
         if candidate_rank < existing_rank:
-            deduped[key] = finding
+            deduped[key] = _merge_finding_evidence(finding, existing)
+        else:
+            deduped[key] = _merge_finding_evidence(existing, finding)
 
     return sorted(
         deduped.values(),
