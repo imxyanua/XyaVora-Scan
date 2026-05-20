@@ -193,6 +193,9 @@ export interface SiteDiscoveryResult {
   sitemapUrls:       string[];
   sitemapUrlCount:   number;
   sitemapIndexCount: number;
+  robotsEvidence:    string[];
+  sitemapEvidence:   string[];
+  discoveryEvidence: string[];
   error?:            string;
 }
 
@@ -201,8 +204,10 @@ export interface WhoisResult {
   createdDate?: string;
   updatedDate?: string;
   expiryDate?:  string;
+  expiryDaysRemaining?: number;
   nameServers:  string[];
   dnssec?:      string;
+  whoisEvidence: string[];
   raw?:         string;
   error?:       string;
 }

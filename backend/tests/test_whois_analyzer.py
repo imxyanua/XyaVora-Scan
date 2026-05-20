@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 from datetime import datetime, timezone, timedelta
 
-from app.analyzers.whois_analyzer import analyze_whois, _parse_whois, _build_findings, _to_iso
+from app.analyzers.whois_analyzer import analyze_whois, _parse_whois, _build_findings, _to_iso, _days_until
 from app.schemas.report import WhoisResult
 
 
@@ -54,6 +54,8 @@ def test_parse_whois_basic():
     result = _parse_whois(_mock_whois(365))
     assert result.registrar == "GoDaddy.com, LLC"
     assert result.expiryDate is not None
+    assert result.expiryDaysRemaining is not None
+    assert any(item.startswith("registrar:") for item in result.whoisEvidence)
     assert "ns1.example.com" in result.nameServers
     assert result.error is None
 
@@ -72,22 +74,30 @@ def test_parse_whois_deduplicates_nameservers():
 
 def test_findings_registration_ok():
     result = WhoisResult(expiryDate=(_future_dt(365)).isoformat(), dnssec="signedDelegation")
+    result.expiryDaysRemaining = _days_until(result.expiryDate)
+    result.whoisEvidence = ["expires: test", "dnssec: signedDelegation"]
     findings = _build_findings(result)
     ids = [f.id for f in findings]
     assert "domain_registration_ok" in ids
     assert "dnssec_enabled" in ids
+    assert all(f.source == "whois" for f in findings)
 
 
 def test_findings_expiring_soon():
     result = WhoisResult(expiryDate=(_future_dt(20)).isoformat(), dnssec="unsigned")
+    result.expiryDaysRemaining = _days_until(result.expiryDate)
+    result.whoisEvidence = ["expires: test"]
     findings = _build_findings(result)
     expiring = next(f for f in findings if f.id == "domain_expiring_soon")
     assert expiring.status == "warning"
     assert expiring.severity == "medium"
+    assert expiring.confidence == "verified"
 
 
 def test_findings_expired():
     result = WhoisResult(expiryDate=(_future_dt(-5)).isoformat(), dnssec="unsigned")
+    result.expiryDaysRemaining = _days_until(result.expiryDate)
+    result.whoisEvidence = ["expires: test"]
     findings = _build_findings(result)
     expired = next(f for f in findings if f.id == "domain_expired")
     assert expired.status == "fail"
@@ -96,9 +106,16 @@ def test_findings_expired():
 
 def test_findings_dnssec_not_enabled():
     result = WhoisResult(expiryDate=(_future_dt(365)).isoformat(), dnssec="unsigned")
+    result.expiryDaysRemaining = _days_until(result.expiryDate)
     findings = _build_findings(result)
     dnssec_f = next(f for f in findings if f.id == "dnssec_not_enabled")
     assert dnssec_f.status == "warning"
+
+
+def test_findings_expiry_unknown():
+    result = WhoisResult(registrar="Test Registrar", dnssec="unsigned", whoisEvidence=["registrar: Test Registrar"])
+    findings = _build_findings(result)
+    assert "domain_expiry_unknown" in [f.id for f in findings]
 
 
 def test_findings_error():

@@ -191,6 +191,9 @@ class SiteDiscoveryResult(_Base):
     sitemapUrls:       list[str] = []
     sitemapUrlCount:   int = 0
     sitemapIndexCount: int = 0
+    robotsEvidence:    list[str] = []
+    sitemapEvidence:   list[str] = []
+    discoveryEvidence: list[str] = []
     error:             Optional[str] = None
 
 
@@ -199,8 +202,10 @@ class WhoisResult(_Base):
     createdDate: Optional[str] = None
     updatedDate: Optional[str] = None
     expiryDate:  Optional[str] = None
+    expiryDaysRemaining: Optional[int] = None
     nameServers: list[str] = []
     dnssec:      Optional[str] = None
+    whoisEvidence: list[str] = []
     raw:         Optional[str] = None
     error:       Optional[str] = None
 

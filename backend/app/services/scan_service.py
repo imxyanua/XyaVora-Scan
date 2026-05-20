@@ -239,10 +239,25 @@ def build_evidence_summary(report: ScanReport) -> list[EvidenceSummaryItem]:
             report.whois.registrar or f"{len(report.whois.nameServers)} name servers",
             "whois",
             "medium",
-            [*([f"registrar:{report.whois.registrar}"] if report.whois.registrar else []), *report.whois.nameServers[:5]],
+            report.whois.whoisEvidence,
         )
     else:
         add("whois", "WHOIS", "unavailable", "Registrar data not available", "whois")
+
+    if report.siteDiscovery.error:
+        add("discovery", "Crawl Discovery", "error", report.siteDiscovery.error, "http")
+    elif report.siteDiscovery.robotsPresent or report.siteDiscovery.sitemapPresent:
+        add(
+            "discovery",
+            "Crawl Discovery",
+            "observed",
+            f"robots: {report.siteDiscovery.robotsPresent}, sitemap: {report.siteDiscovery.sitemapPresent}",
+            "http",
+            "medium",
+            report.siteDiscovery.discoveryEvidence,
+        )
+    else:
+        add("discovery", "Crawl Discovery", "unavailable", "No robots.txt or sitemap evidence observed", "http")
 
     if report.pageMetadata.error:
         add("metadata", "Page Metadata", "error", report.pageMetadata.error, "html")

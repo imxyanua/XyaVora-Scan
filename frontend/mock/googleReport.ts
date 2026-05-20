@@ -178,6 +178,9 @@ export const mockGoogleReport: ScanReport = {
     sitemapUrls:       ["https://www.google.com/", "https://www.google.com/search/about"],
     sitemapUrlCount:   2,
     sitemapIndexCount: 0,
+    robotsEvidence:    ["robots.requested_url: https://www.google.com/robots.txt", "robots.status_code: 200"],
+    sitemapEvidence:   ["sitemap.requested_url: https://www.google.com/sitemap.xml", "sitemap.status_code: 200", "sitemap.url_count: 2"],
+    discoveryEvidence: ["robots.status_code: 200", "sitemap.status_code: 200"],
   },
 
   whois: {
@@ -185,8 +188,10 @@ export const mockGoogleReport: ScanReport = {
     createdDate: "1997-09-15T00:00:00.000Z",
     updatedDate: "2019-09-09T00:00:00.000Z",
     expiryDate:  "2028-09-14T00:00:00.000Z",
+    expiryDaysRemaining: 845,
     nameServers: ["ns1.google.com", "ns2.google.com", "ns3.google.com", "ns4.google.com"],
     dnssec:      "unsigned",
+    whoisEvidence: ["registrar: MarkMonitor Inc.", "expires: 2028-09-14T00:00:00.000Z", "dnssec: unsigned"],
   },
 
   techStack: [

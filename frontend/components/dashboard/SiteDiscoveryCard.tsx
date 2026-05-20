@@ -1,4 +1,5 @@
 import type { SiteDiscoveryResult } from "@/types";
+import { DetailPanel } from "./DetailPanel";
 
 type Props = {
   discovery: SiteDiscoveryResult;
@@ -31,6 +32,22 @@ export function SiteDiscoveryCard({ discovery }: Props) {
   const topAgents = discovery.userAgents.slice(0, 4).join(", ");
   const topSitemaps = discovery.sitemapUrls.slice(0, 4);
   const ruleCount = discovery.allowRules.length + discovery.disallowRules.length;
+  const detailItems = [
+    { label: "robots.txt Present", value: discovery.robotsPresent },
+    { label: "robots.txt URL", value: discovery.robotsUrl },
+    { label: "robots.txt Status", value: discovery.robotsStatusCode },
+    { label: "User Agents", value: discovery.userAgents.join("\n") },
+    { label: "Allow Rules", value: discovery.allowRules.join("\n") },
+    { label: "Disallow Rules", value: discovery.disallowRules.join("\n") },
+    { label: "Crawl Delay", value: discovery.crawlDelay },
+    { label: "Disallow All", value: discovery.disallowAll },
+    { label: "Sitemap Present", value: discovery.sitemapPresent },
+    { label: "Sitemap URL", value: discovery.sitemapUrl },
+    { label: "Sitemap URLs", value: discovery.sitemapUrls.join("\n") },
+    { label: "robots.txt Evidence", value: discovery.robotsEvidence?.join("\n") },
+    { label: "Sitemap Evidence", value: discovery.sitemapEvidence?.join("\n") },
+    { label: "Discovery Evidence", value: discovery.discoveryEvidence?.join("\n") },
+  ];
 
   return (
     <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex h-full flex-col">
@@ -75,6 +92,7 @@ export function SiteDiscoveryCard({ discovery }: Props) {
           )}
         </>
       )}
+      {!discovery.error && <DetailPanel items={detailItems} />}
     </div>
   );
 }
