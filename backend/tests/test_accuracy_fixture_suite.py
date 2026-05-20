@@ -123,6 +123,99 @@ FIXTURES: tuple[AccuracyFixture, ...] = (
         ),
         absent=("React", "Vue.js", "Angular", "Tailwind CSS"),
     ),
+    AccuracyFixture(
+        name="astro_netlify_site",
+        headers={"x-nf-request-id": "01HTEXAMPLE"},
+        html="""
+        <html>
+          <head>
+            <script type="module" src="/_astro/entry.client.abc123.js"></script>
+          </head>
+          <body>
+            <astro-island uid="abc" component-url="/_astro/Header.abc123.js"></astro-island>
+          </body>
+        </html>
+        """,
+        expected=(
+            TechExpectation("Astro", "high", {"html", "asset-url"}),
+            TechExpectation("Netlify", "high", {"header"}),
+        ),
+        absent=("Next.js", "React", "SvelteKit", "WordPress"),
+        cdn_provider="Netlify",
+        cdn_confidence="high",
+    ),
+    AccuracyFixture(
+        name="sveltekit_static_site",
+        headers={},
+        html="""
+        <html>
+          <head>
+            <script type="module" src="/_app/immutable/entry/start.abc123.js"></script>
+            <script>window.__sveltekit_data = { nodes: [] };</script>
+          </head>
+        </html>
+        """,
+        expected=(
+            TechExpectation("SvelteKit", "high", {"html", "asset-url"}),
+            TechExpectation("Svelte", "medium", {"inferred"}),
+        ),
+        absent=("Next.js", "React", "Vue.js", "Nuxt.js"),
+    ),
+    AccuracyFixture(
+        name="docusaurus_docs_site",
+        headers={},
+        html="""
+        <html>
+          <head>
+            <script>window.__docusaurus = { siteConfig: {} };</script>
+          </head>
+          <body>
+            <nav class="navbar__brand">Docs</nav>
+            <main class="theme-doc-markdown markdown">Guide</main>
+          </body>
+        </html>
+        """,
+        expected=(
+            TechExpectation("Docusaurus", "high", {"html"}),
+        ),
+        absent=("React", "Next.js", "MkDocs", "Hugo"),
+    ),
+    AccuracyFixture(
+        name="mkdocs_material_site",
+        headers={},
+        html="""
+        <html data-md-color-scheme="slate">
+          <head>
+            <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.0">
+          </head>
+          <body>
+            <header class="md-header">
+              <a class="md-header__button">Docs</a>
+            </header>
+          </body>
+        </html>
+        """,
+        expected=(
+            TechExpectation("MkDocs", "high", {"html"}),
+        ),
+        absent=("Docusaurus", "Hugo", "React"),
+    ),
+    AccuracyFixture(
+        name="hugo_static_site",
+        headers={},
+        html="""
+        <html>
+          <head>
+            <meta name="generator" content="Hugo 0.124.1">
+          </head>
+          <body>Static site</body>
+        </html>
+        """,
+        expected=(
+            TechExpectation("Hugo", "high", {"meta"}),
+        ),
+        absent=("MkDocs", "Docusaurus", "WordPress"),
+    ),
 )
 
 

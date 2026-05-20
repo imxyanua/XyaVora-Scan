@@ -124,7 +124,7 @@ _RULES: list[_Rule] = [
     _Rule("Angular",    "JavaScript Framework", "high",   html=r'angular(?:\.min)?\.js|ng-version|ng-app|_ngcontent-',
           version_re=r'angular[./-]([\d.]+)(?:\.min)?\.js'),
     _Rule("SvelteKit",  "JavaScript Framework", "high",   html=r'__sveltekit_data|/_app/immutable/|sveltekit:start'),
-    _Rule("Svelte",     "JavaScript Framework", "medium", html=r'svelte'),
+    _Rule("Svelte",     "JavaScript Framework", "medium", html=r'svelte(?:\.min)?\.js|data-svelte-h|svelte-[a-z0-9]'),
     _Rule("Gatsby",     "JavaScript Framework", "high",   html=r'___gatsby|gatsby-chunk|gatsby-image'),
     _Rule("Remix",      "JavaScript Framework", "high",   html=r'__remixContext|__remixManifest'),
     _Rule("Astro",      "JavaScript Framework", "high",   html=r'data-astro-cid|astro-island|@astrojs|/_astro/'),
@@ -203,6 +203,9 @@ _RULES: list[_Rule] = [
 
     # ── Other ─────────────────────────────────────────────────────
     _Rule("Google Fonts", "Other", "high",   html=r'fonts\.googleapis\.com'),
+    _Rule("Docusaurus",   "Other", "high",   html=r'__docusaurus|docusaurus(?:\.config)?|theme-doc-|navbar__brand'),
+    _Rule("MkDocs",       "Other", "high",   html=r'mkdocs-material|Material for MkDocs|data-md-color-scheme|md-header__button'),
+    _Rule("Hugo",         "Other", "high",   meta=r'hugo', version_re=r'Hugo\s*([\d.]+)'),
     _Rule("Sentry",       "Other", "high",   html=r'sentry\.io|@sentry/|Sentry\.init'),
     _Rule("Stripe",       "Other", "high",   html=r'js\.stripe\.com'),
     _Rule("PayPal",       "Other", "high",   html=r'paypal\.com/sdk/js|paypalobjects\.com'),
