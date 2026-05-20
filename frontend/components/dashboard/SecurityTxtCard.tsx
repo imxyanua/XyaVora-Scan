@@ -24,6 +24,9 @@ export function SecurityTxtCard({ securityTxt }: Props) {
     { label: "Policy", value: securityTxt.policy },
     { label: "Encryption", value: securityTxt.encryption },
     { label: "Expires", value: securityTxt.expires },
+    { label: "Expired", value: securityTxt.expired },
+    { label: "Checked Locations", value: securityTxt.checkedLocations?.join("\n") },
+    { label: "Evidence", value: securityTxt.securityTxtEvidence?.join("\n") },
     { label: "Raw", value: securityTxt.raw },
   ];
 
@@ -49,6 +52,11 @@ export function SecurityTxtCard({ securityTxt }: Props) {
           <p className="font-mono text-[11px] text-primary-fixed/60">
             &gt; RFC 9116 recommends publishing a security.txt
           </p>
+          {securityTxt.securityTxtEvidence?.slice(0, 2).map((item) => (
+            <p key={item} className="font-mono text-[10px] text-[#d7e8ff]/45 break-all">
+              &gt; {item}
+            </p>
+          ))}
         </div>
       ) : (
         <div className="font-mono text-sm flex-1">
@@ -70,7 +78,7 @@ export function SecurityTxtCard({ securityTxt }: Props) {
           ))}
         </div>
       )}
-      {!securityTxt.error && securityTxt.present && <DetailPanel items={detailItems} />}
+      {!securityTxt.error && <DetailPanel items={detailItems} />}
     </div>
   );
 }

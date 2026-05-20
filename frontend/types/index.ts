@@ -154,6 +154,7 @@ export interface HttpOverviewResult {
   expires?:       string;
   etag?:          string;
   lastModified?:  string;
+  responseEvidence?: string[];
   error?:         string;
 }
 
@@ -167,6 +168,10 @@ export interface PageMetadataResult {
   faviconUrl?:    string;
   language?:      string;
   robots?:        string;
+  robotsDirectives: string[];
+  canonicalHost?: string;
+  canonicalMatchesFinalHost?: boolean;
+  metadataEvidence: string[];
   noindex:        boolean;
   nofollow:       boolean;
   error?:         string;
@@ -188,6 +193,9 @@ export interface SiteDiscoveryResult {
   sitemapUrls:       string[];
   sitemapUrlCount:   number;
   sitemapIndexCount: number;
+  robotsEvidence:    string[];
+  sitemapEvidence:   string[];
+  discoveryEvidence: string[];
   error?:            string;
 }
 
@@ -196,8 +204,10 @@ export interface WhoisResult {
   createdDate?: string;
   updatedDate?: string;
   expiryDate?:  string;
+  expiryDaysRemaining?: number;
   nameServers:  string[];
   dnssec?:      string;
+  whoisEvidence: string[];
   raw?:         string;
   error?:       string;
 }
@@ -247,6 +257,7 @@ export interface CookieResult {
   expires?:   string;
   maxAge?:    number;
   warnings:   string[];
+  evidence?:  string[];
 }
 
 // ── Security.txt ─────────────────────────────
@@ -254,10 +265,13 @@ export interface CookieResult {
 export interface SecurityTxtResult {
   present:    boolean;
   location?:  string;
+  checkedLocations: string[];
   contact?:   string;
   policy?:    string;
   encryption?:string;
   expires?:   string;
+  expired:    boolean;
+  securityTxtEvidence: string[];
   raw?:       string;
   error?:     string;
 }

@@ -40,6 +40,7 @@ export function HttpOverviewCard({ http }: Props) {
     { label: "Last Modified", value: http.lastModified },
     { label: "Cache Control", value: http.cacheControl },
     { label: "Expires", value: http.expires },
+    { label: "Response Evidence", value: http.responseEvidence?.join("\n") },
   ];
 
   return (

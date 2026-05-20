@@ -34,6 +34,10 @@ export function PageMetadataCard({ metadata }: Props) {
     { label: "Favicon", value: metadata.faviconUrl },
     { label: "Language", value: metadata.language },
     { label: "Robots", value: metadata.robots },
+    { label: "Robots Directives", value: metadata.robotsDirectives?.join("\n") },
+    { label: "Canonical Host", value: metadata.canonicalHost },
+    { label: "Canonical Matches Host", value: metadata.canonicalMatchesFinalHost },
+    { label: "Metadata Evidence", value: metadata.metadataEvidence?.join("\n") },
     { label: "Noindex", value: metadata.noindex },
     { label: "Nofollow", value: metadata.nofollow },
   ];
@@ -76,6 +80,7 @@ export function PageMetadataCard({ metadata }: Props) {
           <div className="flex-1 overflow-hidden">
             <Row label="Language" value={metadata.language} />
             <Row label="Canonical" value={metadata.canonicalUrl} />
+            <Row label="Canonical Host" value={metadata.canonicalHost} />
             <Row label="OG Image" value={metadata.ogImage} />
             <Row label="Robots" value={metadata.robots} />
             <Row label="Noindex" value={metadata.noindex ? "YES" : "NO"} />

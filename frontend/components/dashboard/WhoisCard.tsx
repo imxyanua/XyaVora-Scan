@@ -1,4 +1,5 @@
 import type { WhoisResult } from "@/types";
+import { DetailPanel } from "./DetailPanel";
 
 interface Props {
   whois: WhoisResult;
@@ -21,7 +22,18 @@ export function WhoisCard({ whois }: Props) {
     { key: "CREATED",     val: fmt(whois.createdDate)  },
     { key: "UPDATED",     val: fmt(whois.updatedDate)  },
     { key: "EXPIRES",     val: fmt(whois.expiryDate)   },
+    { key: "DAYS LEFT",   val: whois.expiryDaysRemaining ?? "Unknown" },
     { key: "DNSSEC",      val: whois.dnssec     ?? "Unknown" },
+  ];
+  const detailItems = [
+    { label: "Registrar", value: whois.registrar },
+    { label: "Created", value: whois.createdDate },
+    { label: "Updated", value: whois.updatedDate },
+    { label: "Expires", value: whois.expiryDate },
+    { label: "Days Remaining", value: whois.expiryDaysRemaining },
+    { label: "DNSSEC", value: whois.dnssec },
+    { label: "Name Servers", value: whois.nameServers?.join("\n") },
+    { label: "WHOIS Evidence", value: whois.whoisEvidence?.join("\n") },
   ];
 
   return (
@@ -58,6 +70,7 @@ export function WhoisCard({ whois }: Props) {
           )}
         </div>
       )}
+      {!whois.error && <DetailPanel items={detailItems} />}
     </div>
   );
 }

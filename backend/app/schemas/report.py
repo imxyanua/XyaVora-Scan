@@ -152,6 +152,7 @@ class HttpOverviewResult(_Base):
     expires:         Optional[str] = None
     etag:            Optional[str] = None
     lastModified:    Optional[str] = None
+    responseEvidence: list[str] = []
     error:           Optional[str] = None
 
 
@@ -165,6 +166,10 @@ class PageMetadataResult(_Base):
     faviconUrl:     Optional[str] = None
     language:       Optional[str] = None
     robots:         Optional[str] = None
+    robotsDirectives: list[str] = []
+    canonicalHost:  Optional[str] = None
+    canonicalMatchesFinalHost: Optional[bool] = None
+    metadataEvidence: list[str] = []
     noindex:        bool = False
     nofollow:       bool = False
     error:          Optional[str] = None
@@ -186,6 +191,9 @@ class SiteDiscoveryResult(_Base):
     sitemapUrls:       list[str] = []
     sitemapUrlCount:   int = 0
     sitemapIndexCount: int = 0
+    robotsEvidence:    list[str] = []
+    sitemapEvidence:   list[str] = []
+    discoveryEvidence: list[str] = []
     error:             Optional[str] = None
 
 
@@ -194,8 +202,10 @@ class WhoisResult(_Base):
     createdDate: Optional[str] = None
     updatedDate: Optional[str] = None
     expiryDate:  Optional[str] = None
+    expiryDaysRemaining: Optional[int] = None
     nameServers: list[str] = []
     dnssec:      Optional[str] = None
+    whoisEvidence: list[str] = []
     raw:         Optional[str] = None
     error:       Optional[str] = None
 
@@ -242,6 +252,7 @@ class CookieResult(_Base):
     expires:  Optional[str] = None
     maxAge:   Optional[int] = None
     warnings: list[str] = []
+    evidence: list[str] = []
 
 
 # ── Security.txt ──────────────────────────────────────────────────
@@ -249,10 +260,13 @@ class CookieResult(_Base):
 class SecurityTxtResult(_Base):
     present:    bool = False
     location:   Optional[str] = None
+    checkedLocations: list[str] = []
     contact:    Optional[str] = None
     policy:     Optional[str] = None
     encryption: Optional[str] = None
     expires:    Optional[str] = None
+    expired:    bool = False
+    securityTxtEvidence: list[str] = []
     raw:        Optional[str] = None
     error:      Optional[str] = None
 

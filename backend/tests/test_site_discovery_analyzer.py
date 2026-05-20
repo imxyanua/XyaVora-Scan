@@ -1,4 +1,5 @@
-from app.analyzers.site_discovery_analyzer import parse_robots_txt, parse_sitemap_xml
+from app.analyzers.site_discovery_analyzer import _build_findings, _text_evidence, parse_robots_txt, parse_sitemap_xml
+from app.schemas.report import SiteDiscoveryResult
 
 
 def test_parse_robots_txt_extracts_crawl_rules_and_sitemaps():
@@ -58,3 +59,30 @@ def test_parse_sitemap_xml_counts_sitemap_index_entries():
     assert url_count == 0
     assert sitemap_count == 1
     assert locations == ["https://example.com/posts.xml"]
+
+
+def test_text_evidence_includes_status_and_size():
+    evidence = _text_evidence("robots", "https://example.com/robots.txt", 200, "https://example.com/robots.txt", "abc")
+
+    assert "robots.status_code: 200" in evidence
+    assert "robots.bytes_read: 3" in evidence
+
+
+def test_build_findings_includes_discovery_evidence():
+    result = SiteDiscoveryResult(
+        robotsPresent=True,
+        robotsUrl="https://example.com/robots.txt",
+        sitemapPresent=True,
+        sitemapUrlCount=2,
+        sitemapIndexCount=0,
+        robotsEvidence=["robots.status_code: 200"],
+        sitemapEvidence=["sitemap.status_code: 200"],
+    )
+
+    findings = _build_findings(result)
+    robots = next(f for f in findings if f.id == "robots_txt_present")
+    sitemap = next(f for f in findings if f.id == "sitemap_present")
+
+    assert robots.source == "http"
+    assert robots.evidence == ["robots.status_code: 200"]
+    assert sitemap.evidence == ["sitemap.status_code: 200"]

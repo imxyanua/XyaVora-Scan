@@ -143,6 +143,7 @@ export const mockGoogleReport: ScanReport = {
     compression:    "br",
     cacheControl:   "private, max-age=0",
     etag:           undefined,
+    responseEvidence: ["status_code: 200", "final_url: https://www.google.com/", "redirect_count: 1", "response_time_ms: 142", "bytes_read: 18432"],
   },
 
   pageMetadata: {
@@ -155,6 +156,10 @@ export const mockGoogleReport: ScanReport = {
     faviconUrl:    "https://www.google.com/favicon.ico",
     language:      "en",
     robots:        undefined,
+    robotsDirectives: [],
+    canonicalHost: "www.google.com",
+    canonicalMatchesFinalHost: true,
+    metadataEvidence: ["title: present", "description: present", "canonical: https://www.google.com/", "robots: missing"],
     noindex:       false,
     nofollow:      false,
   },
@@ -173,6 +178,9 @@ export const mockGoogleReport: ScanReport = {
     sitemapUrls:       ["https://www.google.com/", "https://www.google.com/search/about"],
     sitemapUrlCount:   2,
     sitemapIndexCount: 0,
+    robotsEvidence:    ["robots.requested_url: https://www.google.com/robots.txt", "robots.status_code: 200"],
+    sitemapEvidence:   ["sitemap.requested_url: https://www.google.com/sitemap.xml", "sitemap.status_code: 200", "sitemap.url_count: 2"],
+    discoveryEvidence: ["robots.status_code: 200", "sitemap.status_code: 200"],
   },
 
   whois: {
@@ -180,8 +188,10 @@ export const mockGoogleReport: ScanReport = {
     createdDate: "1997-09-15T00:00:00.000Z",
     updatedDate: "2019-09-09T00:00:00.000Z",
     expiryDate:  "2028-09-14T00:00:00.000Z",
+    expiryDaysRemaining: 845,
     nameServers: ["ns1.google.com", "ns2.google.com", "ns3.google.com", "ns4.google.com"],
     dnssec:      "unsigned",
+    whoisEvidence: ["registrar: MarkMonitor Inc.", "expires: 2028-09-14T00:00:00.000Z", "dnssec: unsigned"],
   },
 
   techStack: [
@@ -201,6 +211,7 @@ export const mockGoogleReport: ScanReport = {
       sameSite: "None",
       expires:  "2026-11-12T10:42:00.000Z",
       warnings: [],
+      evidence: ["cookie: NID", "secure: true", "httponly: true", "samesite: None", "expires: 2026-11-12T10:42:00.000Z"],
     },
     {
       name:     "__Secure-1PSID",
@@ -208,6 +219,7 @@ export const mockGoogleReport: ScanReport = {
       httpOnly: false,
       sameSite: "Lax",
       warnings: ["httpOnly flag is missing — cookie accessible via JavaScript"],
+      evidence: ["cookie: __Secure-1PSID", "secure: true", "httponly: false", "samesite: Lax", "warning: httpOnly flag is missing"],
     },
     {
       name:     "CONSENT",
@@ -219,12 +231,23 @@ export const mockGoogleReport: ScanReport = {
         "httpOnly flag is missing",
         "SameSite attribute is not set",
       ],
+      evidence: ["cookie: CONSENT", "secure: false", "httponly: false", "samesite: missing", "warning: Secure flag is missing"],
     },
   ],
 
   securityTxt: {
     present:  false,
     error:    "security.txt not found at /.well-known/security.txt or /security.txt",
+    checkedLocations: ["https://www.google.com/.well-known/security.txt", "https://www.google.com/security.txt"],
+    expired: false,
+    securityTxtEvidence: [
+      "present: false",
+      "checked: https://www.google.com/.well-known/security.txt",
+      "checked: https://www.google.com/security.txt",
+      "contact: missing",
+      "expires: missing",
+      "expired: false",
+    ],
   },
 
   screenshot: {

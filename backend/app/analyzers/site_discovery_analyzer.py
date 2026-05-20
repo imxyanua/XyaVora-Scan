@@ -109,6 +109,15 @@ def parse_sitemap_xml(text: str) -> tuple[int, int, list[str]]:
     return url_count, sitemap_count, locations
 
 
+def _text_evidence(label: str, requested_url: str, status: int, final_url: str, text: str) -> list[str]:
+    return [
+        f"{label}.requested_url: {requested_url}",
+        f"{label}.status_code: {status}",
+        f"{label}.final_url: {final_url}",
+        f"{label}.bytes_read: {len(text.encode('utf-8'))}",
+    ]
+
+
 def _build_findings(result: SiteDiscoveryResult) -> list[Finding]:
     findings: list[Finding] = []
 
@@ -128,6 +137,9 @@ def _build_findings(result: SiteDiscoveryResult) -> list[Finding]:
             else "Publish a robots.txt file if the site needs explicit crawler guidance or sitemap discovery."
         ),
         status="pass" if result.robotsPresent else "info",
+        confidence="observed",
+        source="http",
+        evidence=result.robotsEvidence,
     ))
 
     findings.append(Finding(
@@ -146,6 +158,9 @@ def _build_findings(result: SiteDiscoveryResult) -> list[Finding]:
             else "Add a sitemap.xml and reference it from robots.txt for better page discovery."
         ),
         status="pass" if result.sitemapPresent else "info",
+        confidence="observed",
+        source="http",
+        evidence=result.sitemapEvidence,
     ))
 
     if result.disallowAll:
@@ -158,6 +173,9 @@ def _build_findings(result: SiteDiscoveryResult) -> list[Finding]:
             impact="Search engines and benign crawlers may avoid indexing the site.",
             recommendation="Confirm this is intentional. If not, narrow the disallow rules to specific paths.",
             status="warning",
+            confidence="observed",
+            source="http",
+            evidence=result.robotsEvidence,
         ))
 
     return findings
@@ -178,6 +196,8 @@ async def analyze_site_discovery(normalized_url: str) -> AnalyzerResult:
             try:
                 robots_status, final_robots_url, robots_text = await _fetch_text(client, robots_url)
                 result.robotsStatusCode = robots_status
+                result.robotsEvidence = _text_evidence("robots", robots_url, robots_status, final_robots_url, robots_text)
+                result.discoveryEvidence.extend(result.robotsEvidence)
                 if robots_status == 200 and robots_text.strip():
                     parsed = parse_robots_txt(robots_text)
                     result.robotsPresent = True
@@ -203,6 +223,8 @@ async def analyze_site_discovery(normalized_url: str) -> AnalyzerResult:
                     status, final_sitemap_url, sitemap_text = await _fetch_text(client, sitemap_url)
                 except Exception:
                     continue
+                sitemap_evidence = _text_evidence("sitemap", sitemap_url, status, final_sitemap_url, sitemap_text)
+                result.discoveryEvidence.extend(sitemap_evidence)
                 if status != 200 or not sitemap_text.strip():
                     continue
                 url_count, sitemap_count, locations = parse_sitemap_xml(sitemap_text)
@@ -214,6 +236,12 @@ async def analyze_site_discovery(normalized_url: str) -> AnalyzerResult:
                 result.sitemapUrlCount = url_count
                 result.sitemapIndexCount = sitemap_count
                 result.sitemapUrls = locations
+                result.sitemapEvidence = [
+                    *sitemap_evidence,
+                    f"sitemap.url_count: {url_count}",
+                    f"sitemap.index_count: {sitemap_count}",
+                    *[f"sitemap.loc: {url}" for url in locations[:6]],
+                ]
                 break
 
         return AnalyzerResult(

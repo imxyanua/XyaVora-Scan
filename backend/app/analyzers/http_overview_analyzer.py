@@ -5,7 +5,7 @@ import httpx
 
 from app.core.config import settings
 from app.schemas.analyzer import AnalyzerResult
-from app.schemas.report import HttpOverviewResult, RedirectHop
+from app.schemas.report import Finding, HttpOverviewResult, RedirectHop
 from app.utils.safe_fetch import validate_public_http_url
 
 _USER_AGENT = "XyaVora-Scan/0.1 (passive-security-scanner; http-overview)"
@@ -96,6 +96,82 @@ def _short(value: str, limit: int = 96) -> str:
     return value if len(value) <= limit else f"{value[:limit - 3]}..."
 
 
+def _response_evidence(
+    response: httpx.Response,
+    total_bytes: int,
+    elapsed_ms: int,
+    redirect_count: int,
+) -> list[str]:
+    headers = response.headers
+    evidence = [
+        f"status_code: {response.status_code}",
+        f"final_url: {response.url}",
+        f"redirect_count: {redirect_count}",
+        f"response_time_ms: {elapsed_ms}",
+        f"bytes_read: {total_bytes}",
+    ]
+
+    for key in ("content-type", "content-length", "content-encoding", "cache-control", "etag", "last-modified"):
+        value = headers.get(key)
+        if value:
+            evidence.append(f"{key}: {_short(value)}")
+
+    return evidence
+
+
+def _build_findings(result: HttpOverviewResult) -> list[Finding]:
+    findings: list[Finding] = []
+
+    if result.statusCode >= 500:
+        findings.append(Finding(
+            id="http_server_error",
+            severity="medium",
+            category="HTTP",
+            title="Server Returned 5xx Status",
+            description=f"The final HTTP response returned status {result.statusCode}.",
+            impact="The page may be unavailable or unstable for users and downstream scanners.",
+            recommendation="Check server logs and upstream health for the scanned URL.",
+            status="warning",
+            confidence="observed",
+            source="http",
+            evidence=result.responseEvidence,
+        ))
+    elif result.statusCode >= 400:
+        findings.append(Finding(
+            id="http_client_error",
+            severity="low",
+            category="HTTP",
+            title="Final URL Returned 4xx Status",
+            description=f"The final HTTP response returned status {result.statusCode}.",
+            impact="The scanner reached a page that may be missing, blocked, or require access.",
+            recommendation="Verify the scanned URL and whether access controls or bot protections are expected.",
+            status="info",
+            confidence="observed",
+            source="http",
+            evidence=result.responseEvidence,
+        ))
+
+    if result.hostChanged:
+        findings.append(Finding(
+            id="http_host_changed",
+            severity="info",
+            category="HTTP",
+            title="Request Redirected To A Different Host",
+            description=f"The scan started at {result.initialHost} and ended at {result.finalHost}.",
+            impact="This is often expected for www/apex redirects, but it changes which host the final page represents.",
+            recommendation="Review the redirect chain if the final host is not expected.",
+            status="info",
+            confidence="observed",
+            source="http",
+            evidence=[
+                *[f"{hop.statusCode}: {hop.fromUrl} -> {hop.toUrl}" for hop in result.redirectHops],
+                *result.responseEvidence,
+            ],
+        ))
+
+    return findings
+
+
 async def analyze_http_overview(normalized_url: str) -> AnalyzerResult:
     start = time.perf_counter()
     current_url = validate_public_http_url(normalized_url)
@@ -135,12 +211,13 @@ async def analyze_http_overview(normalized_url: str) -> AnalyzerResult:
                     cdn_provider, cdn_confidence, cdn_evidence = _detect_cdn(headers)
                     final_url = str(response.url)
                     parsed_final = urlparse(final_url)
+                    redirect_count = max(len(chain) - 1, 0)
                     result = HttpOverviewResult(
                         statusCode=response.status_code,
                         finalUrl=final_url,
                         redirectChain=chain,
                         redirectHops=hops,
-                        redirectCount=max(len(chain) - 1, 0),
+                        redirectCount=redirect_count,
                         initialHost=initial_host,
                         finalHost=parsed_final.hostname,
                         finalProtocol=parsed_final.scheme,
@@ -161,8 +238,9 @@ async def analyze_http_overview(normalized_url: str) -> AnalyzerResult:
                         expires=headers.get("expires"),
                         etag=headers.get("etag"),
                         lastModified=headers.get("last-modified"),
+                        responseEvidence=_response_evidence(response, total, elapsed_ms, redirect_count),
                     )
-                    return AnalyzerResult(key="httpOverview", status="success", data=result, findings=[])
+                    return AnalyzerResult(key="httpOverview", status="success", data=result, findings=_build_findings(result))
             raise httpx.TooManyRedirects(f"Exceeded redirect limit for {normalized_url}")
     except httpx.TimeoutException:
         return AnalyzerResult(

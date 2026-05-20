@@ -1,4 +1,5 @@
 import type { CookieResult } from "@/types";
+import { DetailPanel } from "./DetailPanel";
 
 interface Props {
   cookies: CookieResult[];
@@ -19,6 +20,21 @@ function FlagBadge({ ok, label }: { ok: boolean; label: string }) {
 }
 
 export function CookiesCard({ cookies }: Props) {
+  const detailItems = cookies.flatMap((cookie, index) => [
+    {
+      label: `${cookie.name || `Cookie ${index + 1}`}`,
+      value: [
+        `secure: ${cookie.secure}`,
+        `httponly: ${cookie.httpOnly}`,
+        `samesite: ${cookie.sameSite ?? "missing"}`,
+        cookie.expires ? `expires: ${cookie.expires}` : null,
+        cookie.maxAge !== undefined ? `max_age: ${cookie.maxAge}` : null,
+        cookie.warnings.length ? `warnings: ${cookie.warnings.join(" | ")}` : null,
+        cookie.evidence?.length ? `evidence: ${cookie.evidence.join(" | ")}` : null,
+      ].filter(Boolean).join("\n"),
+    },
+  ]);
+
   return (
     <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex h-full flex-col">
       {/* Header */}
@@ -55,10 +71,16 @@ export function CookiesCard({ cookies }: Props) {
                   SameSite={c.sameSite}
                 </div>
               )}
+              {c.evidence && c.evidence.length > 0 && (
+                <p className="mt-1 truncate font-mono text-[10px] text-[#d7e8ff]/45" title={c.evidence.join("\n")}>
+                  &gt; {c.evidence[0]}
+                </p>
+              )}
             </div>
           ))}
         </div>
       )}
+      {cookies.length > 0 && <DetailPanel items={detailItems} />}
     </div>
   );
 }
