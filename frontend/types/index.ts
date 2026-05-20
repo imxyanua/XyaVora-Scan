@@ -154,6 +154,7 @@ export interface HttpOverviewResult {
   expires?:       string;
   etag?:          string;
   lastModified?:  string;
+  responseEvidence?: string[];
   error?:         string;
 }
 
@@ -167,6 +168,10 @@ export interface PageMetadataResult {
   faviconUrl?:    string;
   language?:      string;
   robots?:        string;
+  robotsDirectives: string[];
+  canonicalHost?: string;
+  canonicalMatchesFinalHost?: boolean;
+  metadataEvidence: string[];
   noindex:        boolean;
   nofollow:       boolean;
   error?:         string;

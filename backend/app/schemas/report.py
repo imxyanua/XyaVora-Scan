@@ -152,6 +152,7 @@ class HttpOverviewResult(_Base):
     expires:         Optional[str] = None
     etag:            Optional[str] = None
     lastModified:    Optional[str] = None
+    responseEvidence: list[str] = []
     error:           Optional[str] = None
 
 
@@ -165,6 +166,10 @@ class PageMetadataResult(_Base):
     faviconUrl:     Optional[str] = None
     language:       Optional[str] = None
     robots:         Optional[str] = None
+    robotsDirectives: list[str] = []
+    canonicalHost:  Optional[str] = None
+    canonicalMatchesFinalHost: Optional[bool] = None
+    metadataEvidence: list[str] = []
     noindex:        bool = False
     nofollow:       bool = False
     error:          Optional[str] = None

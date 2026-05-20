@@ -224,11 +224,7 @@ def build_evidence_summary(report: ScanReport) -> list[EvidenceSummaryItem]:
             f"{report.httpOverview.statusCode} final status, {report.httpOverview.redirectCount} redirects",
             "http",
             "high",
-            [value for value in [
-                f"final-url:{report.httpOverview.finalUrl}" if report.httpOverview.finalUrl else None,
-                f"final-host:{report.httpOverview.finalHost}" if report.httpOverview.finalHost else None,
-                f"content-type:{report.httpOverview.contentType}" if report.httpOverview.contentType else None,
-            ] if value],
+            report.httpOverview.responseEvidence,
         )
     else:
         add("http", "HTTP Response", "unavailable", "No HTTP response status captured", "http")
@@ -258,11 +254,7 @@ def build_evidence_summary(report: ScanReport) -> list[EvidenceSummaryItem]:
             report.pageMetadata.title or "Description detected",
             "html",
             "medium",
-            [value for value in [
-                f"title:{report.pageMetadata.title}" if report.pageMetadata.title else None,
-                f"canonical:{report.pageMetadata.canonicalUrl}" if report.pageMetadata.canonicalUrl else None,
-                f"language:{report.pageMetadata.language}" if report.pageMetadata.language else None,
-            ] if value],
+            report.pageMetadata.metadataEvidence,
         )
     else:
         add("metadata", "Page Metadata", "unavailable", "No title or description detected", "html")

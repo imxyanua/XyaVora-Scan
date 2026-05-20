@@ -143,6 +143,7 @@ export const mockGoogleReport: ScanReport = {
     compression:    "br",
     cacheControl:   "private, max-age=0",
     etag:           undefined,
+    responseEvidence: ["status_code: 200", "final_url: https://www.google.com/", "redirect_count: 1", "response_time_ms: 142", "bytes_read: 18432"],
   },
 
   pageMetadata: {
@@ -155,6 +156,10 @@ export const mockGoogleReport: ScanReport = {
     faviconUrl:    "https://www.google.com/favicon.ico",
     language:      "en",
     robots:        undefined,
+    robotsDirectives: [],
+    canonicalHost: "www.google.com",
+    canonicalMatchesFinalHost: true,
+    metadataEvidence: ["title: present", "description: present", "canonical: https://www.google.com/", "robots: missing"],
     noindex:       false,
     nofollow:      false,
   },
