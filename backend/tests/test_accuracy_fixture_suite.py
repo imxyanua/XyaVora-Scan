@@ -286,6 +286,80 @@ FIXTURES: tuple[AccuracyFixture, ...] = (
         ),
         absent=("Webflow", "Wix", "Squarespace", "WordPress"),
     ),
+    AccuracyFixture(
+        name="analytics_suite",
+        headers={},
+        html="""
+        <html>
+          <head>
+            <script async src="https://www.googletagmanager.com/gtm.js?id=GTM-ABC123"></script>
+            <script async src="https://www.google-analytics.com/analytics.js"></script>
+            <script>
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('config', 'G-ABC123');
+              fbq('init', '123456789');
+            </script>
+            <script src="https://www.clarity.ms/tag/abc123"></script>
+            <script src="https://connect.facebook.net/en_US/fbevents.js"></script>
+          </head>
+        </html>
+        """,
+        expected=(
+            TechExpectation("Google Tag Manager", "high", {"html", "asset-url"}),
+            TechExpectation("Google Analytics", "high", {"html", "asset-url"}),
+            TechExpectation("Microsoft Clarity", "high", {"html", "asset-url"}),
+            TechExpectation("Facebook Pixel", "high", {"html", "asset-url"}),
+        ),
+        absent=("PostHog", "Matomo", "Plausible", "HubSpot"),
+    ),
+    AccuracyFixture(
+        name="checkout_payment_suite",
+        headers={},
+        html="""
+        <html>
+          <head>
+            <script src="https://js.stripe.com/v3/"></script>
+            <script src="https://www.paypal.com/sdk/js?client-id=abc"></script>
+            <script src="https://www.google.com/recaptcha/api.js"></script>
+          </head>
+        </html>
+        """,
+        expected=(
+            TechExpectation("Stripe", "high", {"html", "asset-url"}),
+            TechExpectation("PayPal", "high", {"html", "asset-url"}),
+            TechExpectation("reCAPTCHA", "high", {"html", "asset-url"}),
+        ),
+        absent=("Braintree", "Razorpay", "hCaptcha", "Cloudflare Turnstile"),
+    ),
+    AccuracyFixture(
+        name="support_and_monitoring_suite",
+        headers={"set-cookie": "intercom-id-app=abc; hubspotutk=xyz; Path=/"},
+        html="""
+        <html>
+          <head>
+            <script>
+              Sentry.init({ dsn: 'https://abc@sentry.io/123' });
+              window.Intercom('boot', { app_id: 'abc' });
+            </script>
+            <script src="https://widget.intercom.io/widget/abc"></script>
+            <script src="https://static.zdassets.com/embeddable_framework/main.js"></script>
+            <script src="https://client.crisp.chat/l.js"></script>
+            <script src="https://code.tidio.co/abc123.js"></script>
+            <script src="https://js.hs-scripts.com/123456.js"></script>
+          </head>
+        </html>
+        """,
+        expected=(
+            TechExpectation("Sentry", "high", {"html"}),
+            TechExpectation("Intercom", "high", {"html", "asset-url", "cookie"}),
+            TechExpectation("Zendesk", "high", {"html", "asset-url"}),
+            TechExpectation("Crisp", "high", {"html", "asset-url"}),
+            TechExpectation("Tidio", "high", {"html", "asset-url"}),
+            TechExpectation("HubSpot", "high", {"html", "asset-url", "cookie"}),
+        ),
+        absent=("Drift", "LiveChat", "PostHog"),
+    ),
 )
 
 
