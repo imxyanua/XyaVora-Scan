@@ -19,12 +19,16 @@ def test_parse_all_secure_flags():
     assert c.sameSite == "Lax"
     assert c.maxAge == 3600
     assert c.warnings == []
+    assert "cookie: session" in c.evidence
+    assert "secure: True" in c.evidence
+    assert "max_age: 3600" in c.evidence
 
 
 def test_parse_missing_secure():
     c = _parse_set_cookie("token=xyz; HttpOnly; SameSite=Strict")
     assert c.secure is False
     assert any("Secure" in w for w in c.warnings)
+    assert any(item.startswith("warning:") for item in c.evidence)
 
 
 def test_parse_missing_httponly():
@@ -71,7 +75,9 @@ def test_findings_all_ok():
 def test_findings_missing_secure():
     c = CookieResult(name="bad", secure=False, httpOnly=True, sameSite="Lax")
     findings = _build_findings([c])
-    assert any(f.id == "cookie_no_secure" for f in findings)
+    finding = next(f for f in findings if f.id == "cookie_no_secure")
+    assert "cookie: bad" in finding.evidence
+    assert "secure: False" in finding.evidence
 
 
 def test_findings_missing_httponly():

@@ -1,4 +1,5 @@
 import re
+from datetime import datetime, timezone
 
 import httpx
 
@@ -38,7 +39,38 @@ def _parse_security_txt(text: str) -> dict:
     return fields
 
 
+def _expires_is_expired(value: str | None) -> bool:
+    if not value:
+        return False
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed < datetime.now(timezone.utc)
+
+
+def _evidence(result: SecurityTxtResult) -> list[str]:
+    evidence = [
+        f"present: {result.present}",
+        *[f"checked: {location}" for location in result.checkedLocations],
+    ]
+    if result.location:
+        evidence.append(f"location: {result.location}")
+    for label, value in (
+        ("contact", result.contact),
+        ("policy", result.policy),
+        ("encryption", result.encryption),
+        ("expires", result.expires),
+    ):
+        evidence.append(f"{label}: {value or 'missing'}")
+    evidence.append(f"expired: {result.expired}")
+    return evidence
+
+
 def _build_findings(result: SecurityTxtResult) -> list[Finding]:
+    evidence = result.securityTxtEvidence or _evidence(result)
     if not result.present:
         return [Finding(
             id="no_security_txt",
@@ -54,7 +86,7 @@ def _build_findings(result: SecurityTxtResult) -> list[Finding]:
             status="warning",
             confidence="observed",
             source="http",
-            evidence=["Checked /.well-known/security.txt and /security.txt without a usable response."],
+            evidence=evidence,
         )]
 
     findings = [Finding(
@@ -67,7 +99,7 @@ def _build_findings(result: SecurityTxtResult) -> list[Finding]:
         status="pass",
         confidence="verified",
         source="http",
-        evidence=[f"location: {result.location}"] if result.location else [],
+        evidence=evidence,
     )]
 
     if not result.contact:
@@ -82,7 +114,36 @@ def _build_findings(result: SecurityTxtResult) -> list[Finding]:
             status="warning",
             confidence="observed",
             source="http",
-            evidence=[f"location: {result.location}", "Contact field not present in parsed security.txt"],
+            evidence=evidence,
+        ))
+
+    if not result.expires:
+        findings.append(Finding(
+            id="security_txt_no_expires",
+            severity="low",
+            category="Security.txt",
+            title="security.txt Missing Expires Field",
+            description="The security.txt file does not contain an Expires field.",
+            impact="Researchers cannot tell whether the published contact information is still current.",
+            recommendation="Add an Expires field and keep it updated before the timestamp passes.",
+            status="warning",
+            confidence="observed",
+            source="http",
+            evidence=evidence,
+        ))
+    elif result.expired:
+        findings.append(Finding(
+            id="security_txt_expired",
+            severity="low",
+            category="Security.txt",
+            title="security.txt Is Expired",
+            description=f"The security.txt Expires field is in the past: {result.expires}.",
+            impact="Researchers may not trust stale reporting instructions.",
+            recommendation="Refresh the security.txt file and set a future Expires value.",
+            status="warning",
+            confidence="verified",
+            source="http",
+            evidence=evidence,
         ))
 
     return findings
@@ -90,6 +151,7 @@ def _build_findings(result: SecurityTxtResult) -> list[Finding]:
 
 async def analyze_security_txt(normalized_url: str) -> AnalyzerResult:
     timeout = httpx.Timeout(settings.FETCH_TIMEOUT_SECONDS)
+    checked_locations: list[str] = []
 
     async with httpx.AsyncClient(
         follow_redirects=True,
@@ -99,6 +161,7 @@ async def analyze_security_txt(normalized_url: str) -> AnalyzerResult:
     ) as client:
         for path in _PATHS:
             url = normalized_url.rstrip("/") + path
+            checked_locations.append(url)
             try:
                 resp = await client.get(url)
             except (httpx.TimeoutException, httpx.RequestError):
@@ -106,21 +169,27 @@ async def analyze_security_txt(normalized_url: str) -> AnalyzerResult:
 
             if resp.status_code == 200 and resp.text.strip():
                 fields = _parse_security_txt(resp.text)
+                raw_url = getattr(resp, "url", None)
+                final_url = str(raw_url) if isinstance(raw_url, (str, httpx.URL)) else url
                 result = SecurityTxtResult(
                     present=True,
-                    location=url,
+                    location=final_url,
+                    checkedLocations=checked_locations,
                     contact=fields["contact"],
                     policy=fields["policy"],
                     encryption=fields["encryption"],
                     expires=fields["expires"],
+                    expired=_expires_is_expired(fields["expires"]),
                     raw=resp.text[:2000],
                 )
+                result.securityTxtEvidence = _evidence(result)
                 findings = _build_findings(result)
                 return AnalyzerResult(
                     key="securityTxt", status="success",
                     data=result, findings=findings,
                 )
 
-    result = SecurityTxtResult(present=False)
+    result = SecurityTxtResult(present=False, checkedLocations=checked_locations)
+    result.securityTxtEvidence = _evidence(result)
     findings = _build_findings(result)
     return AnalyzerResult(key="securityTxt", status="success", data=result, findings=findings)

@@ -257,6 +257,7 @@ export interface CookieResult {
   expires?:   string;
   maxAge?:    number;
   warnings:   string[];
+  evidence?:  string[];
 }
 
 // ── Security.txt ─────────────────────────────
@@ -264,10 +265,13 @@ export interface CookieResult {
 export interface SecurityTxtResult {
   present:    boolean;
   location?:  string;
+  checkedLocations: string[];
   contact?:   string;
   policy?:    string;
   encryption?:string;
   expires?:   string;
+  expired:    boolean;
+  securityTxtEvidence: string[];
   raw?:       string;
   error?:     string;
 }

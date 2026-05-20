@@ -35,6 +35,18 @@ def _parse_set_cookie(header_value: str) -> CookieResult:
     elif samesite.lower() == "none" and not secure:
         warnings.append("SameSite=None requires Secure flag")
 
+    evidence = [
+        f"cookie: {name}",
+        f"secure: {secure}",
+        f"httponly: {httponly}",
+        f"samesite: {samesite or 'missing'}",
+    ]
+    if expires:
+        evidence.append(f"expires: {expires}")
+    if max_age is not None:
+        evidence.append(f"max_age: {max_age}")
+    evidence.extend(f"warning: {warning}" for warning in warnings)
+
     return CookieResult(
         name=name,
         secure=secure,
@@ -43,7 +55,26 @@ def _parse_set_cookie(header_value: str) -> CookieResult:
         expires=expires,
         maxAge=max_age,
         warnings=warnings,
+        evidence=evidence,
     )
+
+
+def _cookie_evidence(cookie: CookieResult) -> list[str]:
+    if cookie.evidence:
+        return cookie.evidence
+
+    evidence = [
+        f"cookie: {cookie.name}",
+        f"secure: {cookie.secure}",
+        f"httponly: {cookie.httpOnly}",
+        f"samesite: {cookie.sameSite or 'missing'}",
+    ]
+    if cookie.expires:
+        evidence.append(f"expires: {cookie.expires}")
+    if cookie.maxAge is not None:
+        evidence.append(f"max_age: {cookie.maxAge}")
+    evidence.extend(f"warning: {warning}" for warning in cookie.warnings)
+    return evidence
 
 
 def _build_findings(cookies: list[CookieResult]) -> list[Finding]:
@@ -81,7 +112,7 @@ def _build_findings(cookies: list[CookieResult]) -> list[Finding]:
             status="fail",
             confidence="observed",
             source="headers",
-            evidence=[f"{cookie.name}: Secure={cookie.secure}" for cookie in no_secure[:5]],
+            evidence=[item for cookie in no_secure[:5] for item in _cookie_evidence(cookie)],
         ))
 
     if no_httponly:
@@ -97,7 +128,7 @@ def _build_findings(cookies: list[CookieResult]) -> list[Finding]:
             status="fail",
             confidence="observed",
             source="headers",
-            evidence=[f"{cookie.name}: HttpOnly={cookie.httpOnly}" for cookie in no_httponly[:5]],
+            evidence=[item for cookie in no_httponly[:5] for item in _cookie_evidence(cookie)],
         ))
 
     if no_samesite:
@@ -113,7 +144,7 @@ def _build_findings(cookies: list[CookieResult]) -> list[Finding]:
             status="warning",
             confidence="observed",
             source="headers",
-            evidence=[f"{cookie.name}: SameSite={cookie.sameSite or 'missing'}" for cookie in no_samesite[:5]],
+            evidence=[item for cookie in no_samesite[:5] for item in _cookie_evidence(cookie)],
         ))
 
     if not findings:
@@ -127,7 +158,7 @@ def _build_findings(cookies: list[CookieResult]) -> list[Finding]:
             status="pass",
             confidence="observed",
             source="headers",
-            evidence=[f"{cookie.name}: Secure={cookie.secure}, HttpOnly={cookie.httpOnly}, SameSite={cookie.sameSite}" for cookie in cookies[:5]],
+            evidence=[item for cookie in cookies[:5] for item in _cookie_evidence(cookie)],
         ))
 
     return findings

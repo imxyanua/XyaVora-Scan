@@ -252,6 +252,7 @@ class CookieResult(_Base):
     expires:  Optional[str] = None
     maxAge:   Optional[int] = None
     warnings: list[str] = []
+    evidence: list[str] = []
 
 
 # ── Security.txt ──────────────────────────────────────────────────
@@ -259,10 +260,13 @@ class CookieResult(_Base):
 class SecurityTxtResult(_Base):
     present:    bool = False
     location:   Optional[str] = None
+    checkedLocations: list[str] = []
     contact:    Optional[str] = None
     policy:     Optional[str] = None
     encryption: Optional[str] = None
     expires:    Optional[str] = None
+    expired:    bool = False
+    securityTxtEvidence: list[str] = []
     raw:        Optional[str] = None
     error:      Optional[str] = None
 
