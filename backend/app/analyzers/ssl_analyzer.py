@@ -123,6 +123,22 @@ def _build_findings(result: SslResult) -> list[Finding]:
         ))
         return findings
 
+    if not result.trusted:
+        findings.append(Finding(
+            id="ssl_untrusted",
+            severity="high",
+            category="SSL",
+            title="SSL Certificate Is Not Trusted",
+            description="The TLS handshake reached a server certificate, but certificate verification failed.",
+            impact="Browsers may warn users or block access because the certificate chain, hostname, or validity could not be trusted.",
+            recommendation="Install a certificate trusted by major browsers and ensure the certificate matches the scanned hostname.",
+            status="fail",
+            confidence="verified",
+            source="tls",
+            evidence=result.certificateEvidence,
+        ))
+        return findings
+
     if result.daysRemaining == 0:
         findings.append(Finding(
             id="ssl_expired",
@@ -160,6 +176,49 @@ def _build_findings(result: SslResult) -> list[Finding]:
             description=f"Certificate is trusted, valid for {result.daysRemaining} more day(s). Protocol: {result.protocol}.",
             recommendation="No action required. Monitor expiration date.",
             status="pass",
+            confidence="verified",
+            source="tls",
+            evidence=result.certificateEvidence,
+        ))
+
+    if result.protocol in {"TLSv1", "TLSv1.1", "SSLv3", "SSLv2"}:
+        findings.append(Finding(
+            id="tls_legacy_protocol",
+            severity="high",
+            category="SSL",
+            title="Legacy TLS Protocol Negotiated",
+            description=f"The scanner negotiated {result.protocol}, which is obsolete for modern HTTPS.",
+            impact="Legacy TLS versions have known weaknesses and may fail modern client or compliance requirements.",
+            recommendation="Disable SSLv2, SSLv3, TLS 1.0, and TLS 1.1. Prefer TLS 1.2 and TLS 1.3.",
+            status="fail",
+            confidence="verified",
+            source="tls",
+            evidence=result.certificateEvidence,
+        ))
+    elif result.protocol == "TLSv1.2":
+        findings.append(Finding(
+            id="tls12_supported",
+            severity="info",
+            category="SSL",
+            title="TLS 1.2 Is Negotiated",
+            description="The scanner negotiated TLS 1.2. This is acceptable, though TLS 1.3 is preferred when available.",
+            recommendation="Keep TLS 1.2 enabled for compatibility and enable TLS 1.3 when supported by the server platform.",
+            status="info",
+            confidence="verified",
+            source="tls",
+            evidence=result.certificateEvidence,
+        ))
+
+    if result.cipherBits is not None and result.cipherBits < 128:
+        findings.append(Finding(
+            id="tls_weak_cipher",
+            severity="high",
+            category="SSL",
+            title="Weak TLS Cipher Negotiated",
+            description=f"The negotiated cipher provides only {result.cipherBits} bits of security.",
+            impact="Weak ciphers can reduce confidentiality and may be rejected by modern clients.",
+            recommendation="Disable weak cipher suites and prefer modern AEAD ciphers.",
+            status="fail",
             confidence="verified",
             source="tls",
             evidence=result.certificateEvidence,

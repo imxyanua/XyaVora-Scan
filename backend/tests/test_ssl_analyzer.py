@@ -106,6 +106,40 @@ def test_findings_no_https():
     assert findings[0].severity == "high"
 
 
+def test_findings_untrusted_cert_not_reported_as_expired():
+    result = SslResult(
+        httpsAvailable=True,
+        trusted=False,
+        tlsConfidence="medium",
+        certificateEvidence=["certificate verification failed"],
+    )
+    findings = _build_findings(result)
+
+    assert findings[0].id == "ssl_untrusted"
+    assert findings[0].status == "fail"
+    assert "ssl_expired" not in {finding.id for finding in findings}
+
+
+def test_findings_legacy_tls_and_weak_cipher():
+    result = SslResult(
+        httpsAvailable=True,
+        trusted=True,
+        daysRemaining=90,
+        issuer="X",
+        subject="x.com",
+        validFrom="",
+        validTo="",
+        protocol="TLSv1",
+        cipherBits=64,
+        certificateEvidence=["protocol: TLSv1", "cipher: OLD"],
+    )
+    findings = _build_findings(result)
+    ids = {finding.id for finding in findings}
+
+    assert "tls_legacy_protocol" in ids
+    assert "tls_weak_cipher" in ids
+
+
 # ── Unit: analyze_ssl with mocked socket ─────────────────────────
 
 @pytest.mark.asyncio
@@ -146,6 +180,7 @@ async def test_analyze_ssl_cert_verification_failed():
     assert result.data.httpsAvailable is True
     assert result.data.tlsConfidence == "medium"
     assert result.data.certificateEvidence
+    assert result.findings[0].id == "ssl_untrusted"
 
 
 # ── Integration: real TLS ─────────────────────────────────────────

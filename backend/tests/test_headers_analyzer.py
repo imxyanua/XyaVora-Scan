@@ -35,7 +35,8 @@ def test_all_headers_present():
     assert findings == []
     hsts = next(i for i in items if i.header == "Strict-Transport-Security")
     assert hsts.confidence == "high"
-    assert hsts.evidence == ["Strict-Transport-Security: max-age=31536000; includeSubDomains"]
+    assert hsts.evidence[0] == "Strict-Transport-Security: max-age=31536000; includeSubDomains"
+    assert "hsts.max_age: 31536000" in hsts.evidence
 
 
 def test_all_headers_missing():
@@ -97,7 +98,21 @@ def test_permissive_csp_produces_warning_item_and_finding():
 
     assert csp.status == "warning"
     assert csp.confidence == "medium"
+    assert "csp.unsafe_inline: True" in csp.evidence
+    assert "csp.broad_source: True" in csp.evidence
     assert "weak_csp" in {f.id for f in findings}
+
+
+def test_csp_nonce_hash_does_not_trigger_wildcard_warning():
+    raw = _make_headers({
+        "content-security-policy": "default-src 'self'; script-src 'nonce-abc' 'sha256-deadbeef'",
+    })
+    items, findings = _check_headers(raw)
+    csp = next(i for i in items if i.header == "Content-Security-Policy")
+
+    assert csp.status == "present"
+    assert "csp.broad_source: False" in csp.evidence
+    assert "weak_csp" not in {f.id for f in findings}
 
 
 def test_server_finding():
@@ -119,6 +134,8 @@ async def test_analyze_headers_no_security_headers():
     assert result.status == "success"
     assert result.data.statusCode == 200
     assert result.data.server == "Apache"
+    assert "status_code: 200" in result.data.responseEvidence
+    assert "server: Apache" in result.data.responseEvidence
     # All 6 security headers missing + server exposed = 7 findings
     finding_ids = {f.id for f in result.findings}
     assert "missing_hsts" in finding_ids

@@ -19,6 +19,10 @@ export function SecurityHeadersCard({ headers }: Props) {
     { label: "Redirect Detected", value: headers.redirectDetected },
     { label: "Server", value: headers.server },
     { label: "X-Powered-By", value: headers.xPoweredBy },
+    {
+      label: "Response Evidence",
+      value: headers.responseEvidence?.length ? headers.responseEvidence.join("\n") : undefined,
+    },
     ...headers.securityHeaders.map((header) => ({
       label: header.header,
       value: [

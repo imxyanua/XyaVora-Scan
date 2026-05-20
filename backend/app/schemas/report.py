@@ -113,6 +113,7 @@ class HeadersResult(_Base):
     server:           Optional[str] = None
     xPoweredBy:       Optional[str] = None
     securityHeaders:  list[SecurityHeaderItem] = []
+    responseEvidence: list[str] = []
     error:            Optional[str] = None
 
 
