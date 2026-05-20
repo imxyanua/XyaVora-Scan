@@ -105,7 +105,7 @@ export function DataConfidenceStrip({ report }: Props) {
         <span className="font-mono text-[11px] text-white/70">[MODULES:{modules.length}]</span>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-2">
+      <div className="grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(min(100%,9.5rem),1fr))]">
         {modules.map((module) => {
           const style = STATUS_STYLE[module.status];
           return (

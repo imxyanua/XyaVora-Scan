@@ -191,7 +191,7 @@ export function ReportQualitySummary({ report }: { report: ScanReport }) {
         <span className="font-mono text-[11px] text-white/70">[EVIDENCE_MODEL]</span>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+      <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,18rem),1fr))]">
         <QualityColumn group="verified" items={groups.verified} />
         <QualityColumn group="observed" items={groups.observed} />
         <QualityColumn group="inferred" items={groups.inferred} />

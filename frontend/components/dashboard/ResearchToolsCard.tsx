@@ -264,7 +264,7 @@ export function ResearchToolsCard({ report }: Props) {
         External Tools for Further Research
       </h2>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-1.5">
+      <div className="grid gap-1.5 [grid-template-columns:repeat(auto-fit,minmax(min(100%,20rem),1fr))]">
         {RESEARCH_TOOLS.map((tool) => (
           <a
             key={tool.name}
