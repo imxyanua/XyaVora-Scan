@@ -24,6 +24,10 @@ export function DNSRecordsCard({ dns }: Props) {
       `ttl: ${record.ttl ?? "Unknown"}`,
     ].join("\n"),
   }));
+  const queryEvidenceItems = dns.dnsQueryEvidence?.map((item, index) => ({
+    label: `Query #${index + 1}`,
+    value: item,
+  })) ?? [];
 
   return (
     <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] overflow-hidden flex h-full flex-col">
@@ -87,7 +91,7 @@ export function DNSRecordsCard({ dns }: Props) {
           </>
         )}
       </div>
-      {!dns.error && <DetailPanel items={detailItems} label="All DNS Records" />}
+      {!dns.error && <DetailPanel items={[...queryEvidenceItems, ...detailItems]} label="All DNS Records" />}
     </div>
   );
 }

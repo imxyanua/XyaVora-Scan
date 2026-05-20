@@ -170,7 +170,10 @@ def build_evidence_summary(report: ScanReport) -> list[EvidenceSummaryItem]:
             f"{len(report.dns.records)} records resolved",
             "dns",
             "high",
-            [f"{record.type}:{record.value}" for record in report.dns.records[:5]],
+            [
+                *report.dns.dnsQueryEvidence,
+                *[f"{record.type}:{record.value}" for record in report.dns.records[:5]],
+            ],
         )
     else:
         add("dns", "DNS Records", "unavailable", "No DNS records returned by resolver", "dns")

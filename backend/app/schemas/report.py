@@ -55,10 +55,13 @@ class DnsResult(_Base):
     mxEvidence:     list[str] = []
     spfDetected:    bool = False
     dmarcDetected:  bool = False
+    spfRecordCount: int = 0
+    dmarcRecordCount: int = 0
     spfRecord:      Optional[str] = None
     dmarcRecord:    Optional[str] = None
     spfEvidence:    list[str] = []
     dmarcEvidence:  list[str] = []
+    dnsQueryEvidence: list[str] = []
     emailSecurityConfidence: Optional[TechConfidence] = None
     spfAll:         Optional[str] = None
     spfLookupCount: int = 0

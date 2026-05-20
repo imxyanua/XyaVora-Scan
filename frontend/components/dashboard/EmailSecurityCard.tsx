@@ -80,11 +80,13 @@ export function EmailSecurityCard({ dns }: Props) {
     { label: "MX Records", value: dns.mxRecords?.join("\n") },
     { label: "MX Evidence", value: dns.mxEvidence?.join("\n") },
     { label: "SPF Detected", value: dns.spfDetected },
+    { label: "SPF Record Count", value: dns.spfRecordCount },
     { label: "SPF Record", value: dns.spfRecord },
     { label: "SPF All Policy", value: describeSpfAll(dns.spfAll) },
     { label: "SPF Lookups", value: dns.spfLookupCount },
     { label: "SPF Evidence", value: dns.spfEvidence?.join("\n") },
     { label: "DMARC Detected", value: dns.dmarcDetected },
+    { label: "DMARC Record Count", value: dns.dmarcRecordCount },
     { label: "DMARC Record", value: dns.dmarcRecord },
     { label: "DMARC Policy", value: dns.dmarcPolicy },
     { label: "Subdomain Policy", value: dns.dmarcSubdomainPolicy },
@@ -94,6 +96,7 @@ export function EmailSecurityCard({ dns }: Props) {
     { label: "DKIM Alignment", value: dns.dmarcAlignmentDkim },
     { label: "SPF Alignment", value: dns.dmarcAlignmentSpf },
     { label: "DMARC Evidence", value: dns.dmarcEvidence?.join("\n") },
+    { label: "DNS Query Evidence", value: dns.dnsQueryEvidence?.join("\n") },
   ];
 
   return (
@@ -127,8 +130,10 @@ export function EmailSecurityCard({ dns }: Props) {
       ) : (
         <div>
           <Row label="MX" value={dns.mxDetected ? mxPreview || "YES" : "NO"} tone={dns.mxDetected ? "good" : "warn"} />
+          <Row label="SPF Records" value={dns.spfRecordCount} tone={dns.spfRecordCount > 1 ? "bad" : dns.spfRecordCount === 1 ? "good" : "warn"} />
           <Row label="SPF Policy" value={describeSpfAll(dns.spfAll)} tone={spfTone(dns.spfAll)} />
           <Row label="SPF Lookups" value={dns.spfLookupCount} tone={dns.spfLookupCount > 10 ? "bad" : dns.spfLookupCount > 8 ? "warn" : "normal"} />
+          <Row label="DMARC Records" value={dns.dmarcRecordCount} tone={dns.dmarcRecordCount > 1 ? "bad" : dns.dmarcRecordCount === 1 ? "good" : "warn"} />
           <Row label="DMARC Policy" value={dns.dmarcPolicy} tone={dmarcTone(dns.dmarcPolicy)} />
           <Row label="Subdomain Policy" value={dns.dmarcSubdomainPolicy} tone={dmarcTone(dns.dmarcSubdomainPolicy || dns.dmarcPolicy)} />
           <Row label="DMARC Percent" value={dns.dmarcPct !== undefined ? `${dns.dmarcPct}%` : undefined} tone={dns.dmarcPct !== undefined && dns.dmarcPct < 100 ? "warn" : "normal"} />
