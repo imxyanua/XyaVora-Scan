@@ -58,10 +58,13 @@ export interface DnsResult {
   mxEvidence:    string[];
   spfDetected:   boolean;
   dmarcDetected: boolean;
+  spfRecordCount: number;
+  dmarcRecordCount: number;
   spfRecord?:    string;
   dmarcRecord?:  string;
   spfEvidence:   string[];
   dmarcEvidence: string[];
+  dnsQueryEvidence: string[];
   emailSecurityConfidence?: "high" | "medium" | "low";
   spfAll?:        string;
   spfLookupCount: number;

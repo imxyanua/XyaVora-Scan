@@ -68,7 +68,7 @@ def test_parse_dmarc_extracts_policy_tags():
 
 def test_record_evidence_includes_host_type_and_value():
     records = [DnsRecord(type="MX", host="example.com", value="10 mail.example.com", ttl=300)]
-    assert _record_evidence(records) == ["example.com MX 10 mail.example.com"]
+    assert _record_evidence(records) == ["example.com MX 10 mail.example.com ttl=300"]
 
 
 def test_email_security_confidence_high_requires_strict_spf_and_enforced_dmarc():
@@ -126,6 +126,52 @@ def test_build_findings_warns_on_partial_dmarc_pct():
     result = DnsResult(spfDetected=True, dmarcDetected=True, spfAll="-", dmarcPolicy="reject", dmarcPct=50)
     findings = _build_findings(result, "v=DMARC1; p=reject; pct=50")
     assert "dmarc_partial_enforcement" in [f.id for f in findings]
+
+
+def test_build_findings_warns_on_multiple_spf_records():
+    result = DnsResult(
+        spfDetected=True,
+        dmarcDetected=True,
+        spfRecordCount=2,
+        dmarcRecordCount=1,
+        spfAll="-",
+        dmarcPolicy="reject",
+        spfEvidence=[
+            "example.com TXT v=spf1 include:_spf.one -all ttl=300",
+            "example.com TXT v=spf1 include:_spf.two -all ttl=300",
+        ],
+    )
+    findings = _build_findings(result, "v=DMARC1; p=reject")
+    finding = next(f for f in findings if f.id == "spf_multiple_records")
+
+    assert finding.status == "fail"
+    assert finding.confidence == "verified"
+    assert len(finding.evidence) == 2
+
+
+def test_build_findings_warns_on_multiple_dmarc_records():
+    result = DnsResult(
+        spfDetected=True,
+        dmarcDetected=True,
+        spfRecordCount=1,
+        dmarcRecordCount=2,
+        spfAll="-",
+        dmarcPolicy="reject",
+        dmarcEvidence=[
+            "_dmarc.example.com TXT v=DMARC1; p=reject ttl=300",
+            "_dmarc.example.com TXT v=DMARC1; p=quarantine ttl=300",
+        ],
+    )
+    findings = _build_findings(result, "v=DMARC1; p=reject")
+
+    assert "dmarc_multiple_records" in [f.id for f in findings]
+
+
+def test_build_findings_warns_on_invalid_dmarc_policy():
+    result = DnsResult(spfDetected=True, dmarcDetected=True, spfAll="-", dmarcPolicy="bad")
+    findings = _build_findings(result, "v=DMARC1; p=bad")
+
+    assert "dmarc_invalid_policy" in [f.id for f in findings]
 
 
 # ── Integration tests — real DNS (requires network) ───────────────

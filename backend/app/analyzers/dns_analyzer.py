@@ -24,21 +24,30 @@ async def _query(resolver: dns.asyncresolver.Resolver, hostname: str, rtype: str
     return records
 
 
+def _spf_records(txt_records: list[DnsRecord]) -> list[str]:
+    return [
+        _clean_txt_value(r.value)
+        for r in txt_records
+        if _clean_txt_value(r.value).lower().startswith("v=spf1")
+    ]
+
+
+def _dmarc_records(dmarc_records: list[DnsRecord]) -> list[str]:
+    return [
+        _clean_txt_value(r.value)
+        for r in dmarc_records
+        if _clean_txt_value(r.value).lower().startswith("v=dmarc1")
+    ]
+
+
 def _detect_spf(txt_records: list[DnsRecord]) -> tuple[bool, str | None]:
-    for r in txt_records:
-        # SPF records always start with "v=spf1" per RFC 7208
-        val = _clean_txt_value(r.value)
-        if val.lower().startswith("v=spf1"):
-            return True, val
-    return False, None
+    records = _spf_records(txt_records)
+    return bool(records), records[0] if records else None
 
 
 def _detect_dmarc(dmarc_records: list[DnsRecord]) -> tuple[bool, str | None]:
-    for r in dmarc_records:
-        val = _clean_txt_value(r.value)
-        if val.lower().startswith("v=dmarc1"):
-            return True, val
-    return False, None
+    records = _dmarc_records(dmarc_records)
+    return bool(records), records[0] if records else None
 
 
 def _clean_txt_value(value: str) -> str:
@@ -117,7 +126,7 @@ def _email_security_confidence(result: DnsResult) -> str:
 
 
 def _record_evidence(records: list[DnsRecord]) -> list[str]:
-    return [f"{record.host} {record.type} {record.value}" for record in records]
+    return [f"{record.host} {record.type} {record.value} ttl={record.ttl if record.ttl is not None else 'unknown'}" for record in records]
 
 
 def _build_findings(
@@ -125,6 +134,36 @@ def _build_findings(
     dmarc_record: str | None,
 ) -> list[Finding]:
     findings: list[Finding] = []
+
+    if result.spfRecordCount > 1:
+        findings.append(Finding(
+            id="spf_multiple_records",
+            severity="medium",
+            category="DNS",
+            title="Multiple SPF Records Published",
+            description=f"The domain publishes {result.spfRecordCount} SPF TXT records. SPF expects a single policy record.",
+            impact="Receivers can treat multiple SPF records as a permanent SPF error, reducing mail authentication reliability.",
+            recommendation="Merge all SPF mechanisms into one v=spf1 TXT record and remove duplicate SPF records.",
+            status="fail",
+            confidence="verified",
+            source="dns",
+            evidence=result.spfEvidence,
+        ))
+
+    if result.dmarcRecordCount > 1:
+        findings.append(Finding(
+            id="dmarc_multiple_records",
+            severity="medium",
+            category="DNS",
+            title="Multiple DMARC Records Published",
+            description=f"The domain publishes {result.dmarcRecordCount} DMARC TXT records at _dmarc.",
+            impact="Receivers may ignore DMARC when multiple records are present, weakening spoofing protection.",
+            recommendation="Keep exactly one DMARC TXT record at _dmarc.<domain>.",
+            status="fail",
+            confidence="verified",
+            source="dns",
+            evidence=result.dmarcEvidence,
+        ))
 
     if not result.spfDetected:
         findings.append(Finding(
@@ -165,6 +204,20 @@ def _build_findings(
             description=f"DMARC exists, but the policy is p=none and does not enforce failures: {dmarc_record}",
             impact="Email that fails DMARC checks is still delivered. The policy offers no protection, only reporting.",
             recommendation="Review DMARC reports, fix sender alignment, then change policy to p=quarantine or p=reject.",
+            status="warning",
+            confidence="verified",
+            source="dns",
+            evidence=[dmarc_record] if dmarc_record else [],
+        ))
+    elif result.dmarcDetected and result.dmarcPolicy not in ("none", "quarantine", "reject"):
+        findings.append(Finding(
+            id="dmarc_invalid_policy",
+            severity="medium",
+            category="DNS",
+            title="DMARC Policy Is Invalid Or Missing",
+            description=f"DMARC exists, but the p= policy is missing or not recognized: {dmarc_record}",
+            impact="Receivers may ignore the DMARC policy or treat it as invalid.",
+            recommendation="Set DMARC p=none, p=quarantine, or p=reject. Move toward quarantine/reject after monitoring.",
             status="warning",
             confidence="verified",
             source="dns",
@@ -240,14 +293,19 @@ async def analyze_dns(hostname: str) -> AnalyzerResult:
 
     dmarc_records: list[DnsRecord] = dmarc_result if isinstance(dmarc_result, list) else []
 
-    spf_detected, spf_record     = _detect_spf(txt_records)
-    dmarc_detected, dmarc_record = _detect_dmarc(dmarc_records)
+    spf_records = _spf_records(txt_records)
+    dmarc_policy_records = _dmarc_records(dmarc_records)
+    spf_detected, spf_record     = bool(spf_records), spf_records[0] if spf_records else None
+    dmarc_detected, dmarc_record = bool(dmarc_policy_records), dmarc_policy_records[0] if dmarc_policy_records else None
     spf_info = _parse_spf(spf_record)
     dmarc_info = _parse_dmarc(dmarc_record)
     mx_records = [r.value for r in all_records if r.type == "MX"]
     mx_dns_records = [r for r in all_records if r.type == "MX"]
-    spf_dns_records = [r for r in txt_records if spf_record and _clean_txt_value(r.value) == spf_record]
-    dmarc_dns_records = [r for r in dmarc_records if dmarc_record and _clean_txt_value(r.value) == dmarc_record]
+    dns_query_evidence = [
+        f"{rtype}: {sum(1 for record in all_records if record.type == rtype)} record(s)"
+        for rtype in _RECORD_TYPES
+    ]
+    dns_query_evidence.append(f"_dmarc TXT: {len(dmarc_records)} record(s)")
 
     dns_result = DnsResult(
         records=all_records + dmarc_records,
@@ -256,10 +314,13 @@ async def analyze_dns(hostname: str) -> AnalyzerResult:
         mxEvidence=_record_evidence(mx_dns_records),
         spfDetected=spf_detected,
         dmarcDetected=dmarc_detected,
+        spfRecordCount=len(spf_records),
+        dmarcRecordCount=len(dmarc_policy_records),
         spfRecord=spf_record,
         dmarcRecord=dmarc_record,
-        spfEvidence=_record_evidence(spf_dns_records),
-        dmarcEvidence=_record_evidence(dmarc_dns_records),
+        spfEvidence=_record_evidence([r for r in txt_records if _clean_txt_value(r.value) in spf_records]),
+        dmarcEvidence=_record_evidence([r for r in dmarc_records if _clean_txt_value(r.value) in dmarc_policy_records]),
+        dnsQueryEvidence=dns_query_evidence,
         **spf_info,
         **dmarc_info,
     )
