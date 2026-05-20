@@ -62,6 +62,23 @@ function screenshotStatus(report: ScanReport) {
 }
 
 function sourceReliability(report: ScanReport) {
+  if (report.evidenceSummary?.length) {
+    const byLevel = {
+      verified: report.evidenceSummary.filter((item) => item.level === "verified"),
+      observed: report.evidenceSummary.filter((item) => item.level === "observed"),
+      inferred: report.evidenceSummary.filter((item) => item.level === "inferred"),
+    };
+
+    const summarize = (items: typeof report.evidenceSummary) =>
+      items.length ? items.map((item) => `${item.label}: ${item.detail}`).join(", ") : "None";
+
+    return table([
+      ["Verified direct evidence", summarize(byLevel.verified)],
+      ["Observed page/network data", summarize(byLevel.observed)],
+      ["Heuristic or policy checks", summarize(byLevel.inferred)],
+    ]);
+  }
+
   const verifiedSignals = [
     !report.dns.error && report.dns.records.length > 0 ? `DNS records (${report.dns.records.length})` : null,
     !report.ssl.error && report.ssl.httpsAvailable ? `TLS certificate (${report.ssl.protocol ?? "TLS"})` : null,

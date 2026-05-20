@@ -1,4 +1,4 @@
-import type { ScanReport, TechStackItem } from "@/types";
+import type { EvidenceSummaryItem, ScanReport, TechStackItem } from "@/types";
 
 type QualityGroup = "verified" | "observed" | "inferred";
 
@@ -30,7 +30,26 @@ function hasAssetOnlySignal(item: TechStackItem) {
   return sources.length > 0 && sources.every((source) => source === "asset-url" || source === "asset-body");
 }
 
+function groupsFromEvidenceSummary(items: EvidenceSummaryItem[]): Record<QualityGroup, QualityItem[]> {
+  return items.reduce<Record<QualityGroup, QualityItem[]>>(
+    (groups, item) => {
+      if (item.level === "verified" || item.level === "observed" || item.level === "inferred") {
+        groups[item.level].push({
+          label: item.label,
+          detail: item.confidence ? `${item.detail} (${item.confidence} confidence)` : item.detail,
+        });
+      }
+      return groups;
+    },
+    { verified: [], observed: [], inferred: [] },
+  );
+}
+
 function qualityGroups(report: ScanReport): Record<QualityGroup, QualityItem[]> {
+  if (report.evidenceSummary?.length) {
+    return groupsFromEvidenceSummary(report.evidenceSummary);
+  }
+
   const verified: QualityItem[] = [];
   const observed: QualityItem[] = [];
   const inferred: QualityItem[] = [];

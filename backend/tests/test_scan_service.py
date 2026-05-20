@@ -1,10 +1,11 @@
 import pytest
 from app.services import scan_service
-from app.services.scan_service import normalize_findings, run_scan
+from app.services.scan_service import build_evidence_summary, normalize_findings, run_scan
 from app.analyzers.score_analyzer import compute_score
 from app.schemas.analyzer import AnalyzerResult
 from app.schemas.report import (
     DnsResult,
+    DnsRecord,
     Finding,
     HeadersResult,
     HttpOverviewResult,
@@ -12,7 +13,9 @@ from app.schemas.report import (
     SiteDiscoveryResult,
     ScreenshotResult,
     SecurityTxtResult,
+    SecurityHeaderItem,
     SslResult,
+    TechStackItem,
     WhoisResult,
 )
 
@@ -134,6 +137,72 @@ def test_normalize_findings_merges_duplicate_evidence_and_strongest_confidence()
     assert normalized[0].evidence == ["header:missing", "status:200"]
 
 
+def test_build_evidence_summary_marks_direct_and_heuristic_sources():
+    report = scan_service.ScanReport(
+        target="example.com",
+        normalizedUrl="https://example.com",
+        hostname="example.com",
+        scanTime="2026-05-20T00:00:00Z",
+        score=90,
+        grade="A",
+        status="Low Risk",
+        summary="ok",
+        dns=DnsResult(records=[DnsRecord(type="A", host="example.com", value="93.184.216.34")]),
+        ssl=SslResult(
+            httpsAvailable=True,
+            trusted=True,
+            protocol="TLSv1.3",
+            daysRemaining=90,
+            tlsConfidence="high",
+            certificateEvidence=["issuer:Example CA"],
+        ),
+        headers=HeadersResult(securityHeaders=[
+            SecurityHeaderItem(
+                header="Content-Security-Policy",
+                status="present",
+                value="default-src 'self'",
+                description="Restricts allowed content sources.",
+            ),
+        ]),
+        httpOverview=HttpOverviewResult(
+            statusCode=200,
+            finalUrl="https://example.com",
+            finalHost="example.com",
+            contentType="text/html",
+        ),
+        techStack=[
+            TechStackItem(
+                name="React",
+                category="JavaScript Framework",
+                confidence="low",
+                sources=["asset-url"],
+                evidence=["asset:/static/react.js"],
+            ),
+        ],
+        findings=[
+            Finding(
+                id="missing_referrer",
+                severity="low",
+                category="Headers",
+                title="Missing Referrer Policy",
+                description="x",
+                recommendation="x",
+                status="warning",
+                confidence="best-practice",
+                source="scanner",
+            ),
+        ],
+    )
+
+    summary = build_evidence_summary(report)
+    by_module = {item.module: item for item in summary}
+
+    assert by_module["dns"].level == "verified"
+    assert by_module["tls"].confidence == "high"
+    assert by_module["techStack"].level == "inferred"
+    assert by_module["findings"].level == "inferred"
+
+
 # ── scan_service integration ──────────────────────────────────────
 
 @pytest.mark.asyncio
@@ -205,7 +274,10 @@ async def test_run_scan_force_refresh_bypasses_cache(monkeypatch):
     monkeypatch.setattr(scan_service, "analyze_screenshot", fake_screenshot)
     monkeypatch.setattr(scan_service, "analyze_score", fake_score)
 
-    await scan_service.run_scan("example.com", "https://example.com", "example.com")
+    report = await scan_service.run_scan("example.com", "https://example.com", "example.com")
+    assert report.evidenceSummary
+    assert {item.module for item in report.evidenceSummary} >= {"dns", "tls", "headers", "http", "findings"}
+
     await scan_service.run_scan("example.com", "https://example.com", "example.com")
     assert calls["dns"] == 1
 

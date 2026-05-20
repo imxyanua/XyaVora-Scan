@@ -1,12 +1,13 @@
 import asyncio
 import time
 from datetime import datetime, timezone
+from typing import Literal
 
 from app.core.config import settings
 from app.schemas.report import (
     ScanReport, DnsResult, SslResult, HeadersResult, Finding,
     HttpOverviewResult, PageMetadataResult, SiteDiscoveryResult,
-    WhoisResult, SecurityTxtResult, ScreenshotResult,
+    WhoisResult, SecurityTxtResult, ScreenshotResult, EvidenceSummaryItem,
 )
 from app.schemas.analyzer import AnalyzerResult
 from app.analyzers.dns_analyzer         import analyze_dns
@@ -48,6 +49,9 @@ _CONFIDENCE_PRIORITY = {
     "best-practice": 2,
     "inferred": 3,
 }
+
+EvidenceLevelValue = Literal["verified", "observed", "inferred", "unavailable", "error"]
+EvidenceConfidenceValue = Literal["high", "medium", "low"]
 
 
 def _merge_unique(values: list[str]) -> list[str]:
@@ -124,6 +128,186 @@ def normalize_findings(findings: list[Finding]) -> list[Finding]:
     )
 
 
+def _tech_is_asset_only(sources: list[str]) -> bool:
+    return bool(sources) and all(source in {"asset-url", "asset-body"} for source in sources)
+
+
+def build_evidence_summary(report: ScanReport) -> list[EvidenceSummaryItem]:
+    """
+    Summarizes how reliable each major report module is.
+    This gives API clients an explicit evidence model instead of forcing the UI
+    to infer whether data came from direct protocol checks, page observation, or
+    lower-confidence heuristics.
+    """
+    items: list[EvidenceSummaryItem] = []
+
+    def add(
+        module: str,
+        label: str,
+        level: EvidenceLevelValue,
+        detail: str,
+        source: str,
+        confidence: EvidenceConfidenceValue | None = None,
+        evidence: list[str] | None = None,
+    ) -> None:
+        items.append(EvidenceSummaryItem(
+            module=module,
+            label=label,
+            level=level,
+            detail=detail,
+            source=source,
+            confidence=confidence,
+            evidence=evidence or [],
+        ))
+
+    if report.dns.error:
+        add("dns", "DNS Records", "error", report.dns.error, "dns")
+    elif report.dns.records:
+        add(
+            "dns",
+            "DNS Records",
+            "verified",
+            f"{len(report.dns.records)} records resolved",
+            "dns",
+            "high",
+            [f"{record.type}:{record.value}" for record in report.dns.records[:5]],
+        )
+    else:
+        add("dns", "DNS Records", "unavailable", "No DNS records returned by resolver", "dns")
+
+    if report.ssl.error:
+        add("tls", "TLS Certificate", "error", report.ssl.error, "tls")
+    elif report.ssl.httpsAvailable:
+        add(
+            "tls",
+            "TLS Certificate",
+            "verified",
+            f"{report.ssl.protocol or 'TLS'} handshake, {report.ssl.daysRemaining} days remaining",
+            "tls",
+            report.ssl.tlsConfidence or ("high" if report.ssl.trusted else "medium"),
+            report.ssl.certificateEvidence[:5],
+        )
+    else:
+        add("tls", "TLS Certificate", "unavailable", "HTTPS was not available during scan", "tls")
+
+    if report.headers.error:
+        add("headers", "Security Headers", "error", report.headers.error, "headers")
+    elif report.headers.securityHeaders:
+        present = sum(1 for header in report.headers.securityHeaders if header.status == "present")
+        missing = sum(1 for header in report.headers.securityHeaders if header.status == "missing")
+        warnings = sum(1 for header in report.headers.securityHeaders if header.status == "warning")
+        add(
+            "headers",
+            "Security Headers",
+            "verified",
+            f"{present} present, {missing} missing, {warnings} weak",
+            "headers",
+            "high" if present else "medium",
+            [f"{header.header}:{header.status}" for header in report.headers.securityHeaders],
+        )
+    else:
+        add("headers", "Security Headers", "unavailable", "No security header checks returned", "headers")
+
+    if report.httpOverview.error:
+        add("http", "HTTP Response", "error", report.httpOverview.error, "http")
+    elif report.httpOverview.statusCode:
+        add(
+            "http",
+            "HTTP Response",
+            "observed",
+            f"{report.httpOverview.statusCode} final status, {report.httpOverview.redirectCount} redirects",
+            "http",
+            "high",
+            [value for value in [
+                f"final-url:{report.httpOverview.finalUrl}" if report.httpOverview.finalUrl else None,
+                f"final-host:{report.httpOverview.finalHost}" if report.httpOverview.finalHost else None,
+                f"content-type:{report.httpOverview.contentType}" if report.httpOverview.contentType else None,
+            ] if value],
+        )
+    else:
+        add("http", "HTTP Response", "unavailable", "No HTTP response status captured", "http")
+
+    if report.whois.error:
+        add("whois", "WHOIS", "error", report.whois.error, "whois")
+    elif report.whois.registrar or report.whois.nameServers:
+        add(
+            "whois",
+            "WHOIS",
+            "observed",
+            report.whois.registrar or f"{len(report.whois.nameServers)} name servers",
+            "whois",
+            "medium",
+            [*([f"registrar:{report.whois.registrar}"] if report.whois.registrar else []), *report.whois.nameServers[:5]],
+        )
+    else:
+        add("whois", "WHOIS", "unavailable", "Registrar data not available", "whois")
+
+    if report.pageMetadata.error:
+        add("metadata", "Page Metadata", "error", report.pageMetadata.error, "html")
+    elif report.pageMetadata.title or report.pageMetadata.description:
+        add(
+            "metadata",
+            "Page Metadata",
+            "observed",
+            report.pageMetadata.title or "Description detected",
+            "html",
+            "medium",
+            [value for value in [
+                f"title:{report.pageMetadata.title}" if report.pageMetadata.title else None,
+                f"canonical:{report.pageMetadata.canonicalUrl}" if report.pageMetadata.canonicalUrl else None,
+                f"language:{report.pageMetadata.language}" if report.pageMetadata.language else None,
+            ] if value],
+        )
+    else:
+        add("metadata", "Page Metadata", "unavailable", "No title or description detected", "html")
+
+    if report.techStack:
+        low_confidence = [
+            item for item in report.techStack
+            if item.confidence == "low" or "inferred" in item.sources or _tech_is_asset_only(item.sources)
+        ]
+        direct = [item for item in report.techStack if item not in low_confidence]
+        level = "observed" if direct else "inferred"
+        confidence = "high" if any(item.confidence == "high" for item in direct) else "medium" if direct else "low"
+        add(
+            "techStack",
+            "Tech Stack",
+            level,
+            f"{len(direct)} direct fingerprints, {len(low_confidence)} heuristic fingerprints",
+            "html",
+            confidence,
+            [f"{item.name}:{item.confidence}:{'+'.join(item.sources)}" for item in report.techStack[:8]],
+        )
+    else:
+        add("techStack", "Tech Stack", "unavailable", "No technology fingerprints detected", "html")
+
+    if report.cookies:
+        add("cookies", "Cookies", "observed", f"{len(report.cookies)} Set-Cookie values observed", "headers", "medium")
+    else:
+        add("cookies", "Cookies", "unavailable", "No Set-Cookie headers observed", "headers")
+
+    if report.securityTxt.error:
+        add("securityTxt", "security.txt", "error", report.securityTxt.error, "http")
+    elif report.securityTxt.present:
+        add("securityTxt", "security.txt", "observed", report.securityTxt.location or "Disclosure file found", "http", "medium")
+    else:
+        add("securityTxt", "security.txt", "unavailable", "No security.txt file observed", "http")
+
+    actionable = sum(1 for finding in report.findings if finding.status in {"fail", "warning"})
+    best_practice = sum(1 for finding in report.findings if finding.confidence == "best-practice")
+    add(
+        "findings",
+        "Posture Findings",
+        "inferred" if best_practice else "observed",
+        f"{actionable} actionable findings, {best_practice} best-practice checks",
+        "scanner",
+        "medium" if actionable else "high",
+        [f"{finding.id}:{finding.status}:{finding.confidence}" for finding in report.findings[:8]],
+    )
+
+    return items
+
+
 async def _run(coro, timeout: float | None = None) -> AnalyzerResult:
     """
     Wraps an analyzer coroutine with a per-analyzer timeout.
@@ -185,7 +369,7 @@ async def run_scan(
         def _err(r: AnalyzerResult) -> str | None:
             return r.errors[0] if r.errors else "Analyzer failed"
 
-        return ScanReport(
+        report = ScanReport(
             target=target,
             normalizedUrl=normalized_url,
             hostname=hostname,
@@ -207,6 +391,8 @@ async def run_scan(
             screenshot=shot_r.data    if isinstance(shot_r.data, ScreenshotResult)    else ScreenshotResult(error=_err(shot_r)),
             findings=all_findings,
         )
+        report.evidenceSummary = build_evidence_summary(report)
+        return report
 
     report = await asyncio.wait_for(_pipeline(), timeout=settings.SCAN_TIMEOUT_SECONDS)
     _cache_set(hostname, report)

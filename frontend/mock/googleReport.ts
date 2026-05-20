@@ -326,4 +326,5 @@ export const mockGoogleReport: ScanReport = {
       status:         "pass",
     },
   ],
+  evidenceSummary: [],
 };

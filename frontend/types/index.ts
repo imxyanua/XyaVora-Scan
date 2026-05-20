@@ -223,6 +223,18 @@ export interface TechStackItem {
 
 // ── Cookies ──────────────────────────────────
 
+export type EvidenceLevel = "verified" | "observed" | "inferred" | "unavailable" | "error";
+
+export interface EvidenceSummaryItem {
+  module:      string;
+  label:       string;
+  level:       EvidenceLevel;
+  detail:      string;
+  source:      string;
+  confidence?: "high" | "medium" | "low";
+  evidence?:   string[];
+}
+
 export interface CookieResult {
   name:       string;
   secure:     boolean;
@@ -281,6 +293,7 @@ export interface ScanReport {
   securityTxt:   SecurityTxtResult;
   screenshot:    ScreenshotResult;
   findings:      Finding[];
+  evidenceSummary: EvidenceSummaryItem[];
 }
 
 // ── History ───────────────────────────────────

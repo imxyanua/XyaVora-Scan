@@ -21,6 +21,7 @@ def test_scan_report_defaults():
     assert report.grade == "B"
     assert report.findings == []
     assert report.techStack == []
+    assert report.evidenceSummary == []
 
 
 def test_scan_report_camel_case_json():
@@ -43,6 +44,7 @@ def test_scan_report_camel_case_json():
     assert "httpOverview" in data
     assert "pageMetadata" in data
     assert "siteDiscovery" in data
+    assert "evidenceSummary" in data
 
 
 def test_finding_all_fields():
