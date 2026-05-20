@@ -217,6 +217,19 @@ class TechStackItem(_Base):
 
 # ── Cookies ───────────────────────────────────────────────────────
 
+EvidenceLevel = Literal["verified", "observed", "inferred", "unavailable", "error"]
+
+
+class EvidenceSummaryItem(_Base):
+    module:     str
+    label:      str
+    level:      EvidenceLevel
+    detail:     str
+    source:     str
+    confidence: Optional[TechConfidence] = None
+    evidence:   list[str] = []
+
+
 class CookieResult(_Base):
     name:     str
     secure:   bool
@@ -279,3 +292,4 @@ class ScanReport(_Base):
     securityTxt:   SecurityTxtResult = SecurityTxtResult()
     screenshot:    ScreenshotResult  = ScreenshotResult()
     findings:      list[Finding]     = []
+    evidenceSummary: list[EvidenceSummaryItem] = []

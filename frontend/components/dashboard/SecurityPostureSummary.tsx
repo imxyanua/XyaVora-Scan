@@ -76,7 +76,7 @@ export function SecurityPostureSummary({ ssl, headers, cookies, securityTxt }: P
         <span className="font-mono text-[11px] text-white/70">[POSTURE]</span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
+      <div className="grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(min(100%,14rem),1fr))]">
         <Metric
           label="Transport"
           status={tlsStatus}

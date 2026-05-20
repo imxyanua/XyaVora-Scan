@@ -65,13 +65,18 @@ function ReportSection({
 
 function BalancedGrid({
   children,
-  columns = "xl:columns-2 2xl:columns-3",
+  minWidth = "360px",
 }: {
   children: ReactNode;
-  columns?: string;
+  minWidth?: string;
 }) {
   return (
-    <div className={`columns-1 gap-4 md:columns-2 ${columns}`}>
+    <div
+      className="grid gap-4"
+      style={{
+        gridTemplateColumns: `repeat(auto-fit, minmax(min(100%, ${minWidth}), 1fr))`,
+      }}
+    >
       {children}
     </div>
   );
@@ -79,7 +84,7 @@ function BalancedGrid({
 
 function BalancedItem({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
   return (
-    <div className={`mb-4 break-inside-avoid ${wide ? "md:column-span-all" : ""}`}>
+    <div className={`min-w-0 ${wide ? "lg:col-span-full" : ""}`}>
       {children}
     </div>
   );
@@ -135,8 +140,8 @@ export function ReportDashboard({ domain, report, historyId, guestScanId }: Prop
         </nav>
 
         <ReportSection id="overview" title="Overview" detail="risk score, scan time, primary signals">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
-            <div className="lg:col-span-4">
+          <div className="grid grid-cols-1 gap-4 items-stretch lg:grid-cols-[minmax(280px,0.75fr)_minmax(0,1.65fr)]">
+            <div className="min-w-0">
               <RiskScoreCard
                 score={report.score}
                 grade={report.grade}
@@ -144,7 +149,7 @@ export function ReportDashboard({ domain, report, historyId, guestScanId }: Prop
                 scanTime={report.scanTime}
               />
             </div>
-            <div className="lg:col-span-8">
+            <div className="min-w-0">
               <KeySignalsOverview
                 headers={report.headers}
                 dns={report.dns}
@@ -158,11 +163,11 @@ export function ReportDashboard({ domain, report, historyId, guestScanId }: Prop
 
         <ReportSection id="priorities" title="Risk Priorities" detail="posture observations, then full finding log">
           <PriorityFindingsCard findings={report.findings} />
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-start">
-            <div className="xl:col-span-7">
+          <div className="grid gap-4 items-start xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.9fr)]">
+            <div className="min-w-0">
               <AdvisoryPanel findings={report.findings} />
             </div>
-            <div className="xl:col-span-5">
+            <div className="min-w-0">
               <ScreenshotCard screenshot={report.screenshot} />
             </div>
           </div>
@@ -175,7 +180,7 @@ export function ReportDashboard({ domain, report, historyId, guestScanId }: Prop
             cookies={report.cookies}
             securityTxt={report.securityTxt}
           />
-          <BalancedGrid>
+          <BalancedGrid minWidth="390px">
             <BalancedItem wide>
               <SecurityHeadersCard headers={report.headers} />
             </BalancedItem>
@@ -192,7 +197,7 @@ export function ReportDashboard({ domain, report, historyId, guestScanId }: Prop
         </ReportSection>
 
         <ReportSection id="network" title="Network And Discovery" detail="dns, mail posture, ownership, crawler hints">
-          <BalancedGrid>
+          <BalancedGrid minWidth="360px">
             <BalancedItem>
               <EmailSecurityCard dns={report.dns} />
             </BalancedItem>
@@ -209,7 +214,7 @@ export function ReportDashboard({ domain, report, historyId, guestScanId }: Prop
         </ReportSection>
 
         <ReportSection id="page" title="Page Intelligence" detail="http behavior, redirects, metadata, detected stack">
-          <BalancedGrid>
+          <BalancedGrid minWidth="380px">
             <BalancedItem>
               <HttpOverviewCard http={report.httpOverview} />
             </BalancedItem>
