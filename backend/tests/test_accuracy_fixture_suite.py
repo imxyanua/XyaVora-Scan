@@ -216,6 +216,76 @@ FIXTURES: tuple[AccuracyFixture, ...] = (
         ),
         absent=("MkDocs", "Docusaurus", "WordPress"),
     ),
+    AccuracyFixture(
+        name="webflow_marketing_site",
+        headers={},
+        html="""
+        <html data-wf-page="64fabc123" data-wf-site="64fdef456">
+          <head>
+            <link rel="stylesheet" href="https://uploads-ssl.webflow.com/64fdef456/css/site.webflow.css">
+            <script src="https://assets.website-files.com/64fdef456/js/webflow.js"></script>
+          </head>
+        </html>
+        """,
+        expected=(
+            TechExpectation("Webflow", "high", {"html", "asset-url"}),
+        ),
+        absent=("Wix", "Squarespace", "Framer", "WordPress"),
+    ),
+    AccuracyFixture(
+        name="wix_site",
+        headers={},
+        html="""
+        <html>
+          <head>
+            <script src="https://static.wixstatic.com/services/wix-thunderbolt/dist/main.js"></script>
+          </head>
+          <body>
+            <a href="https://example.wixsite.com/home">Home</a>
+          </body>
+        </html>
+        """,
+        expected=(
+            TechExpectation("Wix", "high", {"html", "asset-url"}),
+        ),
+        absent=("Webflow", "Squarespace", "Framer", "WordPress"),
+    ),
+    AccuracyFixture(
+        name="squarespace_site",
+        headers={},
+        html="""
+        <html>
+          <head>
+            <script src="https://static1.squarespace.com/static/vta/commerce.js"></script>
+          </head>
+          <body>
+            <a href="https://www.squarespace.com">Built with Squarespace</a>
+          </body>
+        </html>
+        """,
+        expected=(
+            TechExpectation("Squarespace", "high", {"html", "asset-url"}),
+        ),
+        absent=("Webflow", "Wix", "Framer", "WordPress"),
+    ),
+    AccuracyFixture(
+        name="framer_site",
+        headers={},
+        html="""
+        <html>
+          <head>
+            <script type="module" src="https://framerusercontent.com/sites/site-id/script.js"></script>
+          </head>
+          <body>
+            <a href="https://framer.com/projects/site">Prototype</a>
+          </body>
+        </html>
+        """,
+        expected=(
+            TechExpectation("Framer", "high", {"html", "asset-url"}),
+        ),
+        absent=("Webflow", "Wix", "Squarespace", "WordPress"),
+    ),
 )
 
 
