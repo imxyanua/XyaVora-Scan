@@ -89,7 +89,7 @@ export function PriorityFindingsCard({ findings }: Props) {
               Priority Observations
             </h2>
             <p className="font-mono text-[13px] text-[#d7e8ff]/70 mt-2 max-w-3xl leading-relaxed">
-              Highest-impact checks that need review. Verified transport/DNS failures are weighted above best-practice observations.
+              Highest-impact checks that need review. These are posture observations, not confirmed exploit reports. Verified transport/DNS failures are weighted above best-practice observations.
             </p>
           </div>
           <div className="flex gap-2 shrink-0">

@@ -39,6 +39,21 @@ def test_score_single_fail():
     score, grade, status, summary = compute_score(findings)
     assert score < 100
     assert "1 failed check" in summary
+    assert "posture observations" in summary.lower()
+
+
+def test_score_best_practice_warning_is_weighted_lower_than_observed():
+    observed = Finding(
+        id="missing_csp", severity="medium", category="Headers",
+        title="Missing CSP", description="x", recommendation="x",
+        status="warning", confidence="observed", source="headers",
+    )
+    best_practice = observed.model_copy(update={"confidence": "best-practice"})
+
+    observed_score, *_ = compute_score([observed])
+    best_practice_score, *_ = compute_score([best_practice])
+
+    assert best_practice_score > observed_score
 
 
 def test_score_grade_boundaries():
