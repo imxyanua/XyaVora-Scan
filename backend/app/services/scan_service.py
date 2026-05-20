@@ -203,7 +203,10 @@ def build_evidence_summary(report: ScanReport) -> list[EvidenceSummaryItem]:
             f"{present} present, {missing} missing, {warnings} weak",
             "headers",
             "high" if present else "medium",
-            [f"{header.header}:{header.status}" for header in report.headers.securityHeaders],
+            [
+                *report.headers.responseEvidence[:5],
+                *[f"{header.header}:{header.status}" for header in report.headers.securityHeaders],
+            ],
         )
     else:
         add("headers", "Security Headers", "unavailable", "No security header checks returned", "headers")

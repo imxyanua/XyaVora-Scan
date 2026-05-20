@@ -92,6 +92,10 @@ def _short(value: str, limit: int = 120) -> str:
     return value if len(value) <= limit else f"{value[:limit - 3]}..."
 
 
+def _has_broad_csp_source(value: str) -> bool:
+    return bool(re.search(r"(?:^|[\s;])\*(?:[\s;]|$)", value))
+
+
 def _present_item(rule: dict, value: str) -> tuple[SecurityHeaderItem, Finding | None]:
     header = rule["header"]
     confidence = "high"
@@ -102,6 +106,9 @@ def _present_item(rule: dict, value: str) -> tuple[SecurityHeaderItem, Finding |
     lower = value.lower()
     if header == "Strict-Transport-Security":
         max_age = _hsts_max_age(lower)
+        evidence.append(f"hsts.max_age: {max_age if max_age is not None else 'missing'}")
+        evidence.append(f"hsts.include_subdomains: {'includesubdomains' in lower}")
+        evidence.append(f"hsts.preload: {'preload' in lower}")
         if max_age is None or max_age < _HSTS_MIN_AGE:
             status = "warning"
             confidence = "medium"
@@ -119,7 +126,11 @@ def _present_item(rule: dict, value: str) -> tuple[SecurityHeaderItem, Finding |
                 evidence=evidence,
             )
     elif header == "Content-Security-Policy":
-        if "unsafe-inline" in lower or "*" in lower:
+        has_unsafe_inline = "'unsafe-inline'" in lower
+        has_broad_source = _has_broad_csp_source(lower)
+        evidence.append(f"csp.unsafe_inline: {has_unsafe_inline}")
+        evidence.append(f"csp.broad_source: {has_broad_source}")
+        if has_unsafe_inline or has_broad_source:
             status = "warning"
             confidence = "medium"
             warning = Finding(
@@ -251,6 +262,21 @@ def _check_headers(
     return items, findings
 
 
+def _response_evidence(response: httpx.Response) -> list[str]:
+    headers = response.headers
+    evidence = [
+        f"status_code: {response.status_code}",
+        f"final_url: {response.url}",
+    ]
+
+    for key in ("server", "x-powered-by", "content-type", "cache-control"):
+        value = headers.get(key)
+        if value:
+            evidence.append(f"{key}: {_short(value)}")
+
+    return evidence
+
+
 def _server_finding(server: str) -> Finding:
     return Finding(
         id="server_exposed",
@@ -299,6 +325,7 @@ async def analyze_headers(normalized_url: str) -> AnalyzerResult:
         server=server,
         xPoweredBy=x_powered_by,
         securityHeaders=security_items,
+        responseEvidence=_response_evidence(response),
     )
 
     return AnalyzerResult(key="headers", status="success", data=result, findings=findings)

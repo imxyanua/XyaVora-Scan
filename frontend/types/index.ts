@@ -115,6 +115,7 @@ export interface HeadersResult {
   server?:          string;
   xPoweredBy?:      string;
   securityHeaders:  SecurityHeaderItem[];
+  responseEvidence?: string[];
   error?:           string;
 }
 
