@@ -35,8 +35,11 @@ function summarizeFindings(findings: Finding[]) {
       `  - Severity: ${finding.severity}`,
       `  - Category: ${finding.category}`,
       `  - Confidence: ${finding.confidence ?? "Unknown"}`,
+      `  - Classification: ${finding.classification ?? "Unknown"}`,
       `  - Source: ${finding.source ?? "Unknown"}`,
+      finding.analysis ? `  - Why it appears: ${finding.analysis}` : null,
       `  - Recommendation: ${finding.recommendation}`,
+      finding.verification ? `  - Manual verification: ${finding.verification}` : null,
       finding.evidence?.length ? `  - Evidence: ${finding.evidence.slice(0, 3).join(" | ")}` : null,
     ].filter(Boolean).join("\n"))
     .join("\n");
@@ -49,7 +52,8 @@ function summarizeTechStack(items: TechStackItem[]) {
     .map((item) => {
       const suffix = item.version ? ` ${item.version}` : "";
       const sources = item.sources?.length ? item.sources.join(" + ") : "unknown source";
-      return `- **${item.name}${suffix}** (${item.category}, ${item.confidence}, ${sources})`;
+      const reason = item.confidenceReason ? ` - ${item.confidenceReason}` : "";
+      return `- **${item.name}${suffix}** (${item.category}, ${item.confidence}, ${sources})${reason}`;
     })
     .join("\n");
 }
@@ -87,6 +91,7 @@ function sourceReliability(report: ScanReport) {
 
   const observedSignals = [
     !report.httpOverview.error && report.httpOverview.statusCode ? `HTTP response (${report.httpOverview.statusCode})` : null,
+    !report.serverLocation.error && report.serverLocation.ip ? `Server location (${report.serverLocation.country ?? report.serverLocation.ip})` : null,
     !report.pageMetadata.error && (report.pageMetadata.title || report.pageMetadata.description) ? "Page metadata" : null,
     !report.whois.error && (report.whois.registrar || report.whois.nameServers.length > 0) ? "WHOIS registry data" : null,
     report.cookies.length > 0 ? `Cookies (${report.cookies.length})` : null,
@@ -200,6 +205,29 @@ export function generateMarkdownReport(report: ScanReport) {
       ["CDN Provider", report.httpOverview.cdnProvider],
       ["CDN Confidence", report.httpOverview.cdnConfidence],
       ["HTTP Evidence", report.httpOverview.responseEvidence?.join("; ")],
+    ]),
+    "",
+    "## Server Location",
+    "",
+    table([
+      ["IP", report.serverLocation.ip],
+      ["Resolved IP", report.serverLocation.resolvedIp],
+      ["City", [report.serverLocation.postal, report.serverLocation.city, report.serverLocation.region].filter(Boolean).join(", ")],
+      ["Country", report.serverLocation.countryCode ? `${report.serverLocation.country} (${report.serverLocation.countryCode})` : report.serverLocation.country],
+      ["Timezone", report.serverLocation.timezone],
+      ["Country Languages", report.serverLocation.languages?.join(", ")],
+      ["Country Currency", report.serverLocation.currencyCode ? `${report.serverLocation.currency} (${report.serverLocation.currencyCode})` : report.serverLocation.currency],
+      ["Coordinates", report.serverLocation.latitude !== undefined && report.serverLocation.longitude !== undefined ? `${report.serverLocation.latitude}, ${report.serverLocation.longitude}` : undefined],
+      ["Organization", report.serverLocation.organization],
+      ["ASN", report.serverLocation.asn],
+      ["Source", report.serverLocation.source],
+      ["Location Confidence", report.serverLocation.locationConfidence],
+      ["Network Role", report.serverLocation.networkRole],
+      ["Network Provider", report.serverLocation.networkProvider],
+      ["Accuracy Note", report.serverLocation.accuracyNote],
+      ["Network Evidence", report.serverLocation.networkEvidence?.join("; ")],
+      ["Evidence", report.serverLocation.locationEvidence?.join("; ")],
+      ["Error", report.serverLocation.error],
     ]),
     "",
     "## DNS And Email",

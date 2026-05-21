@@ -15,6 +15,13 @@ FindingSeverity = Literal["info", "low", "medium", "high"]
 FindingStatus   = Literal["pass", "warning", "fail", "info"]
 FindingConfidence = Literal["verified", "observed", "inferred", "best-practice"]
 FindingSource = Literal["dns", "tls", "headers", "http", "html", "cookie", "whois", "scanner"]
+FindingClassification = Literal[
+    "verified-issue",
+    "observed-risk",
+    "hardening-recommendation",
+    "investigation-lead",
+    "informational",
+]
 FindingCategory = Literal[
     "DNS", "SSL", "Headers", "WHOIS",
     "Tech Stack", "Cookies", "Security.txt", "Screenshot",
@@ -34,6 +41,9 @@ class Finding(_Base):
     confidence:     FindingConfidence = "best-practice"
     source:         FindingSource = "scanner"
     evidence:       list[str] = []
+    analysis:       Optional[str] = None
+    verification:   Optional[str] = None
+    classification: Optional[FindingClassification] = None
 
 
 # ── DNS ───────────────────────────────────────────────────────────
@@ -156,6 +166,33 @@ class HttpOverviewResult(_Base):
     error:           Optional[str] = None
 
 
+class ServerLocationResult(_Base):
+    ip:             Optional[str] = None
+    resolvedIp:     Optional[str] = None
+    city:           Optional[str] = None
+    region:         Optional[str] = None
+    postal:         Optional[str] = None
+    country:        Optional[str] = None
+    countryCode:    Optional[str] = None
+    timezone:       Optional[str] = None
+    languages:      list[str] = []
+    currency:       Optional[str] = None
+    currencyCode:   Optional[str] = None
+    latitude:       Optional[float] = None
+    longitude:      Optional[float] = None
+    organization:   Optional[str] = None
+    isp:            Optional[str] = None
+    asn:            Optional[int] = None
+    source:         Optional[str] = None
+    locationConfidence: Optional[TechConfidence] = None
+    networkRole:    Optional[str] = None
+    networkProvider: Optional[str] = None
+    accuracyNote:   Optional[str] = None
+    networkEvidence: list[str] = []
+    locationEvidence: list[str] = []
+    error:          Optional[str] = None
+
+
 class PageMetadataResult(_Base):
     title:          Optional[str] = None
     description:    Optional[str] = None
@@ -227,6 +264,7 @@ class TechStackItem(_Base):
     version:    Optional[str] = None
     sources:    list[str] = []
     evidence:   list[str] = []
+    confidenceReason: Optional[str] = None
 
 
 # ── Cookies ───────────────────────────────────────────────────────
@@ -302,6 +340,7 @@ class ScanReport(_Base):
     ssl:           SslResult        = SslResult()
     headers:       HeadersResult    = HeadersResult()
     httpOverview:  HttpOverviewResult = HttpOverviewResult()
+    serverLocation: ServerLocationResult = ServerLocationResult()
     pageMetadata:  PageMetadataResult = PageMetadataResult()
     siteDiscovery: SiteDiscoveryResult = SiteDiscoveryResult()
     whois:         WhoisResult      = WhoisResult()

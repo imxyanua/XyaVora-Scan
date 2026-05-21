@@ -9,6 +9,12 @@ export type FindingSeverity = "info" | "low" | "medium" | "high";
 export type FindingStatus   = "pass" | "warning" | "fail" | "info";
 export type FindingConfidence = "verified" | "observed" | "inferred" | "best-practice";
 export type FindingSource = "dns" | "tls" | "headers" | "http" | "html" | "cookie" | "whois" | "scanner";
+export type FindingClassification =
+  | "verified-issue"
+  | "observed-risk"
+  | "hardening-recommendation"
+  | "investigation-lead"
+  | "informational";
 export type FindingCategory =
   | "DNS"
   | "SSL"
@@ -40,6 +46,9 @@ export interface Finding {
   confidence?:    FindingConfidence;
   source?:        FindingSource;
   evidence?:      string[];
+  analysis?:      string;
+  verification?:  string;
+  classification?: FindingClassification;
 }
 
 // ── DNS ──────────────────────────────────────
@@ -158,6 +167,33 @@ export interface HttpOverviewResult {
   error?:         string;
 }
 
+export interface ServerLocationResult {
+  ip?:               string;
+  resolvedIp?:       string;
+  city?:             string;
+  region?:           string;
+  postal?:           string;
+  country?:          string;
+  countryCode?:      string;
+  timezone?:         string;
+  languages:         string[];
+  currency?:         string;
+  currencyCode?:     string;
+  latitude?:         number;
+  longitude?:        number;
+  organization?:     string;
+  isp?:              string;
+  asn?:              number;
+  source?:           string;
+  locationConfidence?: "high" | "medium" | "low";
+  networkRole?:      string;
+  networkProvider?:  string;
+  accuracyNote?:     string;
+  networkEvidence:   string[];
+  locationEvidence:  string[];
+  error?:            string;
+}
+
 export interface PageMetadataResult {
   title?:         string;
   description?:   string;
@@ -233,6 +269,7 @@ export interface TechStackItem {
   version?:   string;
   sources?:   string[];
   evidence?:  string[];
+  confidenceReason?: string;
 }
 
 // ── Cookies ──────────────────────────────────
@@ -303,6 +340,7 @@ export interface ScanReport {
   ssl:           SslResult;
   headers:       HeadersResult;
   httpOverview:  HttpOverviewResult;
+  serverLocation: ServerLocationResult;
   pageMetadata:  PageMetadataResult;
   siteDiscovery: SiteDiscoveryResult;
   whois:         WhoisResult;

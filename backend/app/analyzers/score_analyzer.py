@@ -34,17 +34,35 @@ _WARN_DEDUCTIONS: dict[str, int] = {
     "security_txt_no_contact":1,
 }
 
+_CONFIDENCE_WEIGHT: dict[str, float] = {
+    "verified": 1.0,
+    "observed": 1.0,
+    "best-practice": 0.6,
+    "inferred": 0.5,
+}
+
+
+def _finding_key(finding: Finding) -> str:
+    return finding.id.replace("f-", "").replace("-", "_")
+
+
+def _weighted_deduction(finding: Finding, table: dict[str, int]) -> int:
+    base = table.get(_finding_key(finding), 0)
+    if base == 0:
+        return 0
+
+    confidence = getattr(finding, "confidence", "observed")
+    weight = _CONFIDENCE_WEIGHT.get(confidence, 1.0)
+    return max(1, round(base * weight))
+
 
 def compute_score(findings: list[Finding]) -> tuple[int, RiskGrade, RiskStatus, str]:
     """
     Derives score from findings rather than from individual analyzer fields
     so the scoring logic stays in one place and is easy to adjust.
     """
-    def _key(f: Finding) -> str:
-        return f.id.replace("f-", "").replace("-", "_")
-
-    deduction = sum(_DEDUCTIONS.get(_key(f), 0) for f in findings if f.status == "fail")
-    deduction += sum(_WARN_DEDUCTIONS.get(_key(f), 0) for f in findings if f.status == "warning")
+    deduction = sum(_weighted_deduction(f, _DEDUCTIONS) for f in findings if f.status == "fail")
+    deduction += sum(_weighted_deduction(f, _WARN_DEDUCTIONS) for f in findings if f.status == "warning")
     # Cap deduction at 100 to avoid negative scores
     score = max(0, 100 - deduction)
 
@@ -66,9 +84,11 @@ def compute_score(findings: list[Finding]) -> tuple[int, RiskGrade, RiskStatus, 
 
     fail_count = sum(1 for f in findings if f.status == "fail")
     warn_count = sum(1 for f in findings if f.status == "warning")
+    best_practice_count = sum(1 for f in findings if getattr(f, "confidence", None) == "best-practice")
     summary = (
-        f"Found {fail_count} failed check(s) and {warn_count} review item(s). "
-        f"Risk grade: {grade} ({score}/100)."
+        f"Found {fail_count} failed check(s), {warn_count} review observation(s), "
+        f"and {best_practice_count} best-practice observation(s). "
+        f"Risk grade: {grade} ({score}/100). Findings are posture observations, not proof of exploitation."
     )
 
     return score, grade, status, summary

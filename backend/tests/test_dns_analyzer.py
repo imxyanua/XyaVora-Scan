@@ -95,19 +95,26 @@ def test_email_security_confidence_medium_when_records_exist_but_not_enforced():
 
 def test_build_findings_missing_both():
     result = DnsResult(spfDetected=False, dmarcDetected=False)
-    findings = _build_findings(result, None)
+    findings = _build_findings(result, None, "example.com")
     ids = [f.id for f in findings]
     assert "missing_spf" in ids
     assert "missing_dmarc" in ids
     assert all(f.status == "fail" for f in findings)
+    spf = next(f for f in findings if f.id == "missing_spf")
+    dmarc = next(f for f in findings if f.id == "missing_dmarc")
+    assert "dig TXT example.com" in spf.verification
+    assert "dig TXT _dmarc.example.com" in dmarc.verification
 
 
 def test_build_findings_dmarc_none_policy():
     result = DnsResult(spfDetected=True, dmarcDetected=True, dmarcPolicy="none")
-    findings = _build_findings(result, "v=DMARC1; p=none")
+    findings = _build_findings(result, "v=DMARC1; p=none", "example.com")
     ids = [f.id for f in findings]
     assert "dmarc_not_strict" in ids
     assert findings[0].status == "warning"
+    finding = next(f for f in findings if f.id == "dmarc_not_strict")
+    assert "p= tag is set to none" in finding.analysis
+    assert "dig TXT _dmarc.example.com" in finding.verification
 
 
 def test_build_findings_all_good():

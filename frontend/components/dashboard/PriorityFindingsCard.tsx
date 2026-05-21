@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useCallback } from "react";
-import type { Finding, FindingConfidence, FindingSeverity, FindingSource, FindingStatus } from "@/types";
+import type { Finding, FindingClassification, FindingConfidence, FindingSeverity, FindingSource, FindingStatus } from "@/types";
 import { FindingDrawer } from "./FindingDrawer";
 
 interface Props {
@@ -54,6 +54,14 @@ const SOURCE_LABEL: Record<FindingSource, string> = {
   scanner: "Rule",
 };
 
+const CLASSIFICATION_LABEL: Record<FindingClassification, string> = {
+  "verified-issue": "Verified issue",
+  "observed-risk": "Observed risk",
+  "hardening-recommendation": "Hardening recommendation",
+  "investigation-lead": "Investigation lead",
+  informational: "Informational",
+};
+
 function rankFinding(finding: Finding) {
   return STATUS_WEIGHT[finding.status] * 10 + SEVERITY_WEIGHT[finding.severity];
 }
@@ -89,7 +97,7 @@ export function PriorityFindingsCard({ findings }: Props) {
               Priority Observations
             </h2>
             <p className="font-mono text-[13px] text-[#d7e8ff]/70 mt-2 max-w-3xl leading-relaxed">
-              Highest-impact checks that need review. Verified transport/DNS failures are weighted above best-practice observations.
+              Highest-impact checks that need review. These are posture observations, not exploit claims. Classification and confidence show what was verified versus recommended hardening.
             </p>
           </div>
           <div className="flex gap-2 shrink-0">
@@ -131,6 +139,11 @@ export function PriorityFindingsCard({ findings }: Props) {
                       {finding.confidence && (
                         <span className="font-mono text-[10px] text-[#d7e8ff]/45">
                           {CONFIDENCE_LABEL[finding.confidence]}
+                        </span>
+                      )}
+                      {finding.classification && (
+                        <span className="font-mono text-[10px] text-status-warn/75">
+                          {CLASSIFICATION_LABEL[finding.classification]}
                         </span>
                       )}
                       {finding.source && (

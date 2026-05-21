@@ -1,6 +1,11 @@
 import pytest
 from app.services import scan_service
-from app.services.scan_service import build_evidence_summary, normalize_findings, run_scan
+from app.services.scan_service import (
+    annotate_server_location_network_context,
+    build_evidence_summary,
+    normalize_findings,
+    run_scan,
+)
 from app.analyzers.score_analyzer import compute_score
 from app.schemas.analyzer import AnalyzerResult
 from app.schemas.report import (
@@ -14,6 +19,7 @@ from app.schemas.report import (
     ScreenshotResult,
     SecurityTxtResult,
     SecurityHeaderItem,
+    ServerLocationResult,
     SslResult,
     TechStackItem,
     WhoisResult,
@@ -39,6 +45,21 @@ def test_score_single_fail():
     score, grade, status, summary = compute_score(findings)
     assert score < 100
     assert "1 failed check" in summary
+    assert "posture observations" in summary.lower()
+
+
+def test_score_best_practice_warning_is_weighted_lower_than_observed():
+    observed = Finding(
+        id="missing_csp", severity="medium", category="Headers",
+        title="Missing CSP", description="x", recommendation="x",
+        status="warning", confidence="observed", source="headers",
+    )
+    best_practice = observed.model_copy(update={"confidence": "best-practice"})
+
+    observed_score, *_ = compute_score([observed])
+    best_practice_score, *_ = compute_score([best_practice])
+
+    assert best_practice_score > observed_score
 
 
 def test_score_grade_boundaries():
@@ -133,6 +154,7 @@ def test_normalize_findings_merges_duplicate_evidence_and_strongest_confidence()
     assert len(normalized) == 1
     assert normalized[0].severity == "high"
     assert normalized[0].confidence == "observed"
+    assert normalized[0].classification == "observed-risk"
     assert normalized[0].source == "headers"
     assert normalized[0].evidence == ["header:missing", "status:200"]
 
@@ -203,6 +225,32 @@ def test_build_evidence_summary_marks_direct_and_heuristic_sources():
     assert by_module["findings"].level == "inferred"
 
 
+def test_annotate_server_location_marks_cdn_context_without_origin_claim():
+    location = ServerLocationResult(
+        ip="203.0.113.10",
+        resolvedIp="203.0.113.10",
+        city="Singapore",
+        country="Singapore",
+        locationConfidence="medium",
+        networkRole="resolved-ip",
+        locationEvidence=["ip: 203.0.113.10"],
+    )
+    http = HttpOverviewResult(
+        statusCode=200,
+        cdnProvider="Cloudflare",
+        cdnConfidence="high",
+        cdnEvidence=["cf-ray: abc"],
+    )
+
+    annotated = annotate_server_location_network_context(location, http)
+
+    assert annotated.locationConfidence == "low"
+    assert annotated.networkRole == "edge-or-proxy"
+    assert annotated.networkProvider == "Cloudflare"
+    assert "not a verified origin server" in annotated.accuracyNote
+    assert "http_cdn_evidence: cf-ray: abc" in annotated.networkEvidence
+
+
 # ── scan_service integration ──────────────────────────────────────
 
 @pytest.mark.asyncio
@@ -232,6 +280,9 @@ async def test_run_scan_force_refresh_bypasses_cache(monkeypatch):
 
     async def fake_http_overview(url: str):
         return AnalyzerResult(key="httpOverview", status="success", data=HttpOverviewResult())
+
+    async def fake_server_location(hostname: str):
+        return AnalyzerResult(key="serverLocation", status="success", data=ServerLocationResult(ip="203.0.113.10"))
 
     async def fake_page_metadata(url: str):
         return AnalyzerResult(key="pageMetadata", status="success", data=PageMetadataResult())
@@ -265,6 +316,7 @@ async def test_run_scan_force_refresh_bypasses_cache(monkeypatch):
     monkeypatch.setattr(scan_service, "analyze_ssl", fake_ssl)
     monkeypatch.setattr(scan_service, "analyze_headers", fake_headers)
     monkeypatch.setattr(scan_service, "analyze_http_overview", fake_http_overview)
+    monkeypatch.setattr(scan_service, "analyze_server_location", fake_server_location)
     monkeypatch.setattr(scan_service, "analyze_page_metadata", fake_page_metadata)
     monkeypatch.setattr(scan_service, "analyze_site_discovery", fake_site_discovery)
     monkeypatch.setattr(scan_service, "analyze_whois", fake_whois)

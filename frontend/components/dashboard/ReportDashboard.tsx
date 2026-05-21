@@ -18,6 +18,7 @@ import { PageMetadataCard }     from "@/components/dashboard/PageMetadataCard";
 import { RedirectsCard }        from "@/components/dashboard/RedirectsCard";
 import { ServerInfoCard }       from "@/components/dashboard/ServerInfoCard";
 import { SiteDiscoveryCard }    from "@/components/dashboard/SiteDiscoveryCard";
+import { ServerLocationCard }   from "@/components/dashboard/ServerLocationCard";
 import { DNSRecordsCard }       from "@/components/dashboard/DNSRecordsCard";
 import { EmailSecurityCard }    from "@/components/dashboard/EmailSecurityCard";
 import { WhoisCard }            from "@/components/dashboard/WhoisCard";
@@ -198,6 +199,9 @@ export function ReportDashboard({ domain, report, historyId, guestScanId }: Prop
 
         <ReportSection id="network" title="Network And Discovery" detail="dns, mail posture, ownership, crawler hints">
           <BalancedGrid minWidth="360px">
+            <BalancedItem>
+              <ServerLocationCard location={report.serverLocation} />
+            </BalancedItem>
             <BalancedItem>
               <EmailSecurityCard dns={report.dns} />
             </BalancedItem>

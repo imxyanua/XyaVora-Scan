@@ -119,6 +119,11 @@ def _response_evidence(
     return evidence
 
 
+def _http_verification(final_url: str | None = None) -> str:
+    target = final_url or "<final-url>"
+    return f"Run curl -I -L {target} and compare the final status, redirect chain, and response headers."
+
+
 def _build_findings(result: HttpOverviewResult) -> list[Finding]:
     findings: list[Finding] = []
 
@@ -135,6 +140,8 @@ def _build_findings(result: HttpOverviewResult) -> list[Finding]:
             confidence="observed",
             source="http",
             evidence=result.responseEvidence,
+            analysis="The scanner followed the redirect chain and observed a final HTTP status in the 5xx range.",
+            verification=_http_verification(result.finalUrl),
         ))
     elif result.statusCode >= 400:
         findings.append(Finding(
@@ -149,6 +156,8 @@ def _build_findings(result: HttpOverviewResult) -> list[Finding]:
             confidence="observed",
             source="http",
             evidence=result.responseEvidence,
+            analysis="The scanner followed the redirect chain and observed a final HTTP status in the 4xx range.",
+            verification=_http_verification(result.finalUrl),
         ))
 
     if result.hostChanged:
@@ -167,6 +176,8 @@ def _build_findings(result: HttpOverviewResult) -> list[Finding]:
                 *[f"{hop.statusCode}: {hop.fromUrl} -> {hop.toUrl}" for hop in result.redirectHops],
                 *result.responseEvidence,
             ],
+            analysis="The final response host differs from the original input host after redirects.",
+            verification=_http_verification(result.finalUrl),
         ))
 
     return findings

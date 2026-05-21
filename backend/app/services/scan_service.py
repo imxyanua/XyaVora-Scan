@@ -8,12 +8,15 @@ from app.schemas.report import (
     ScanReport, DnsResult, SslResult, HeadersResult, Finding,
     HttpOverviewResult, PageMetadataResult, SiteDiscoveryResult,
     WhoisResult, SecurityTxtResult, ScreenshotResult, EvidenceSummaryItem,
+    ServerLocationResult,
+    FindingClassification,
 )
 from app.schemas.analyzer import AnalyzerResult
 from app.analyzers.dns_analyzer         import analyze_dns
 from app.analyzers.ssl_analyzer         import analyze_ssl
 from app.analyzers.headers_analyzer     import analyze_headers
 from app.analyzers.http_overview_analyzer import analyze_http_overview
+from app.analyzers.server_location_analyzer import analyze_server_location
 from app.analyzers.page_metadata_analyzer import analyze_page_metadata
 from app.analyzers.site_discovery_analyzer import analyze_site_discovery
 from app.analyzers.whois_analyzer       import analyze_whois
@@ -78,6 +81,18 @@ def _merge_finding_evidence(primary: Finding, secondary: Finding) -> Finding:
     return merged
 
 
+def classify_finding(finding: Finding) -> FindingClassification:
+    if finding.status in {"pass", "info"}:
+        return "informational"
+    if finding.confidence == "verified":
+        return "verified-issue"
+    if finding.confidence == "observed":
+        return "observed-risk"
+    if finding.confidence == "inferred":
+        return "investigation-lead"
+    return "hardening-recommendation"
+
+
 def is_cached(hostname: str) -> bool:
     entry = _SCAN_CACHE.get(hostname)
     return bool(entry and time.monotonic() < entry[1])
@@ -117,7 +132,7 @@ def normalize_findings(findings: list[Finding]) -> list[Finding]:
         else:
             deduped[key] = _merge_finding_evidence(existing, finding)
 
-    return sorted(
+    sorted_findings = sorted(
         deduped.values(),
         key=lambda finding: (
             _STATUS_PRIORITY[finding.status],
@@ -126,10 +141,50 @@ def normalize_findings(findings: list[Finding]) -> list[Finding]:
             finding.title.lower(),
         ),
     )
+    return [
+        finding.model_copy(update={"classification": finding.classification or classify_finding(finding)})
+        for finding in sorted_findings
+    ]
 
 
 def _tech_is_asset_only(sources: list[str]) -> bool:
     return bool(sources) and all(source in {"asset-url", "asset-body"} for source in sources)
+
+
+def annotate_server_location_network_context(
+    location: ServerLocationResult,
+    http_overview: HttpOverviewResult,
+) -> ServerLocationResult:
+    """
+    Adds HTTP-observed CDN context to IP geolocation without claiming origin
+    server placement. IP geolocation describes the resolved address only.
+    """
+    if location.error or not location.ip or not http_overview.cdnProvider:
+        return location
+
+    updated = location.model_copy(deep=True)
+    provider = http_overview.cdnProvider
+    evidence = [
+        f"http_cdn_provider: {provider}",
+        *[f"http_cdn_evidence: {item}" for item in http_overview.cdnEvidence],
+    ]
+
+    updated.networkProvider = updated.networkProvider or provider
+    updated.networkRole = "edge-or-proxy"
+    updated.locationConfidence = "low"
+    updated.accuracyNote = (
+        f"HTTP response indicates {provider}; location likely describes a CDN/edge node, "
+        "not a verified origin server."
+    )
+    updated.networkEvidence = _merge_unique([*updated.networkEvidence, *evidence])
+    updated.locationEvidence = _merge_unique([
+        *updated.locationEvidence,
+        f"network_role: {updated.networkRole}",
+        f"network_provider: {updated.networkProvider}",
+        f"accuracy_note: {updated.accuracyNote}",
+        *evidence,
+    ])
+    return updated
 
 
 def build_evidence_summary(report: ScanReport) -> list[EvidenceSummaryItem]:
@@ -228,6 +283,26 @@ def build_evidence_summary(report: ScanReport) -> list[EvidenceSummaryItem]:
         )
     else:
         add("http", "HTTP Response", "unavailable", "No HTTP response status captured", "http")
+
+    if report.serverLocation.error:
+        add("serverLocation", "Server Location", "error", report.serverLocation.error, "http")
+    elif report.serverLocation.ip:
+        location_bits = [
+            value for value in (report.serverLocation.city, report.serverLocation.region, report.serverLocation.country)
+            if value
+        ]
+        level: EvidenceLevelValue = "inferred" if report.serverLocation.networkRole == "edge-or-proxy" else "observed"
+        add(
+            "serverLocation",
+            "Server Location",
+            level,
+            ", ".join(location_bits) if location_bits else report.serverLocation.ip,
+            "http",
+            report.serverLocation.locationConfidence or "medium",
+            [*report.serverLocation.locationEvidence, *report.serverLocation.networkEvidence],
+        )
+    else:
+        add("serverLocation", "Server Location", "unavailable", "No IP geolocation data captured", "http")
 
     if report.whois.error:
         add("whois", "WHOIS", "error", report.whois.error, "whois")
@@ -351,12 +426,13 @@ async def run_scan(
     if cached is not None:
         return cached
     async def _pipeline() -> ScanReport:
-        dns_r, ssl_r, headers_r, http_r, meta_r, discovery_r, whois_r, tech_r, cookies_r, sectxt_r, shot_r = (
+        dns_r, ssl_r, headers_r, http_r, location_r, meta_r, discovery_r, whois_r, tech_r, cookies_r, sectxt_r, shot_r = (
             await asyncio.gather(
                 _run(analyze_dns(hostname)),
                 _run(analyze_ssl(hostname)),
                 _run(analyze_headers(normalized_url)),
                 _run(analyze_http_overview(normalized_url)),
+                _run(analyze_server_location(hostname)),
                 _run(analyze_page_metadata(normalized_url)),
                 _run(analyze_site_discovery(normalized_url)),
                 _run(analyze_whois(hostname)),
@@ -371,7 +447,7 @@ async def run_scan(
         # Collect all findings from every analyzer
         all_findings = normalize_findings([
             f
-            for result in (dns_r, ssl_r, headers_r, http_r, meta_r, discovery_r, whois_r, tech_r, cookies_r, sectxt_r, shot_r)
+            for result in (dns_r, ssl_r, headers_r, http_r, location_r, meta_r, discovery_r, whois_r, tech_r, cookies_r, sectxt_r, shot_r)
             for f in result.findings
         ])
 
@@ -381,6 +457,14 @@ async def run_scan(
 
         def _err(r: AnalyzerResult) -> str | None:
             return r.errors[0] if r.errors else "Analyzer failed"
+
+        http_overview = http_r.data if isinstance(http_r.data, HttpOverviewResult) else HttpOverviewResult(error=_err(http_r))
+        server_location = (
+            location_r.data
+            if isinstance(location_r.data, ServerLocationResult)
+            else ServerLocationResult(error=_err(location_r))
+        )
+        server_location = annotate_server_location_network_context(server_location, http_overview)
 
         report = ScanReport(
             target=target,
@@ -394,7 +478,8 @@ async def run_scan(
             dns=dns_r.data           if isinstance(dns_r.data, DnsResult)           else DnsResult(error=_err(dns_r)),
             ssl=ssl_r.data           if isinstance(ssl_r.data, SslResult)           else SslResult(error=_err(ssl_r)),
             headers=headers_r.data   if isinstance(headers_r.data, HeadersResult)   else HeadersResult(error=_err(headers_r)),
-            httpOverview=http_r.data if isinstance(http_r.data, HttpOverviewResult) else HttpOverviewResult(error=_err(http_r)),
+            httpOverview=http_overview,
+            serverLocation=server_location,
             pageMetadata=meta_r.data if isinstance(meta_r.data, PageMetadataResult) else PageMetadataResult(error=_err(meta_r)),
             siteDiscovery=discovery_r.data if isinstance(discovery_r.data, SiteDiscoveryResult) else SiteDiscoveryResult(error=_err(discovery_r)),
             whois=whois_r.data       if isinstance(whois_r.data, WhoisResult)       else WhoisResult(error=_err(whois_r)),

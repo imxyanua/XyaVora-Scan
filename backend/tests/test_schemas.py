@@ -42,6 +42,7 @@ def test_scan_report_camel_case_json():
     assert "techStack" in data
     assert "securityTxt" in data
     assert "httpOverview" in data
+    assert "serverLocation" in data
     assert "pageMetadata" in data
     assert "siteDiscovery" in data
     assert "evidenceSummary" in data
