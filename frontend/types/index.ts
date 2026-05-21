@@ -160,6 +160,27 @@ export interface HttpOverviewResult {
   error?:         string;
 }
 
+export interface ServerLocationResult {
+  ip?:               string;
+  city?:             string;
+  region?:           string;
+  postal?:           string;
+  country?:          string;
+  countryCode?:      string;
+  timezone?:         string;
+  languages:         string[];
+  currency?:         string;
+  currencyCode?:     string;
+  latitude?:         number;
+  longitude?:        number;
+  organization?:     string;
+  isp?:              string;
+  asn?:              number;
+  source?:           string;
+  locationEvidence:  string[];
+  error?:            string;
+}
+
 export interface PageMetadataResult {
   title?:         string;
   description?:   string;
@@ -305,6 +326,7 @@ export interface ScanReport {
   ssl:           SslResult;
   headers:       HeadersResult;
   httpOverview:  HttpOverviewResult;
+  serverLocation: ServerLocationResult;
   pageMetadata:  PageMetadataResult;
   siteDiscovery: SiteDiscoveryResult;
   whois:         WhoisResult;

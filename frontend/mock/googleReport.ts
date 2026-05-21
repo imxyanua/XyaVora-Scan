@@ -146,6 +146,32 @@ export const mockGoogleReport: ScanReport = {
     responseEvidence: ["status_code: 200", "final_url: https://www.google.com/", "redirect_count: 1", "response_time_ms: 142", "bytes_read: 18432"],
   },
 
+  serverLocation: {
+    ip: "142.250.190.78",
+    city: "Mountain View",
+    region: "California",
+    postal: "94043",
+    country: "United States",
+    countryCode: "US",
+    timezone: "America/Los_Angeles",
+    languages: ["English"],
+    currency: "US Dollar",
+    currencyCode: "USD",
+    latitude: 37.386,
+    longitude: -122.0838,
+    organization: "Google LLC",
+    isp: "Google LLC",
+    asn: 15169,
+    source: "https://ipwho.is",
+    locationEvidence: [
+      "ip: 142.250.190.78",
+      "city: Mountain View",
+      "country: United States",
+      "timezone: America/Los_Angeles",
+      "coordinates: 37.386,-122.0838",
+    ],
+  },
+
   pageMetadata: {
     title:         "Google",
     description:   "Search the world's information, including webpages, images, videos and more.",

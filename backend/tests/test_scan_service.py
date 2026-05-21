@@ -14,6 +14,7 @@ from app.schemas.report import (
     ScreenshotResult,
     SecurityTxtResult,
     SecurityHeaderItem,
+    ServerLocationResult,
     SslResult,
     TechStackItem,
     WhoisResult,
@@ -248,6 +249,9 @@ async def test_run_scan_force_refresh_bypasses_cache(monkeypatch):
     async def fake_http_overview(url: str):
         return AnalyzerResult(key="httpOverview", status="success", data=HttpOverviewResult())
 
+    async def fake_server_location(hostname: str):
+        return AnalyzerResult(key="serverLocation", status="success", data=ServerLocationResult(ip="203.0.113.10"))
+
     async def fake_page_metadata(url: str):
         return AnalyzerResult(key="pageMetadata", status="success", data=PageMetadataResult())
 
@@ -280,6 +284,7 @@ async def test_run_scan_force_refresh_bypasses_cache(monkeypatch):
     monkeypatch.setattr(scan_service, "analyze_ssl", fake_ssl)
     monkeypatch.setattr(scan_service, "analyze_headers", fake_headers)
     monkeypatch.setattr(scan_service, "analyze_http_overview", fake_http_overview)
+    monkeypatch.setattr(scan_service, "analyze_server_location", fake_server_location)
     monkeypatch.setattr(scan_service, "analyze_page_metadata", fake_page_metadata)
     monkeypatch.setattr(scan_service, "analyze_site_discovery", fake_site_discovery)
     monkeypatch.setattr(scan_service, "analyze_whois", fake_whois)

@@ -158,6 +158,27 @@ class HttpOverviewResult(_Base):
     error:           Optional[str] = None
 
 
+class ServerLocationResult(_Base):
+    ip:             Optional[str] = None
+    city:           Optional[str] = None
+    region:         Optional[str] = None
+    postal:         Optional[str] = None
+    country:        Optional[str] = None
+    countryCode:    Optional[str] = None
+    timezone:       Optional[str] = None
+    languages:      list[str] = []
+    currency:       Optional[str] = None
+    currencyCode:   Optional[str] = None
+    latitude:       Optional[float] = None
+    longitude:      Optional[float] = None
+    organization:   Optional[str] = None
+    isp:            Optional[str] = None
+    asn:            Optional[int] = None
+    source:         Optional[str] = None
+    locationEvidence: list[str] = []
+    error:          Optional[str] = None
+
+
 class PageMetadataResult(_Base):
     title:          Optional[str] = None
     description:    Optional[str] = None
@@ -304,6 +325,7 @@ class ScanReport(_Base):
     ssl:           SslResult        = SslResult()
     headers:       HeadersResult    = HeadersResult()
     httpOverview:  HttpOverviewResult = HttpOverviewResult()
+    serverLocation: ServerLocationResult = ServerLocationResult()
     pageMetadata:  PageMetadataResult = PageMetadataResult()
     siteDiscovery: SiteDiscoveryResult = SiteDiscoveryResult()
     whois:         WhoisResult      = WhoisResult()

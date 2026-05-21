@@ -8,12 +8,14 @@ from app.schemas.report import (
     ScanReport, DnsResult, SslResult, HeadersResult, Finding,
     HttpOverviewResult, PageMetadataResult, SiteDiscoveryResult,
     WhoisResult, SecurityTxtResult, ScreenshotResult, EvidenceSummaryItem,
+    ServerLocationResult,
 )
 from app.schemas.analyzer import AnalyzerResult
 from app.analyzers.dns_analyzer         import analyze_dns
 from app.analyzers.ssl_analyzer         import analyze_ssl
 from app.analyzers.headers_analyzer     import analyze_headers
 from app.analyzers.http_overview_analyzer import analyze_http_overview
+from app.analyzers.server_location_analyzer import analyze_server_location
 from app.analyzers.page_metadata_analyzer import analyze_page_metadata
 from app.analyzers.site_discovery_analyzer import analyze_site_discovery
 from app.analyzers.whois_analyzer       import analyze_whois
@@ -229,6 +231,25 @@ def build_evidence_summary(report: ScanReport) -> list[EvidenceSummaryItem]:
     else:
         add("http", "HTTP Response", "unavailable", "No HTTP response status captured", "http")
 
+    if report.serverLocation.error:
+        add("serverLocation", "Server Location", "error", report.serverLocation.error, "http")
+    elif report.serverLocation.ip:
+        location_bits = [
+            value for value in (report.serverLocation.city, report.serverLocation.region, report.serverLocation.country)
+            if value
+        ]
+        add(
+            "serverLocation",
+            "Server Location",
+            "observed",
+            ", ".join(location_bits) if location_bits else report.serverLocation.ip,
+            "http",
+            "medium",
+            report.serverLocation.locationEvidence,
+        )
+    else:
+        add("serverLocation", "Server Location", "unavailable", "No IP geolocation data captured", "http")
+
     if report.whois.error:
         add("whois", "WHOIS", "error", report.whois.error, "whois")
     elif report.whois.registrar or report.whois.nameServers:
@@ -351,12 +372,13 @@ async def run_scan(
     if cached is not None:
         return cached
     async def _pipeline() -> ScanReport:
-        dns_r, ssl_r, headers_r, http_r, meta_r, discovery_r, whois_r, tech_r, cookies_r, sectxt_r, shot_r = (
+        dns_r, ssl_r, headers_r, http_r, location_r, meta_r, discovery_r, whois_r, tech_r, cookies_r, sectxt_r, shot_r = (
             await asyncio.gather(
                 _run(analyze_dns(hostname)),
                 _run(analyze_ssl(hostname)),
                 _run(analyze_headers(normalized_url)),
                 _run(analyze_http_overview(normalized_url)),
+                _run(analyze_server_location(hostname)),
                 _run(analyze_page_metadata(normalized_url)),
                 _run(analyze_site_discovery(normalized_url)),
                 _run(analyze_whois(hostname)),
@@ -371,7 +393,7 @@ async def run_scan(
         # Collect all findings from every analyzer
         all_findings = normalize_findings([
             f
-            for result in (dns_r, ssl_r, headers_r, http_r, meta_r, discovery_r, whois_r, tech_r, cookies_r, sectxt_r, shot_r)
+            for result in (dns_r, ssl_r, headers_r, http_r, location_r, meta_r, discovery_r, whois_r, tech_r, cookies_r, sectxt_r, shot_r)
             for f in result.findings
         ])
 
@@ -395,6 +417,7 @@ async def run_scan(
             ssl=ssl_r.data           if isinstance(ssl_r.data, SslResult)           else SslResult(error=_err(ssl_r)),
             headers=headers_r.data   if isinstance(headers_r.data, HeadersResult)   else HeadersResult(error=_err(headers_r)),
             httpOverview=http_r.data if isinstance(http_r.data, HttpOverviewResult) else HttpOverviewResult(error=_err(http_r)),
+            serverLocation=location_r.data if isinstance(location_r.data, ServerLocationResult) else ServerLocationResult(error=_err(location_r)),
             pageMetadata=meta_r.data if isinstance(meta_r.data, PageMetadataResult) else PageMetadataResult(error=_err(meta_r)),
             siteDiscovery=discovery_r.data if isinstance(discovery_r.data, SiteDiscoveryResult) else SiteDiscoveryResult(error=_err(discovery_r)),
             whois=whois_r.data       if isinstance(whois_r.data, WhoisResult)       else WhoisResult(error=_err(whois_r)),
