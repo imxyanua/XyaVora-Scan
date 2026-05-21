@@ -148,6 +148,7 @@ export const mockGoogleReport: ScanReport = {
 
   serverLocation: {
     ip: "142.250.190.78",
+    resolvedIp: "142.250.190.78",
     city: "Mountain View",
     region: "California",
     postal: "94043",
@@ -163,12 +164,21 @@ export const mockGoogleReport: ScanReport = {
     isp: "Google LLC",
     asn: 15169,
     source: "https://ipwho.is",
+    locationConfidence: "medium",
+    networkRole: "resolved-ip",
+    networkProvider: undefined,
+    accuracyNote: "IP geolocation is approximate and describes the DNS-resolved IP address, not a verified physical origin server.",
+    networkEvidence: [],
     locationEvidence: [
+      "resolved_ip: 142.250.190.78",
       "ip: 142.250.190.78",
       "city: Mountain View",
       "country: United States",
       "timezone: America/Los_Angeles",
       "coordinates: 37.386,-122.0838",
+      "location_confidence: medium",
+      "network_role: resolved-ip",
+      "accuracy_note: IP geolocation is approximate and describes the DNS-resolved IP address, not a verified physical origin server.",
     ],
   },
 

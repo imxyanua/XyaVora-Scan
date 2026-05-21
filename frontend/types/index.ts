@@ -162,6 +162,7 @@ export interface HttpOverviewResult {
 
 export interface ServerLocationResult {
   ip?:               string;
+  resolvedIp?:       string;
   city?:             string;
   region?:           string;
   postal?:           string;
@@ -177,6 +178,11 @@ export interface ServerLocationResult {
   isp?:              string;
   asn?:              number;
   source?:           string;
+  locationConfidence?: "high" | "medium" | "low";
+  networkRole?:      string;
+  networkProvider?:  string;
+  accuracyNote?:     string;
+  networkEvidence:   string[];
   locationEvidence:  string[];
   error?:            string;
 }

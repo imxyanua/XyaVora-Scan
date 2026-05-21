@@ -1,6 +1,11 @@
 import pytest
 from app.services import scan_service
-from app.services.scan_service import build_evidence_summary, normalize_findings, run_scan
+from app.services.scan_service import (
+    annotate_server_location_network_context,
+    build_evidence_summary,
+    normalize_findings,
+    run_scan,
+)
 from app.analyzers.score_analyzer import compute_score
 from app.schemas.analyzer import AnalyzerResult
 from app.schemas.report import (
@@ -217,6 +222,32 @@ def test_build_evidence_summary_marks_direct_and_heuristic_sources():
     assert by_module["tls"].confidence == "high"
     assert by_module["techStack"].level == "inferred"
     assert by_module["findings"].level == "inferred"
+
+
+def test_annotate_server_location_marks_cdn_context_without_origin_claim():
+    location = ServerLocationResult(
+        ip="203.0.113.10",
+        resolvedIp="203.0.113.10",
+        city="Singapore",
+        country="Singapore",
+        locationConfidence="medium",
+        networkRole="resolved-ip",
+        locationEvidence=["ip: 203.0.113.10"],
+    )
+    http = HttpOverviewResult(
+        statusCode=200,
+        cdnProvider="Cloudflare",
+        cdnConfidence="high",
+        cdnEvidence=["cf-ray: abc"],
+    )
+
+    annotated = annotate_server_location_network_context(location, http)
+
+    assert annotated.locationConfidence == "low"
+    assert annotated.networkRole == "edge-or-proxy"
+    assert annotated.networkProvider == "Cloudflare"
+    assert "not a verified origin server" in annotated.accuracyNote
+    assert "http_cdn_evidence: cf-ray: abc" in annotated.networkEvidence
 
 
 # ── scan_service integration ──────────────────────────────────────

@@ -160,6 +160,7 @@ class HttpOverviewResult(_Base):
 
 class ServerLocationResult(_Base):
     ip:             Optional[str] = None
+    resolvedIp:     Optional[str] = None
     city:           Optional[str] = None
     region:         Optional[str] = None
     postal:         Optional[str] = None
@@ -175,6 +176,11 @@ class ServerLocationResult(_Base):
     isp:            Optional[str] = None
     asn:            Optional[int] = None
     source:         Optional[str] = None
+    locationConfidence: Optional[TechConfidence] = None
+    networkRole:    Optional[str] = None
+    networkProvider: Optional[str] = None
+    accuracyNote:   Optional[str] = None
+    networkEvidence: list[str] = []
     locationEvidence: list[str] = []
     error:          Optional[str] = None
 

@@ -45,6 +45,12 @@ function Row({ label, value }: { label: string; value?: string | number | null }
   );
 }
 
+const CONFIDENCE_STYLE = {
+  high: "border-primary-fixed/40 text-primary-fixed bg-primary-fixed/10",
+  medium: "border-status-warn/45 text-status-warn bg-status-warn/10",
+  low: "border-status-warn/60 text-status-warn bg-status-warn/10",
+};
+
 function WorldMap({ location }: { location: ServerLocationResult }) {
   const marker = coordinateToPercent(location.latitude, location.longitude);
 
@@ -128,20 +134,31 @@ export function ServerLocationCard({ location }: Props) {
     : location.currency || location.currencyCode;
   const detailItems = [
     { label: "IP", value: location.ip },
+    { label: "Resolved IP", value: location.resolvedIp },
     { label: "City", value: cityLine },
     { label: "Region", value: location.region },
     { label: "Country", value: location.countryCode ? `${location.country} (${location.countryCode})` : location.country },
     { label: "Timezone", value: location.timezone },
-    { label: "Languages", value: location.languages?.join(", ") },
-    { label: "Currency", value: currency },
+    { label: "Country Languages", value: location.languages?.join(", ") },
+    { label: "Country Currency", value: currency },
     { label: "Latitude", value: location.latitude },
     { label: "Longitude", value: location.longitude },
     { label: "Organization", value: location.organization },
     { label: "ISP", value: location.isp },
     { label: "ASN", value: location.asn },
     { label: "Source", value: location.source },
+    { label: "Confidence", value: location.locationConfidence },
+    { label: "Network Role", value: location.networkRole },
+    { label: "Network Provider", value: location.networkProvider },
+    { label: "Accuracy Note", value: location.accuracyNote },
+    { label: "Network Evidence", value: location.networkEvidence?.join("\n") },
     { label: "Location Evidence", value: location.locationEvidence?.join("\n") },
   ];
+  const badgeSource = location.error
+    ? "missing"
+    : location.locationConfidence === "low"
+      ? "inferred"
+      : "estimated";
 
   return (
     <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex h-full flex-col">
@@ -149,20 +166,32 @@ export function ServerLocationCard({ location }: Props) {
         <h3 className="font-mono text-2xl font-bold text-primary-fixed leading-none">
           Server Location
         </h3>
-        <SourceQualityBadge source={location.error ? "missing" : "estimated"} />
+        <SourceQualityBadge source={badgeSource} />
       </div>
 
       {location.error ? (
         <p className="font-mono text-sm text-status-warn/75 px-5 py-4">[LOCATION_UNAVAILABLE] {location.error}</p>
       ) : (
         <>
+          {(location.accuracyNote || location.locationConfidence) && (
+            <div className="mx-5 mb-3 border border-status-warn/25 bg-status-warn/[0.06] px-3 py-2 font-mono text-xs text-[#d7e8ff]/75">
+              <div className="mb-1 flex items-center justify-between gap-3">
+                <span className="font-bold text-status-warn">Accuracy</span>
+                {location.locationConfidence && (
+                  <span className={`border px-2 py-0.5 text-[10px] leading-none ${CONFIDENCE_STYLE[location.locationConfidence]}`}>
+                    {location.locationConfidence.toUpperCase()}
+                  </span>
+                )}
+              </div>
+              <p className="leading-relaxed">{location.accuracyNote}</p>
+            </div>
+          )}
           <div className="font-mono text-sm">
             <Row label="City" value={cityLine} />
             <Row label="Country" value={location.countryCode ? `${location.country} ${location.countryCode}` : location.country} />
             <Row label="Timezone" value={location.timezone} />
-            <Row label="Languages" value={location.languages?.join(", ")} />
-            <Row label="Currency" value={currency} />
-            <Row label="IP" value={location.ip} />
+            <Row label="Network" value={location.networkProvider || location.networkRole} />
+            <Row label="Resolved IP" value={location.resolvedIp || location.ip} />
           </div>
           <WorldMap location={location} />
         </>
