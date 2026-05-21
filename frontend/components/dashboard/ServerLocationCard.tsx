@@ -94,9 +94,15 @@ function WorldMap({ location }: { location: ServerLocationResult }) {
           </g>
         </svg>
         {marker ? (
-          <div className="absolute -translate-x-1/2 -translate-y-1/2" style={marker}>
-            <span className="block h-3 w-3 border border-primary-fixed bg-primary-fixed shadow-[0_0_18px_rgba(183,255,60,0.9)]" />
-            <span className="absolute left-1/2 top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 border border-primary-fixed/30" />
+          <div
+            className="absolute h-7 w-7 -translate-x-1/2 -translate-y-1/2"
+            style={marker}
+            aria-label="Server location marker"
+          >
+            <span className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-primary-fixed/45" />
+            <span className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-primary-fixed/45" />
+            <span className="absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary-fixed bg-[#070B0F]/70 shadow-[0_0_18px_rgba(183,255,60,0.55)]" />
+            <span className="absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary-fixed" />
           </div>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
