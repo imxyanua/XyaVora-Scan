@@ -1,4 +1,5 @@
 import type { ServerLocationResult } from "@/types";
+import { WORLD_MAP_LAND_PATHS } from "@/lib/worldMapLandPaths";
 import { DetailPanel } from "./DetailPanel";
 import { SourceQualityBadge } from "./SourceQualityBadge";
 
@@ -23,63 +24,6 @@ function coordinateToPercent(latitude?: number, longitude?: number) {
 
 type GeoPoint = readonly [longitude: number, latitude: number];
 
-const LAND_MASSES: Array<{ name: string; points: GeoPoint[] }> = [
-  {
-    name: "North America",
-    points: [
-      [-168, 71], [-149, 69], [-132, 58], [-124, 49], [-117, 36], [-109, 28],
-      [-97, 22], [-88, 17], [-81, 9], [-76, 19], [-82, 25], [-80, 32],
-      [-73, 41], [-63, 49], [-58, 58], [-75, 65], [-96, 70], [-124, 74],
-      [-150, 72], [-168, 71],
-    ],
-  },
-  {
-    name: "Greenland",
-    points: [[-52, 83], [-25, 77], [-31, 66], [-45, 60], [-62, 61], [-72, 70], [-52, 83]],
-  },
-  {
-    name: "South America",
-    points: [
-      [-81, 12], [-70, 8], [-54, 5], [-43, -8], [-36, -23], [-48, -37],
-      [-65, -55], [-74, -45], [-72, -28], [-79, -8], [-81, 12],
-    ],
-  },
-  {
-    name: "Europe",
-    points: [
-      [-11, 72], [11, 71], [31, 63], [44, 54], [38, 43], [25, 37],
-      [13, 42], [2, 43], [-9, 36], [-15, 51], [-11, 72],
-    ],
-  },
-  {
-    name: "Africa",
-    points: [
-      [-18, 35], [9, 37], [33, 31], [51, 12], [44, -12], [31, -34],
-      [18, -35], [5, -25], [-8, -4], [-17, 14], [-18, 35],
-    ],
-  },
-  {
-    name: "Asia",
-    points: [
-      [25, 71], [59, 70], [94, 72], [132, 61], [168, 55], [160, 43],
-      [139, 35], [124, 22], [106, 18], [99, 5], [88, 22], [77, 9],
-      [68, 25], [50, 25], [39, 43], [27, 56], [25, 71],
-    ],
-  },
-  {
-    name: "Southeast Asia",
-    points: [[96, 21], [112, 18], [124, 9], [122, -7], [107, -6], [99, 5], [96, 21]],
-  },
-  {
-    name: "Australia",
-    points: [[112, -11], [153, -15], [154, -34], [135, -43], [113, -33], [112, -11]],
-  },
-  {
-    name: "Antarctica",
-    points: [[-180, -63], [-120, -70], [-55, -66], [10, -72], [82, -66], [150, -70], [180, -63], [180, -90], [-180, -90], [-180, -63]],
-  },
-];
-
 const MAP_MARKERS: GeoPoint[] = [
   [-3, 54], [139, 38], [121, 14], [103, 1], [144, -6], [47, -20],
 ];
@@ -88,10 +32,6 @@ function projectGeoPoint([longitude, latitude]: GeoPoint) {
   const x = ((longitude + 180) / 360) * 1000;
   const y = ((90 - latitude) / 180) * 500;
   return `${x.toFixed(1)} ${y.toFixed(1)}`;
-}
-
-function geoPath(points: GeoPoint[]) {
-  return points.map((point, index) => `${index === 0 ? "M" : "L"}${projectGeoPoint(point)}`).join(" ") + " Z";
 }
 
 function Row({ label, value }: { label: string; value?: string | number | null }) {
@@ -115,7 +55,7 @@ function WorldMap({ location }: { location: ServerLocationResult }) {
           viewBox="0 0 1000 500"
           className="absolute inset-0 h-full w-full"
           role="img"
-          aria-label="Approximate equirectangular world map"
+          aria-label="Natural Earth equirectangular world map"
         >
           <defs>
             <pattern id="location-grid" width="83.333" height="83.333" patternUnits="userSpaceOnUse">
@@ -142,8 +82,8 @@ function WorldMap({ location }: { location: ServerLocationResult }) {
             strokeWidth="1.6"
             shapeRendering="geometricPrecision"
           >
-            {LAND_MASSES.map((mass) => (
-              <path key={mass.name} d={geoPath(mass.points)} />
+            {WORLD_MAP_LAND_PATHS.map((path, index) => (
+              <path key={index} d={path} />
             ))}
           </g>
           <g fill="rgba(183,255,60,0.38)" stroke="none">
