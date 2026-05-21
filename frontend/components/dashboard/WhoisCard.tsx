@@ -38,11 +38,13 @@ export function WhoisCard({ whois }: Props) {
 
   return (
     <div className="bg-[#202322] border border-primary-fixed/10 shadow-[3px_3px_0_#050505] flex flex-col">
-      <div className="px-5 pt-5 pb-3 flex justify-between items-start shrink-0">
+      <div className="px-5 pt-5 pb-3 flex items-start justify-between gap-3 shrink-0">
         <h3 className="font-mono text-2xl font-bold text-primary-fixed leading-none">
           WHOIS
         </h3>
-        <span className="font-mono text-[11px] text-white/70">[REGISTRAR]</span>
+        <span className="shrink-0 border border-primary-fixed/20 bg-[#070B0F] px-2 py-0.5 font-mono text-[10px] text-white/60">
+          REGISTRY
+        </span>
       </div>
 
       {whois.error ? (
@@ -52,7 +54,7 @@ export function WhoisCard({ whois }: Props) {
           {rows.map((row) => (
             <div key={row.key} className="flex justify-between gap-4 px-5 py-1.5 border-b border-primary-fixed/10 hover:bg-primary-fixed/[0.04] transition-colors">
               <span className="text-white font-bold shrink-0">{row.key}</span>
-              <span className="text-white text-right truncate">{row.val}</span>
+              <span className="min-w-0 break-words text-right text-white">{row.val}</span>
             </div>
           ))}
 
