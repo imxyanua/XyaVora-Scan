@@ -77,6 +77,13 @@ def _cookie_evidence(cookie: CookieResult) -> list[str]:
     return evidence
 
 
+def _cookie_verification() -> str:
+    return (
+        "Run curl -I against the final URL and inspect each Set-Cookie header "
+        "for Secure, HttpOnly, and SameSite attributes."
+    )
+
+
 def _build_findings(cookies: list[CookieResult]) -> list[Finding]:
     findings: list[Finding] = []
 
@@ -92,6 +99,8 @@ def _build_findings(cookies: list[CookieResult]) -> list[Finding]:
             confidence="observed",
             source="headers",
             evidence=["No Set-Cookie headers were returned on the initial response."],
+            analysis="The initial HTTP response did not include Set-Cookie headers. Later login or app flows may still set cookies.",
+            verification=_cookie_verification(),
         ))
         return findings
 
@@ -113,6 +122,8 @@ def _build_findings(cookies: list[CookieResult]) -> list[Finding]:
             confidence="observed",
             source="headers",
             evidence=[item for cookie in no_secure[:5] for item in _cookie_evidence(cookie)],
+            analysis="At least one Set-Cookie header was observed without the Secure attribute.",
+            verification=_cookie_verification(),
         ))
 
     if no_httponly:
@@ -129,6 +140,8 @@ def _build_findings(cookies: list[CookieResult]) -> list[Finding]:
             confidence="observed",
             source="headers",
             evidence=[item for cookie in no_httponly[:5] for item in _cookie_evidence(cookie)],
+            analysis="At least one Set-Cookie header was observed without the HttpOnly attribute.",
+            verification=_cookie_verification(),
         ))
 
     if no_samesite:
@@ -145,6 +158,8 @@ def _build_findings(cookies: list[CookieResult]) -> list[Finding]:
             confidence="observed",
             source="headers",
             evidence=[item for cookie in no_samesite[:5] for item in _cookie_evidence(cookie)],
+            analysis="At least one Set-Cookie header was observed without a SameSite attribute.",
+            verification=_cookie_verification(),
         ))
 
     if not findings:
@@ -159,6 +174,8 @@ def _build_findings(cookies: list[CookieResult]) -> list[Finding]:
             confidence="observed",
             source="headers",
             evidence=[item for cookie in cookies[:5] for item in _cookie_evidence(cookie)],
+            analysis="Every Set-Cookie header observed on the initial response included Secure, HttpOnly, and SameSite attributes.",
+            verification=_cookie_verification(),
         ))
 
     return findings

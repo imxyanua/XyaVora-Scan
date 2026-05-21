@@ -120,6 +120,8 @@ def _text_evidence(label: str, requested_url: str, status: int, final_url: str, 
 
 def _build_findings(result: SiteDiscoveryResult) -> list[Finding]:
     findings: list[Finding] = []
+    robots_target = result.robotsUrl or "<origin>/robots.txt"
+    sitemap_target = result.sitemapUrl or "<origin>/sitemap.xml"
 
     findings.append(Finding(
         id="robots_txt_present" if result.robotsPresent else "robots_txt_missing",
@@ -140,6 +142,12 @@ def _build_findings(result: SiteDiscoveryResult) -> list[Finding]:
         confidence="observed",
         source="http",
         evidence=result.robotsEvidence,
+        analysis=(
+            "The scanner fetched robots.txt from the site root and parsed crawler guidance."
+            if result.robotsPresent
+            else "The scanner requested robots.txt from the site root and did not observe a usable file."
+        ),
+        verification=f"Fetch and inspect {robots_target}.",
     ))
 
     findings.append(Finding(
@@ -161,6 +169,12 @@ def _build_findings(result: SiteDiscoveryResult) -> list[Finding]:
         confidence="observed",
         source="http",
         evidence=result.sitemapEvidence,
+        analysis=(
+            "The scanner found sitemap data from robots.txt references or the /sitemap.xml fallback."
+            if result.sitemapPresent
+            else "The scanner checked robots.txt sitemap references and /sitemap.xml but did not observe parseable sitemap data."
+        ),
+        verification=f"Fetch and inspect {sitemap_target}, plus any Sitemap entries in robots.txt.",
     ))
 
     if result.disallowAll:
@@ -176,6 +190,8 @@ def _build_findings(result: SiteDiscoveryResult) -> list[Finding]:
             confidence="observed",
             source="http",
             evidence=result.robotsEvidence,
+            analysis="The parsed robots.txt rules include User-agent: * with Disallow: /.",
+            verification=f"Fetch and inspect {robots_target}.",
         ))
 
     return findings

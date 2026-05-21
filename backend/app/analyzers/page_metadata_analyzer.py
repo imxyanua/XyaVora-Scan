@@ -152,6 +152,10 @@ def parse_page_metadata(html: bytes, base_url: str) -> PageMetadataResult:
     )
 
 
+def _metadata_verification() -> str:
+    return "Open the final page HTML and inspect <meta name=\"robots\"> and <link rel=\"canonical\"> values."
+
+
 def _build_findings(result: PageMetadataResult) -> list[Finding]:
     findings: list[Finding] = []
 
@@ -168,6 +172,8 @@ def _build_findings(result: PageMetadataResult) -> list[Finding]:
             confidence="observed",
             source="html",
             evidence=result.metadataEvidence,
+            analysis="The scanner parsed the final page HTML and found a robots directive containing noindex.",
+            verification=_metadata_verification(),
         ))
 
     if result.canonicalMatchesFinalHost is False:
@@ -183,6 +189,8 @@ def _build_findings(result: PageMetadataResult) -> list[Finding]:
             confidence="observed",
             source="html",
             evidence=result.metadataEvidence,
+            analysis="The scanner parsed the canonical URL from the final page HTML and its host differs from the final response host.",
+            verification=_metadata_verification(),
         ))
 
     return findings

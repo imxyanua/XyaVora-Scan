@@ -88,6 +88,10 @@ def _parse_whois(data: whois.WhoisEntry) -> WhoisResult:
     return result
 
 
+def _whois_verification() -> str:
+    return "Query the domain through the registrar, RDAP, or a WHOIS client and compare registrar, expiry, nameserver, and DNSSEC fields."
+
+
 def _build_findings(result: WhoisResult) -> list[Finding]:
     findings: list[Finding] = []
 
@@ -103,6 +107,8 @@ def _build_findings(result: WhoisResult) -> list[Finding]:
             confidence="observed",
             source="whois",
             evidence=[f"whois_error: {result.error}"],
+            analysis="The WHOIS lookup raised an error or returned data the scanner could not parse.",
+            verification=_whois_verification(),
         ))
         return findings
 
@@ -126,6 +132,8 @@ def _build_findings(result: WhoisResult) -> list[Finding]:
                     confidence="verified",
                     source="whois",
                     evidence=result.whoisEvidence,
+                    analysis="The parsed WHOIS expiration date is earlier than the scan time.",
+                    verification=_whois_verification(),
                 ))
             elif days_left < _EXPIRY_WARN_DAYS:
                 findings.append(Finding(
@@ -140,6 +148,8 @@ def _build_findings(result: WhoisResult) -> list[Finding]:
                     confidence="verified",
                     source="whois",
                     evidence=result.whoisEvidence,
+                    analysis=f"The parsed WHOIS expiration date is within the {_EXPIRY_WARN_DAYS}-day renewal window.",
+                    verification=_whois_verification(),
                 ))
             else:
                 findings.append(Finding(
@@ -153,6 +163,8 @@ def _build_findings(result: WhoisResult) -> list[Finding]:
                     confidence="verified",
                     source="whois",
                     evidence=result.whoisEvidence,
+                    analysis="The parsed WHOIS expiration date is in the future and outside the warning window.",
+                    verification=_whois_verification(),
                 ))
         except (ValueError, TypeError):
             pass
@@ -168,6 +180,8 @@ def _build_findings(result: WhoisResult) -> list[Finding]:
             confidence="observed",
             source="whois",
             evidence=result.whoisEvidence,
+            analysis="The WHOIS response did not include an expiration date the scanner could normalize.",
+            verification=_whois_verification(),
         ))
 
     # DNSSEC check
@@ -183,6 +197,8 @@ def _build_findings(result: WhoisResult) -> list[Finding]:
             confidence="verified",
             source="whois",
             evidence=result.whoisEvidence,
+            analysis="The WHOIS/RDAP data reported a DNSSEC value that is not unsigned/no/false.",
+            verification=_whois_verification(),
         ))
     else:
         findings.append(Finding(
@@ -197,6 +213,8 @@ def _build_findings(result: WhoisResult) -> list[Finding]:
             confidence="observed",
             source="whois",
             evidence=result.whoisEvidence,
+            analysis="WHOIS/RDAP did not confirm DNSSEC as enabled.",
+            verification=_whois_verification(),
         ))
 
     return findings

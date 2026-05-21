@@ -69,6 +69,11 @@ def _evidence(result: SecurityTxtResult) -> list[str]:
     return evidence
 
 
+def _security_txt_verification(result: SecurityTxtResult) -> str:
+    checked = result.checkedLocations or ["<origin>/.well-known/security.txt", "<origin>/security.txt"]
+    return "Fetch and inspect: " + ", ".join(checked)
+
+
 def _build_findings(result: SecurityTxtResult) -> list[Finding]:
     evidence = result.securityTxtEvidence or _evidence(result)
     if not result.present:
@@ -87,6 +92,8 @@ def _build_findings(result: SecurityTxtResult) -> list[Finding]:
             confidence="observed",
             source="http",
             evidence=evidence,
+            analysis="The scanner checked the RFC 9116 well-known path and root fallback path, but neither returned a usable security.txt file.",
+            verification=_security_txt_verification(result),
         )]
 
     findings = [Finding(
@@ -100,6 +107,8 @@ def _build_findings(result: SecurityTxtResult) -> list[Finding]:
         confidence="verified",
         source="http",
         evidence=evidence,
+        analysis="A security.txt file returned HTTP 200 with non-empty content.",
+        verification=_security_txt_verification(result),
     )]
 
     if not result.contact:
@@ -115,6 +124,8 @@ def _build_findings(result: SecurityTxtResult) -> list[Finding]:
             confidence="observed",
             source="http",
             evidence=evidence,
+            analysis="The file was found, but parsed content did not include a Contact field.",
+            verification=_security_txt_verification(result),
         ))
 
     if not result.expires:
@@ -130,6 +141,8 @@ def _build_findings(result: SecurityTxtResult) -> list[Finding]:
             confidence="observed",
             source="http",
             evidence=evidence,
+            analysis="The file was found, but parsed content did not include an Expires field.",
+            verification=_security_txt_verification(result),
         ))
     elif result.expired:
         findings.append(Finding(
@@ -144,6 +157,8 @@ def _build_findings(result: SecurityTxtResult) -> list[Finding]:
             confidence="verified",
             source="http",
             evidence=evidence,
+            analysis="The file was found and its Expires timestamp is earlier than the scan time.",
+            verification=_security_txt_verification(result),
         ))
 
     return findings

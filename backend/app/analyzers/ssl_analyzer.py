@@ -104,6 +104,13 @@ def _parse_cert(hostname: str, info: dict) -> SslResult:
     )
 
 
+def _tls_verification() -> str:
+    return (
+        "Run openssl s_client -connect <domain>:443 -servername <domain> "
+        "and inspect the certificate chain, validity window, negotiated protocol, and cipher."
+    )
+
+
 def _build_findings(result: SslResult) -> list[Finding]:
     findings: list[Finding] = []
 
@@ -120,6 +127,8 @@ def _build_findings(result: SslResult) -> list[Finding]:
             confidence="observed",
             source="tls",
             evidence=result.certificateEvidence,
+            analysis="The scanner attempted a TLS handshake on port 443, but no usable HTTPS connection completed.",
+            verification=_tls_verification(),
         ))
         return findings
 
@@ -136,6 +145,8 @@ def _build_findings(result: SslResult) -> list[Finding]:
             confidence="verified",
             source="tls",
             evidence=result.certificateEvidence,
+            analysis="A TLS server responded, but default certificate verification did not trust the chain, hostname, or validity state.",
+            verification=_tls_verification(),
         ))
         return findings
 
@@ -152,6 +163,8 @@ def _build_findings(result: SslResult) -> list[Finding]:
             confidence="verified",
             source="tls",
             evidence=result.certificateEvidence,
+            analysis="The parsed certificate validity window has already ended at scan time.",
+            verification=_tls_verification(),
         ))
     elif result.daysRemaining < _EXPIRY_WARN_DAYS:
         findings.append(Finding(
@@ -166,6 +179,8 @@ def _build_findings(result: SslResult) -> list[Finding]:
             confidence="verified",
             source="tls",
             evidence=result.certificateEvidence,
+            analysis=f"The parsed certificate is trusted, but expires within the {_EXPIRY_WARN_DAYS}-day renewal window.",
+            verification=_tls_verification(),
         ))
     else:
         findings.append(Finding(
@@ -179,6 +194,8 @@ def _build_findings(result: SslResult) -> list[Finding]:
             confidence="verified",
             source="tls",
             evidence=result.certificateEvidence,
+            analysis="The scanner completed a trusted TLS handshake and parsed a certificate that is still valid.",
+            verification=_tls_verification(),
         ))
 
     if result.protocol in {"TLSv1", "TLSv1.1", "SSLv3", "SSLv2"}:
@@ -194,6 +211,8 @@ def _build_findings(result: SslResult) -> list[Finding]:
             confidence="verified",
             source="tls",
             evidence=result.certificateEvidence,
+            analysis="The negotiated protocol is obsolete for modern HTTPS clients.",
+            verification=_tls_verification(),
         ))
     elif result.protocol == "TLSv1.2":
         findings.append(Finding(
@@ -207,6 +226,8 @@ def _build_findings(result: SslResult) -> list[Finding]:
             confidence="verified",
             source="tls",
             evidence=result.certificateEvidence,
+            analysis="The scanner negotiated TLS 1.2. This is acceptable, though TLS 1.3 is preferred where supported.",
+            verification=_tls_verification(),
         ))
 
     if result.cipherBits is not None and result.cipherBits < 128:
@@ -222,6 +243,8 @@ def _build_findings(result: SslResult) -> list[Finding]:
             confidence="verified",
             source="tls",
             evidence=result.certificateEvidence,
+            analysis="The negotiated cipher reports less than 128 bits of security.",
+            verification=_tls_verification(),
         ))
 
     return findings
