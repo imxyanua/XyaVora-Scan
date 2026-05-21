@@ -21,6 +21,79 @@ function coordinateToPercent(latitude?: number, longitude?: number) {
   };
 }
 
+type GeoPoint = readonly [longitude: number, latitude: number];
+
+const LAND_MASSES: Array<{ name: string; points: GeoPoint[] }> = [
+  {
+    name: "North America",
+    points: [
+      [-168, 71], [-149, 69], [-132, 58], [-124, 49], [-117, 36], [-109, 28],
+      [-97, 22], [-88, 17], [-81, 9], [-76, 19], [-82, 25], [-80, 32],
+      [-73, 41], [-63, 49], [-58, 58], [-75, 65], [-96, 70], [-124, 74],
+      [-150, 72], [-168, 71],
+    ],
+  },
+  {
+    name: "Greenland",
+    points: [[-52, 83], [-25, 77], [-31, 66], [-45, 60], [-62, 61], [-72, 70], [-52, 83]],
+  },
+  {
+    name: "South America",
+    points: [
+      [-81, 12], [-70, 8], [-54, 5], [-43, -8], [-36, -23], [-48, -37],
+      [-65, -55], [-74, -45], [-72, -28], [-79, -8], [-81, 12],
+    ],
+  },
+  {
+    name: "Europe",
+    points: [
+      [-11, 72], [11, 71], [31, 63], [44, 54], [38, 43], [25, 37],
+      [13, 42], [2, 43], [-9, 36], [-15, 51], [-11, 72],
+    ],
+  },
+  {
+    name: "Africa",
+    points: [
+      [-18, 35], [9, 37], [33, 31], [51, 12], [44, -12], [31, -34],
+      [18, -35], [5, -25], [-8, -4], [-17, 14], [-18, 35],
+    ],
+  },
+  {
+    name: "Asia",
+    points: [
+      [25, 71], [59, 70], [94, 72], [132, 61], [168, 55], [160, 43],
+      [139, 35], [124, 22], [106, 18], [99, 5], [88, 22], [77, 9],
+      [68, 25], [50, 25], [39, 43], [27, 56], [25, 71],
+    ],
+  },
+  {
+    name: "Southeast Asia",
+    points: [[96, 21], [112, 18], [124, 9], [122, -7], [107, -6], [99, 5], [96, 21]],
+  },
+  {
+    name: "Australia",
+    points: [[112, -11], [153, -15], [154, -34], [135, -43], [113, -33], [112, -11]],
+  },
+  {
+    name: "Antarctica",
+    points: [[-180, -63], [-120, -70], [-55, -66], [10, -72], [82, -66], [150, -70], [180, -63], [180, -90], [-180, -90], [-180, -63]],
+  },
+];
+
+const MAP_MARKERS: GeoPoint[] = [
+  [-3, 54], [139, 38], [121, 14], [103, 1], [144, -6], [47, -20],
+];
+
+function projectGeoPoint([longitude, latitude]: GeoPoint) {
+  const x = ((longitude + 180) / 360) * 1000;
+  const y = ((90 - latitude) / 180) * 500;
+  return `${x.toFixed(1)} ${y.toFixed(1)}`;
+}
+
+function geoPath(points: GeoPoint[]) {
+  return points.map((point, index) => `${index === 0 ? "M" : "L"}${projectGeoPoint(point)}`).join(" ") + " Z";
+}
+
 function Row({ label, value }: { label: string; value?: string | number | null }) {
   return (
     <div className="flex items-start justify-between gap-4 border-b border-primary-fixed/10 px-5 py-1.5 last:border-b-0 hover:bg-primary-fixed/[0.04] transition-colors">
@@ -67,24 +140,17 @@ function WorldMap({ location }: { location: ServerLocationResult }) {
             stroke="rgba(183,255,60,0.42)"
             strokeLinejoin="round"
             strokeWidth="1.6"
+            shapeRendering="geometricPrecision"
           >
-            <path d="M82 136C111 91 160 71 214 84C238 70 282 87 308 119C348 124 366 153 338 181C309 198 300 228 266 239C237 248 232 277 207 291C181 305 164 279 146 255C124 247 113 224 98 205C82 184 66 166 82 136Z" />
-            <path d="M114 207C144 210 170 219 199 235C225 247 251 244 273 258C250 270 226 270 202 260C180 251 160 246 138 246C121 240 110 225 114 207Z" />
-            <path d="M286 290C320 298 347 325 351 360C354 394 331 418 315 455C297 433 284 406 269 376C253 344 254 316 286 290Z" />
-            <path d="M300 58C332 31 384 33 405 67C391 100 353 111 316 94C293 84 282 72 300 58Z" />
-            <path d="M446 126C465 109 493 108 516 121C507 142 478 149 454 145C438 142 434 135 446 126Z" />
-            <path d="M501 163C530 146 568 153 589 181C617 217 613 269 592 319C573 360 540 351 516 321C495 293 477 247 482 210C484 189 489 174 501 163Z" />
-            <path d="M546 106C596 82 655 87 696 116C733 116 770 135 801 165C840 201 834 241 793 252C752 262 716 246 679 228C650 244 615 236 590 211C565 187 540 170 513 162C506 139 520 120 546 106Z" />
-            <path d="M642 219C662 237 680 258 696 283C677 287 655 271 638 248C627 234 626 223 642 219Z" />
-            <path d="M699 259C725 263 758 272 774 292C751 300 720 293 698 278C686 270 688 262 699 259Z" />
-            <path d="M777 331C821 319 872 336 908 378C873 423 812 418 764 389C742 366 748 341 777 331Z" />
-            <path d="M623 371C643 373 654 396 643 421C624 416 615 397 623 371Z" />
+            {LAND_MASSES.map((mass) => (
+              <path key={mass.name} d={geoPath(mass.points)} />
+            ))}
           </g>
           <g fill="rgba(183,255,60,0.38)" stroke="none">
-            <path d="M428 128l13-8 13 8-7 13h-14z" />
-            <path d="M836 204l12-8 15 7-3 14-17 3z" />
-            <path d="M866 224l11-5 13 7-5 12-15 1z" />
-            <path d="M457 102l9-5 10 7-4 9h-12z" />
+            {MAP_MARKERS.map((point) => {
+              const [x, y] = projectGeoPoint(point).split(" ");
+              return <circle key={`${point[0]}-${point[1]}`} cx={x} cy={y} r="3" />;
+            })}
           </g>
         </svg>
         {marker ? (
