@@ -338,7 +338,8 @@ def _detect(
 
     _add_implied_tech(detected)
     for name, item in list(detected.items()):
-        detected[name] = _calibrate_confidence(item)
+        calibrated = _calibrate_confidence(item)
+        detected[name] = _with_confidence_reason(calibrated, _confidence_reason(calibrated))
 
     items = list(detected.values())
     items.sort(key=lambda x: (_CATEGORY_ORDER.get(x.category, 99), x.name))
@@ -422,7 +423,39 @@ def _with_confidence(item: TechStackItem, confidence: TechConfidence, note: str)
         version=item.version,
         sources=item.sources,
         evidence=evidence,
+        confidenceReason=item.confidenceReason,
     )
+
+
+def _with_confidence_reason(item: TechStackItem, reason: str) -> TechStackItem:
+    return TechStackItem(
+        name=item.name,
+        category=item.category,
+        confidence=item.confidence,
+        version=item.version,
+        sources=item.sources,
+        evidence=item.evidence,
+        confidenceReason=reason,
+    )
+
+
+def _confidence_reason(item: TechStackItem) -> str:
+    source_set = set(item.sources)
+    if "header" in source_set:
+        return "Matched a live HTTP response header."
+    if "cookie" in source_set:
+        return "Matched a Set-Cookie value from the live response."
+    if "meta" in source_set:
+        return "Matched the page meta generator tag."
+    if "html" in source_set:
+        return "Matched visible page HTML or inline script content."
+    if source_set <= {"asset-url", "asset-body"}:
+        return "Matched linked asset URL/body only; treat as weaker supporting evidence."
+    if source_set == {"inferred"}:
+        return "Inferred from another detected technology; verify manually."
+    if source_set:
+        return f"Matched source signals: {', '.join(sorted(source_set))}."
+    return "No source evidence recorded; treat as low confidence."
 
 
 def _extract_asset_urls(base_url: str, html_text: str) -> list[str]:
@@ -545,6 +578,7 @@ def _upsert_detected(detected: dict[str, TechStackItem], item: TechStackItem) ->
         version=selected.version or existing.version or item.version,
         sources=sources,
         evidence=evidence,
+        confidenceReason=selected.confidenceReason or existing.confidenceReason or item.confidenceReason,
     )
 
 
@@ -569,6 +603,7 @@ def _add_implied_tech(detected: dict[str, TechStackItem]) -> None:
                 confidence=confidence,
                 sources=["inferred"],
                 evidence=[f"inferred:{source_name}"],
+                confidenceReason=f"Inferred because {source_name} was detected.",
             ))
 
 

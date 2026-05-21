@@ -231,12 +231,12 @@ export const mockGoogleReport: ScanReport = {
   },
 
   techStack: [
-    { name: "React",            category: "JavaScript Framework", confidence: "high" },
-    { name: "Next.js",          category: "JavaScript Framework", confidence: "medium" },
-    { name: "Cloudflare",       category: "CDN",                  confidence: "high" },
-    { name: "Nginx",            category: "Web Server",           confidence: "high" },
-    { name: "Google Analytics", category: "Analytics",            confidence: "high" },
-    { name: "Vercel",           category: "Hosting",              confidence: "low"  },
+    { name: "React",            category: "JavaScript Framework", confidence: "high", confidenceReason: "Matched visible page HTML or inline script content." },
+    { name: "Next.js",          category: "JavaScript Framework", confidence: "medium", confidenceReason: "Matched linked asset URL/body only; treat as weaker supporting evidence." },
+    { name: "Cloudflare",       category: "CDN",                  confidence: "high", confidenceReason: "Matched a live HTTP response header." },
+    { name: "Nginx",            category: "Web Server",           confidence: "high", confidenceReason: "Matched a live HTTP response header." },
+    { name: "Google Analytics", category: "Analytics",            confidence: "high", confidenceReason: "Matched visible page HTML or inline script content." },
+    { name: "Vercel",           category: "Hosting",              confidence: "low", confidenceReason: "Inferred from another detected technology; verify manually."  },
   ],
 
   cookies: [

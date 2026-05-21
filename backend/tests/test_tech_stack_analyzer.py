@@ -22,6 +22,7 @@ def test_detect_nginx_from_server_header():
     nginx = next((i for i in items if i.name == "nginx"), None)
     assert nginx is not None
     assert "header" in nginx.sources
+    assert nginx.confidenceReason == "Matched a live HTTP response header."
     assert any("header:server" in item for item in nginx.evidence)
 
 
@@ -176,6 +177,7 @@ def test_detect_from_asset_urls_without_fetching_bundle():
     nextjs = next(i for i in items if i.name == "Next.js")
     assert "asset-url" in nextjs.sources
     assert nextjs.confidence == "medium"
+    assert nextjs.confidenceReason == "Matched linked asset URL/body only; treat as weaker supporting evidence."
     assert any("asset-only signal" in item for item in nextjs.evidence)
 
 
@@ -197,6 +199,7 @@ def test_detect_inferred_tech_caps_confidence():
 
     assert react.sources == ["inferred"]
     assert react.confidence == "medium"
+    assert react.confidenceReason == "Inferred from another detected technology; verify manually."
     assert any("inferred from another detected technology" in item for item in react.evidence)
 
 

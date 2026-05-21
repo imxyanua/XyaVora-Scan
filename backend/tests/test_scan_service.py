@@ -154,6 +154,7 @@ def test_normalize_findings_merges_duplicate_evidence_and_strongest_confidence()
     assert len(normalized) == 1
     assert normalized[0].severity == "high"
     assert normalized[0].confidence == "observed"
+    assert normalized[0].classification == "observed-risk"
     assert normalized[0].source == "headers"
     assert normalized[0].evidence == ["header:missing", "status:200"]
 

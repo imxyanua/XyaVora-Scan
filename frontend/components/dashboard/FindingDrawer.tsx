@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import type { Finding, FindingConfidence, FindingSeverity, FindingSource, FindingStatus } from "@/types";
+import type { Finding, FindingClassification, FindingConfidence, FindingSeverity, FindingSource, FindingStatus } from "@/types";
 import { AppIcon } from "@/components/ui/AppIcon";
 
 interface Props {
@@ -53,6 +53,22 @@ const SOURCE_LABEL: Record<FindingSource, string> = {
   cookie: "Cookie",
   whois: "WHOIS",
   scanner: "Scanner rule",
+};
+
+const CLASSIFICATION_LABEL: Record<FindingClassification, string> = {
+  "verified-issue": "Verified issue",
+  "observed-risk": "Observed risk",
+  "hardening-recommendation": "Hardening recommendation",
+  "investigation-lead": "Investigation lead",
+  informational: "Informational",
+};
+
+const CLASSIFICATION_HELP: Record<FindingClassification, string> = {
+  "verified-issue": "The scanner directly verified the condition through a protocol result or parsed response.",
+  "observed-risk": "The scanner observed supporting evidence in the live response, but the impact still depends on context.",
+  "hardening-recommendation": "A defensive control is missing or weak. This is a recommendation, not proof of exploitation.",
+  "investigation-lead": "This is inferred from indirect signals and should be manually validated.",
+  informational: "This item is context for the report and is not an issue by itself.",
 };
 
 export function FindingDrawer({ finding, onClose }: Props) {
@@ -129,8 +145,19 @@ function DrawerContent({ finding, onClose }: { finding: Finding; onClose: () => 
         </span>
       </div>
 
-      {(finding.confidence || finding.source) && (
-        <div className="px-4 py-3 border-b border-primary-fixed/10 grid grid-cols-2 gap-2 shrink-0 bg-[#101720]">
+      {(finding.confidence || finding.source || finding.classification) && (
+        <div className="px-4 py-3 border-b border-primary-fixed/10 grid grid-cols-1 gap-3 shrink-0 bg-[#101720] sm:grid-cols-3">
+          {finding.classification && (
+            <div>
+              <p className="font-mono text-[10px] text-primary-fixed/45 uppercase tracking-widest">Classification</p>
+              <p className="font-mono text-[13px] text-[#d7e8ff]/75 mt-1">
+                {CLASSIFICATION_LABEL[finding.classification]}
+              </p>
+              <p className="font-mono text-[11px] text-[#d7e8ff]/50 mt-1 leading-relaxed">
+                {CLASSIFICATION_HELP[finding.classification]}
+              </p>
+            </div>
+          )}
           <div>
             <p className="font-mono text-[10px] text-primary-fixed/45 uppercase tracking-widest">Confidence</p>
             <p className="font-mono text-[13px] text-[#d7e8ff]/75 mt-1">

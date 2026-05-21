@@ -15,6 +15,13 @@ FindingSeverity = Literal["info", "low", "medium", "high"]
 FindingStatus   = Literal["pass", "warning", "fail", "info"]
 FindingConfidence = Literal["verified", "observed", "inferred", "best-practice"]
 FindingSource = Literal["dns", "tls", "headers", "http", "html", "cookie", "whois", "scanner"]
+FindingClassification = Literal[
+    "verified-issue",
+    "observed-risk",
+    "hardening-recommendation",
+    "investigation-lead",
+    "informational",
+]
 FindingCategory = Literal[
     "DNS", "SSL", "Headers", "WHOIS",
     "Tech Stack", "Cookies", "Security.txt", "Screenshot",
@@ -36,6 +43,7 @@ class Finding(_Base):
     evidence:       list[str] = []
     analysis:       Optional[str] = None
     verification:   Optional[str] = None
+    classification: Optional[FindingClassification] = None
 
 
 # ── DNS ───────────────────────────────────────────────────────────
@@ -256,6 +264,7 @@ class TechStackItem(_Base):
     version:    Optional[str] = None
     sources:    list[str] = []
     evidence:   list[str] = []
+    confidenceReason: Optional[str] = None
 
 
 # ── Cookies ───────────────────────────────────────────────────────

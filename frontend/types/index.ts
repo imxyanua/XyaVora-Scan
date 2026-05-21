@@ -9,6 +9,12 @@ export type FindingSeverity = "info" | "low" | "medium" | "high";
 export type FindingStatus   = "pass" | "warning" | "fail" | "info";
 export type FindingConfidence = "verified" | "observed" | "inferred" | "best-practice";
 export type FindingSource = "dns" | "tls" | "headers" | "http" | "html" | "cookie" | "whois" | "scanner";
+export type FindingClassification =
+  | "verified-issue"
+  | "observed-risk"
+  | "hardening-recommendation"
+  | "investigation-lead"
+  | "informational";
 export type FindingCategory =
   | "DNS"
   | "SSL"
@@ -42,6 +48,7 @@ export interface Finding {
   evidence?:      string[];
   analysis?:      string;
   verification?:  string;
+  classification?: FindingClassification;
 }
 
 // ── DNS ──────────────────────────────────────
@@ -262,6 +269,7 @@ export interface TechStackItem {
   version?:   string;
   sources?:   string[];
   evidence?:  string[];
+  confidenceReason?: string;
 }
 
 // ── Cookies ──────────────────────────────────

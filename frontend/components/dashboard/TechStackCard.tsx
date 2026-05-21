@@ -139,6 +139,7 @@ export function TechStackCard({ techStack }: Props) {
       `confidence: ${tech.confidence}`,
       tech.version ? `version: ${tech.version}` : null,
       tech.sources?.length ? `sources: ${tech.sources.join(" + ")}` : null,
+      tech.confidenceReason ? `confidence_reason: ${tech.confidenceReason}` : null,
       tech.evidence?.length ? `evidence: ${tech.evidence.join(" | ")}` : null,
     ].filter(Boolean).join("\n"),
   }));
@@ -202,9 +203,17 @@ export function TechStackCard({ techStack }: Props) {
                         {sources.length > 0 && (
                           <span className="flex flex-wrap items-center gap-1">
                             <SourceQualityBadge source={sourceQuality(sources)} />
+                            <span className="border border-white/10 px-1.5 py-0.5 text-[9px] leading-none text-white/55">
+                              {tech.confidence.toUpperCase()}
+                            </span>
                             <span className="max-w-[140px] truncate text-[9px] leading-none text-white/45" title={sources.join(" + ")}>
                               {sources.join(" + ")}
                             </span>
+                          </span>
+                        )}
+                        {tech.confidenceReason && (
+                          <span className="max-w-[220px] truncate text-[9px] leading-none text-[#d7e8ff]/45" title={tech.confidenceReason}>
+                            {tech.confidenceReason}
                           </span>
                         )}
                       </span>

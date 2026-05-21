@@ -9,6 +9,7 @@ from app.schemas.report import (
     HttpOverviewResult, PageMetadataResult, SiteDiscoveryResult,
     WhoisResult, SecurityTxtResult, ScreenshotResult, EvidenceSummaryItem,
     ServerLocationResult,
+    FindingClassification,
 )
 from app.schemas.analyzer import AnalyzerResult
 from app.analyzers.dns_analyzer         import analyze_dns
@@ -80,6 +81,18 @@ def _merge_finding_evidence(primary: Finding, secondary: Finding) -> Finding:
     return merged
 
 
+def classify_finding(finding: Finding) -> FindingClassification:
+    if finding.status in {"pass", "info"}:
+        return "informational"
+    if finding.confidence == "verified":
+        return "verified-issue"
+    if finding.confidence == "observed":
+        return "observed-risk"
+    if finding.confidence == "inferred":
+        return "investigation-lead"
+    return "hardening-recommendation"
+
+
 def is_cached(hostname: str) -> bool:
     entry = _SCAN_CACHE.get(hostname)
     return bool(entry and time.monotonic() < entry[1])
@@ -119,7 +132,7 @@ def normalize_findings(findings: list[Finding]) -> list[Finding]:
         else:
             deduped[key] = _merge_finding_evidence(existing, finding)
 
-    return sorted(
+    sorted_findings = sorted(
         deduped.values(),
         key=lambda finding: (
             _STATUS_PRIORITY[finding.status],
@@ -128,6 +141,10 @@ def normalize_findings(findings: list[Finding]) -> list[Finding]:
             finding.title.lower(),
         ),
     )
+    return [
+        finding.model_copy(update={"classification": finding.classification or classify_finding(finding)})
+        for finding in sorted_findings
+    ]
 
 
 def _tech_is_asset_only(sources: list[str]) -> bool:

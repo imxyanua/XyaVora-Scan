@@ -35,6 +35,7 @@ function summarizeFindings(findings: Finding[]) {
       `  - Severity: ${finding.severity}`,
       `  - Category: ${finding.category}`,
       `  - Confidence: ${finding.confidence ?? "Unknown"}`,
+      `  - Classification: ${finding.classification ?? "Unknown"}`,
       `  - Source: ${finding.source ?? "Unknown"}`,
       finding.analysis ? `  - Why it appears: ${finding.analysis}` : null,
       `  - Recommendation: ${finding.recommendation}`,
@@ -51,7 +52,8 @@ function summarizeTechStack(items: TechStackItem[]) {
     .map((item) => {
       const suffix = item.version ? ` ${item.version}` : "";
       const sources = item.sources?.length ? item.sources.join(" + ") : "unknown source";
-      return `- **${item.name}${suffix}** (${item.category}, ${item.confidence}, ${sources})`;
+      const reason = item.confidenceReason ? ` - ${item.confidenceReason}` : "";
+      return `- **${item.name}${suffix}** (${item.category}, ${item.confidence}, ${sources})${reason}`;
     })
     .join("\n");
 }
