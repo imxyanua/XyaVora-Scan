@@ -76,7 +76,26 @@ def test_build_findings_marks_http_errors_and_host_change():
         responseEvidence=["status_code: 404"],
     )
 
-    ids = {finding.id for finding in _build_findings(result)}
+    findings = _build_findings(result)
+    ids = {finding.id for finding in findings}
 
     assert "http_client_error" in ids
     assert "http_host_changed" in ids
+    assert next(f for f in findings if f.id == "http_client_error").classification == "investigation-lead"
+    assert next(f for f in findings if f.id == "http_host_changed").classification == "informational"
+
+
+def test_build_findings_marks_5xx_as_observed_risk():
+    result = HttpOverviewResult(
+        statusCode=503,
+        finalUrl="https://example.com",
+        initialHost="example.com",
+        finalHost="example.com",
+        hostChanged=False,
+        responseEvidence=["status_code: 503"],
+    )
+
+    finding = next(f for f in _build_findings(result) if f.id == "http_server_error")
+
+    assert finding.classification == "observed-risk"
+    assert finding.confidence == "observed"
