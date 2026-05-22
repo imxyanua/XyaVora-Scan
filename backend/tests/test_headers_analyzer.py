@@ -45,7 +45,9 @@ def test_all_headers_missing():
     assert len(findings) == 6
     hsts = next(i for i in items if i.header == "Strict-Transport-Security")
     assert hsts.confidence == "high"
-    assert hsts.evidence == ["Strict-Transport-Security: not present in response headers"]
+    assert hsts.evidence[0] == "Strict-Transport-Security: not present in response headers"
+    assert "scope: final HTTP response after redirects" in hsts.evidence
+    assert "interpretation: hardening recommendation, not a confirmed exploit" in hsts.evidence
 
 
 def test_missing_hsts_produces_best_practice_warning():
@@ -54,7 +56,9 @@ def test_missing_hsts_produces_best_practice_warning():
     assert hsts_finding.status == "warning"
     assert hsts_finding.severity == "medium"
     assert hsts_finding.confidence == "best-practice"
+    assert hsts_finding.classification == "hardening-recommendation"
     assert "not present" in hsts_finding.analysis
+    assert "proof of an exploitable vulnerability" in hsts_finding.analysis
     assert "curl -I" in hsts_finding.verification
 
 
@@ -63,6 +67,7 @@ def test_missing_referrer_produces_warning():
     ref_finding = next(f for f in findings if f.id == "missing_referrer")
     assert ref_finding.status == "warning"
     assert ref_finding.severity == "low"
+    assert ref_finding.classification == "hardening-recommendation"
 
 
 def test_partial_headers():
@@ -91,6 +96,7 @@ def test_weak_hsts_produces_warning_item_and_finding():
     finding = next(f for f in findings if f.id == "weak_hsts")
     assert "180-day" in finding.analysis
     assert "curl -I" in finding.verification
+    assert finding.classification == "observed-risk"
 
 
 def test_permissive_csp_produces_warning_item_and_finding():
@@ -104,7 +110,8 @@ def test_permissive_csp_produces_warning_item_and_finding():
     assert csp.confidence == "medium"
     assert "csp.unsafe_inline: True" in csp.evidence
     assert "csp.broad_source: True" in csp.evidence
-    assert "weak_csp" in {f.id for f in findings}
+    finding = next(f for f in findings if f.id == "weak_csp")
+    assert finding.classification == "observed-risk"
 
 
 def test_csp_nonce_hash_does_not_trigger_wildcard_warning():
@@ -125,6 +132,7 @@ def test_server_finding():
     assert finding.status == "info"
     assert finding.severity == "info"
     assert "nginx/1.18.0" in finding.description
+    assert finding.classification == "informational"
 
 
 # ── Unit: analyze_headers with mocked fetch ───────────────────────
