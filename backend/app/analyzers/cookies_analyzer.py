@@ -35,6 +35,24 @@ def _parse_set_cookie(header_value: str) -> CookieResult:
     elif samesite.lower() == "none" and not secure:
         warnings.append("SameSite=None requires Secure flag")
 
+    normalized_warnings: list[str] = []
+    for warning in warnings:
+        if warning.startswith("Missing Secure flag"):
+            normalized_warnings.append(
+                "Missing Secure flag - verify whether the cookie can travel over HTTP"
+            )
+        elif warning.startswith("Missing HttpOnly flag"):
+            normalized_warnings.append(
+                "Missing HttpOnly flag - JavaScript can read this cookie if it is not otherwise protected"
+            )
+        elif warning.startswith("Missing SameSite attribute"):
+            normalized_warnings.append(
+                "Missing SameSite attribute - browser behavior depends on defaults and cookie context"
+            )
+        else:
+            normalized_warnings.append(warning)
+    warnings = normalized_warnings
+
     evidence = [
         f"cookie: {name}",
         f"secure: {secure}",
@@ -101,6 +119,7 @@ def _build_findings(cookies: list[CookieResult]) -> list[Finding]:
             evidence=["No Set-Cookie headers were returned on the initial response."],
             analysis="The initial HTTP response did not include Set-Cookie headers. Later login or app flows may still set cookies.",
             verification=_cookie_verification(),
+            classification="informational",
         ))
         return findings
 
@@ -116,14 +135,19 @@ def _build_findings(cookies: list[CookieResult]) -> list[Finding]:
             category="Cookies",
             title="Cookies Without Secure Flag",
             description=f"Cookie(s) missing the Secure flag: {names}.",
-            impact="These cookies can be transmitted over unencrypted HTTP connections.",
+            impact="If the site is reachable over HTTP or a cookie is scoped broadly, these cookies may be sent without transport encryption.",
             recommendation="Add the Secure flag to all cookies that do not need to work over HTTP.",
-            status="fail",
+            status="warning",
             confidence="observed",
             source="headers",
             evidence=[item for cookie in no_secure[:5] for item in _cookie_evidence(cookie)],
-            analysis="At least one Set-Cookie header was observed without the Secure attribute.",
+            analysis=(
+                "At least one Set-Cookie header on the initial response was observed without the Secure attribute. "
+                "The scanner can verify the missing flag, but the real impact depends on whether the cookie is sensitive "
+                "and whether the domain is reachable over plain HTTP."
+            ),
             verification=_cookie_verification(),
+            classification="observed-risk",
         ))
 
     if no_httponly:
@@ -134,14 +158,18 @@ def _build_findings(cookies: list[CookieResult]) -> list[Finding]:
             category="Cookies",
             title="Cookies Without HttpOnly Flag",
             description=f"Cookie(s) missing the HttpOnly flag: {names}.",
-            impact="JavaScript can read these cookies — a successful XSS attack can steal session tokens.",
+            impact="JavaScript can read these cookies. This is most serious when the cookie contains session or authentication data.",
             recommendation="Add the HttpOnly flag to all session and authentication cookies.",
-            status="fail",
+            status="warning",
             confidence="observed",
             source="headers",
             evidence=[item for cookie in no_httponly[:5] for item in _cookie_evidence(cookie)],
-            analysis="At least one Set-Cookie header was observed without the HttpOnly attribute.",
+            analysis=(
+                "At least one Set-Cookie header on the initial response was observed without the HttpOnly attribute. "
+                "This is an observed cookie hardening gap, not proof that a session token is exposed."
+            ),
             verification=_cookie_verification(),
+            classification="observed-risk",
         ))
 
     if no_samesite:
@@ -152,14 +180,18 @@ def _build_findings(cookies: list[CookieResult]) -> list[Finding]:
             category="Cookies",
             title="Cookies Without SameSite Attribute",
             description=f"Cookie(s) missing the SameSite attribute: {names}.",
-            impact="Without SameSite, cookies are sent on cross-site requests, enabling CSRF attacks.",
+            impact="Browser defaults may provide some protection, but an explicit SameSite value makes cross-site cookie behavior predictable.",
             recommendation="Set SameSite=Lax (or Strict for sensitive cookies) on all cookies.",
             status="warning",
             confidence="observed",
             source="headers",
             evidence=[item for cookie in no_samesite[:5] for item in _cookie_evidence(cookie)],
-            analysis="At least one Set-Cookie header was observed without a SameSite attribute.",
+            analysis=(
+                "At least one Set-Cookie header on the initial response was observed without a SameSite attribute. "
+                "This is a hardening recommendation unless the cookie is known to protect state-changing actions."
+            ),
             verification=_cookie_verification(),
+            classification="hardening-recommendation",
         ))
 
     if not findings:
@@ -176,6 +208,7 @@ def _build_findings(cookies: list[CookieResult]) -> list[Finding]:
             evidence=[item for cookie in cookies[:5] for item in _cookie_evidence(cookie)],
             analysis="Every Set-Cookie header observed on the initial response included Secure, HttpOnly, and SameSite attributes.",
             verification=_cookie_verification(),
+            classification="informational",
         ))
 
     return findings

@@ -81,19 +81,20 @@ def _build_findings(result: SecurityTxtResult) -> list[Finding]:
             id="no_security_txt",
             severity="low",
             category="Security.txt",
-            title="security.txt Not Found",
-            description="No security.txt file was found at /.well-known/security.txt or /security.txt.",
-            impact="Security researchers have no standardised way to report vulnerabilities to the organisation.",
+            title="security.txt Not Observed",
+            description="No usable security.txt file was found at /.well-known/security.txt or /security.txt.",
+            impact="Security researchers may have less clear guidance for responsible disclosure. This does not indicate a runtime vulnerability.",
             recommendation=(
                 "Create a security.txt file at /.well-known/security.txt following RFC 9116. "
                 "Include at minimum a Contact field."
             ),
             status="warning",
-            confidence="observed",
+            confidence="best-practice",
             source="http",
             evidence=evidence,
             analysis="The scanner checked the RFC 9116 well-known path and root fallback path, but neither returned a usable security.txt file.",
             verification=_security_txt_verification(result),
+            classification="hardening-recommendation",
         )]
 
     findings = [Finding(
@@ -109,6 +110,7 @@ def _build_findings(result: SecurityTxtResult) -> list[Finding]:
         evidence=evidence,
         analysis="A security.txt file returned HTTP 200 with non-empty content.",
         verification=_security_txt_verification(result),
+        classification="informational",
     )]
 
     if not result.contact:
@@ -124,8 +126,12 @@ def _build_findings(result: SecurityTxtResult) -> list[Finding]:
             confidence="observed",
             source="http",
             evidence=evidence,
-            analysis="The file was found, but parsed content did not include a Contact field.",
+            analysis=(
+                "The file was found, but parsed content did not include a Contact field. "
+                "This affects disclosure workflow quality, not the runtime security posture of the scanned application."
+            ),
             verification=_security_txt_verification(result),
+            classification="hardening-recommendation",
         ))
 
     if not result.expires:
@@ -141,8 +147,12 @@ def _build_findings(result: SecurityTxtResult) -> list[Finding]:
             confidence="observed",
             source="http",
             evidence=evidence,
-            analysis="The file was found, but parsed content did not include an Expires field.",
+            analysis=(
+                "The file was found, but parsed content did not include an Expires field. "
+                "RFC 9116 recommends this field so researchers can tell whether the published instructions are current."
+            ),
             verification=_security_txt_verification(result),
+            classification="hardening-recommendation",
         ))
     elif result.expired:
         findings.append(Finding(
@@ -159,6 +169,7 @@ def _build_findings(result: SecurityTxtResult) -> list[Finding]:
             evidence=evidence,
             analysis="The file was found and its Expires timestamp is earlier than the scan time.",
             verification=_security_txt_verification(result),
+            classification="observed-risk",
         ))
 
     return findings
