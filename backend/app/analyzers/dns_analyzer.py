@@ -129,6 +129,19 @@ def _record_evidence(records: list[DnsRecord]) -> list[str]:
     return [f"{record.host} {record.type} {record.value} ttl={record.ttl if record.ttl is not None else 'unknown'}" for record in records]
 
 
+def _mail_auth_absence_evidence(result: DnsResult, record_type: str, target: str) -> list[str]:
+    evidence = [
+        f"missing: {record_type}",
+        f"target: {target}",
+        f"mx_detected: {result.mxDetected}",
+    ]
+    if result.mxEvidence:
+        evidence.extend(result.mxEvidence[:5])
+    else:
+        evidence.append("mx_evidence: no MX records observed during this scan")
+    return evidence
+
+
 def _dns_hostname(result: DnsResult, hostname: str | None = None) -> str:
     if hostname:
         return hostname
@@ -161,6 +174,7 @@ def _build_findings(
             evidence=result.spfEvidence,
             analysis="More than one TXT record beginning with v=spf1 was observed for the same domain.",
             verification=f"Run dig TXT {target} and confirm only one TXT value starts with v=spf1.",
+            classification="verified-issue",
         ))
 
     if result.dmarcRecordCount > 1:
@@ -178,40 +192,51 @@ def _build_findings(
             evidence=result.dmarcEvidence,
             analysis="More than one TXT record beginning with v=DMARC1 was observed at the _dmarc host.",
             verification=f"Run dig TXT {dmarc_target} and confirm exactly one TXT value starts with v=DMARC1.",
+            classification="verified-issue",
         ))
 
     if not result.spfDetected:
+        mail_context = "active mail exchange records were observed" if result.mxDetected else "no MX records were observed during this scan"
         findings.append(Finding(
             id="missing_spf",
-            severity="medium",
+            severity="medium" if result.mxDetected else "low",
             category="DNS",
-            title="SPF Record Is Missing",
-            description="The domain does not publish an SPF TXT record to define allowed mail senders.",
-            impact="Without SPF, anyone can send email that appears to come from this domain, enabling phishing attacks.",
+            title="SPF Record Not Observed",
+            description=f"The domain does not publish an SPF TXT record to define allowed mail senders; {mail_context}.",
+            impact="If this domain sends email, missing SPF weakens sender authorization and can make spoofing harder for receivers to evaluate.",
             recommendation="Add an SPF TXT record listing legitimate mail providers, then end with -all after validation.",
-            status="fail",
-            confidence="observed",
+            status="warning",
+            confidence="best-practice",
             source="dns",
-            evidence=["No TXT record starting with v=spf1 was returned for the domain."],
-            analysis="TXT records were queried for the domain, but none of the returned TXT values started with v=spf1.",
+            evidence=_mail_auth_absence_evidence(result, "SPF", target),
+            analysis=(
+                "TXT records were queried for the domain, but none of the returned TXT values started with v=spf1. "
+                "This is most important for domains that actively send mail; absence alone does not prove active abuse."
+            ),
             verification=f"Run dig TXT {target} and check whether a TXT value begins with v=spf1.",
+            classification="hardening-recommendation" if result.mxDetected else "investigation-lead",
         ))
 
     if not result.dmarcDetected:
+        mail_context = "active mail exchange records were observed" if result.mxDetected else "no MX records were observed during this scan"
         findings.append(Finding(
             id="missing_dmarc",
-            severity="medium",
+            severity="medium" if result.mxDetected else "low",
             category="DNS",
-            title="DMARC Policy Is Missing",
-            description="The domain does not publish a DMARC policy at _dmarc.<domain>.",
-            impact="Without DMARC, email spoofing attempts go unreported and unenforced.",
+            title="DMARC Policy Not Observed",
+            description=f"The domain does not publish a DMARC policy at _dmarc.<domain>; {mail_context}.",
+            impact="If this domain sends email, missing DMARC reduces reporting and enforcement for spoofed messages.",
             recommendation="Publish a DMARC TXT record. Start with p=none for monitoring, then move to quarantine or reject once legitimate senders align.",
-            status="fail",
-            confidence="observed",
+            status="warning",
+            confidence="best-practice",
             source="dns",
-            evidence=["No TXT record starting with v=DMARC1 was returned at _dmarc.<domain>."],
-            analysis="TXT records were queried at the _dmarc host, but no returned TXT value started with v=DMARC1.",
+            evidence=_mail_auth_absence_evidence(result, "DMARC", dmarc_target),
+            analysis=(
+                "TXT records were queried at the _dmarc host, but no returned TXT value started with v=DMARC1. "
+                "This is most important for domains that actively send mail; absence alone does not prove active abuse."
+            ),
             verification=f"Run dig TXT {dmarc_target} and check whether a TXT value begins with v=DMARC1.",
+            classification="hardening-recommendation" if result.mxDetected else "investigation-lead",
         ))
     elif result.dmarcPolicy == "none":
         # p=none means the policy exists but takes no action on failures — reports only
@@ -221,7 +246,7 @@ def _build_findings(
             category="DNS",
             title="DMARC Is Monitoring Only",
             description=f"DMARC exists, but the policy is p=none and does not enforce failures: {dmarc_record}",
-            impact="Email that fails DMARC checks is still delivered. The policy offers no protection, only reporting.",
+            impact="Email that fails DMARC checks is not rejected by this policy. It provides monitoring/reporting before enforcement.",
             recommendation="Review DMARC reports, fix sender alignment, then change policy to p=quarantine or p=reject.",
             status="warning",
             confidence="verified",
@@ -229,6 +254,7 @@ def _build_findings(
             evidence=[dmarc_record] if dmarc_record else [],
             analysis="The DMARC record was found, and its p= tag is set to none, which means monitoring without enforcement.",
             verification=f"Run dig TXT {dmarc_target} and inspect the p= tag in the DMARC record.",
+            classification="observed-risk",
         ))
     elif result.dmarcDetected and result.dmarcPolicy not in ("none", "quarantine", "reject"):
         findings.append(Finding(
@@ -245,6 +271,7 @@ def _build_findings(
             evidence=[dmarc_record] if dmarc_record else [],
             analysis="The DMARC record was found, but the p= tag was missing or outside the recognized values none, quarantine, and reject.",
             verification=f"Run dig TXT {dmarc_target} and validate the p= tag syntax.",
+            classification="verified-issue",
         ))
 
     if result.spfAll in ("+", "?"):
@@ -262,6 +289,7 @@ def _build_findings(
             evidence=[result.spfRecord] if result.spfRecord else [],
             analysis="The SPF record was found, and its all mechanism is permissive rather than a hard fail.",
             verification=f"Run dig TXT {target} and inspect whether the SPF record ends with +all, ?all, ~all, or -all.",
+            classification="observed-risk",
         ))
     elif result.spfLookupCount > 10:
         findings.append(Finding(
@@ -278,6 +306,7 @@ def _build_findings(
             evidence=[result.spfRecord] if result.spfRecord else [],
             analysis="The SPF record contains more DNS-lookup mechanisms than the SPF limit allows.",
             verification=f"Run an SPF validator against {target} and count include, a, mx, exists, ptr, and redirect lookups.",
+            classification="verified-issue",
         ))
 
     if result.dmarcDetected and result.dmarcPct is not None and result.dmarcPct < 100:
@@ -295,6 +324,7 @@ def _build_findings(
             evidence=[result.dmarcRecord] if result.dmarcRecord else [],
             analysis="The DMARC record was found, and its pct tag applies enforcement to less than all matching mail.",
             verification=f"Run dig TXT {dmarc_target} and inspect the pct= tag.",
+            classification="observed-risk",
         ))
 
     return findings
