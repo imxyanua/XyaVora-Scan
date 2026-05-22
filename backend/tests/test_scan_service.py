@@ -6,7 +6,7 @@ from app.services.scan_service import (
     normalize_findings,
     run_scan,
 )
-from app.analyzers.score_analyzer import compute_score
+from app.analyzers.score_analyzer import compute_score, compute_score_details
 from app.schemas.analyzer import AnalyzerResult
 from app.schemas.report import (
     DnsResult,
@@ -62,22 +62,64 @@ def test_score_best_practice_warning_is_weighted_lower_than_observed():
     assert best_practice_score > observed_score
 
 
-def test_score_grade_boundaries():
-    def _score_with_deduction(d: int) -> int:
-        class _F:
-            id = "no_https"
-            status = "fail"
-        from app.analyzers.score_analyzer import _DEDUCTIONS
-        _DEDUCTIONS["no_https"] = d
-        score, *_ = compute_score([_F()])  # type: ignore[arg-type]
-        _DEDUCTIONS["no_https"] = 30  # restore
-        return score
+def test_score_details_explain_weighted_deductions():
+    finding = Finding(
+        id="missing_csp",
+        severity="medium",
+        category="Headers",
+        title="Missing CSP",
+        description="x",
+        recommendation="x",
+        status="warning",
+        confidence="best-practice",
+        source="scanner",
+        classification="hardening-recommendation",
+    )
 
-    assert _score_with_deduction(0) == 100   # no deduction → A
-    assert _score_with_deduction(15) == 85   # → B
-    assert _score_with_deduction(25) == 75   # → C
-    assert _score_with_deduction(35) == 65   # → D
-    assert _score_with_deduction(50) == 50   # → F
+    score, _, _, summary, breakdown, groups = compute_score_details([finding])
+
+    assert score == 97
+    assert "confidence weighting and group caps" in summary
+    assert breakdown[0].baseDeduction == 5
+    assert breakdown[0].confidenceWeight == 0.6
+    assert breakdown[0].appliedDeduction == 3
+    assert breakdown[0].group == "headers"
+    assert groups[0].group == "headers"
+
+
+def test_score_details_caps_header_group():
+    findings = [
+        Finding(
+            id="missing_csp",
+            severity="medium",
+            category="Headers",
+            title=f"Missing CSP {index}",
+            description="x",
+            recommendation="x",
+            status="warning",
+            confidence="observed",
+            source="headers",
+        )
+        for index in range(6)
+    ]
+
+    score, *_rest, breakdown, groups = compute_score_details(findings)
+    header_group = next(group for group in groups if group.group == "headers")
+
+    assert score == 82
+    assert header_group.rawDeduction == 30
+    assert header_group.appliedDeduction == 18
+    assert sum(item.appliedDeduction for item in breakdown) == 18
+
+
+def test_score_grade_boundaries():
+    from app.analyzers.score_analyzer import _grade_status
+
+    assert _grade_status(100) == ("A", "Low Risk")
+    assert _grade_status(85) == ("B", "Medium Risk")
+    assert _grade_status(75) == ("C", "Medium Risk")
+    assert _grade_status(65) == ("D", "High Risk")
+    assert _grade_status(50) == ("F", "High Risk")
 
 
 def test_score_never_negative():

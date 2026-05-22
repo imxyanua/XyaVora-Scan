@@ -67,7 +67,10 @@ def test_build_findings_for_noindex_and_canonical_host_change():
     </html>
     """
     result = parse_page_metadata(html, "https://example.com/page")
-    ids = {finding.id for finding in _build_findings(result)}
+    findings = _build_findings(result)
+    ids = {finding.id for finding in findings}
 
     assert "page_noindex" in ids
     assert "canonical_host_differs" in ids
+    assert next(f for f in findings if f.id == "page_noindex").classification == "investigation-lead"
+    assert next(f for f in findings if f.id == "canonical_host_differs").classification == "investigation-lead"

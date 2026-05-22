@@ -174,6 +174,7 @@ def _build_findings(result: PageMetadataResult) -> list[Finding]:
             evidence=result.metadataEvidence,
             analysis="The scanner parsed the final page HTML and found a robots directive containing noindex.",
             verification=_metadata_verification(),
+            classification="investigation-lead",
         ))
 
     if result.canonicalMatchesFinalHost is False:
@@ -191,6 +192,7 @@ def _build_findings(result: PageMetadataResult) -> list[Finding]:
             evidence=result.metadataEvidence,
             analysis="The scanner parsed the canonical URL from the final page HTML and its host differs from the final response host.",
             verification=_metadata_verification(),
+            classification="investigation-lead",
         ))
 
     return findings

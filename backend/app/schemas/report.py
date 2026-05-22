@@ -282,6 +282,29 @@ class EvidenceSummaryItem(_Base):
     evidence:   list[str] = []
 
 
+class ScoreBreakdownItem(_Base):
+    findingId:           str
+    title:               str
+    category:            FindingCategory
+    status:              FindingStatus
+    confidence:          FindingConfidence
+    classification:      Optional[FindingClassification] = None
+    group:               str
+    groupCap:            int
+    baseDeduction:       int
+    confidenceWeight:    float
+    weightedDeduction:   int
+    appliedDeduction:    int
+    reason:              str
+
+
+class ScoreGroupBreakdown(_Base):
+    group:             str
+    cap:               int
+    rawDeduction:      int
+    appliedDeduction:  int
+
+
 class CookieResult(_Base):
     name:     str
     secure:   bool
@@ -350,3 +373,5 @@ class ScanReport(_Base):
     screenshot:    ScreenshotResult  = ScreenshotResult()
     findings:      list[Finding]     = []
     evidenceSummary: list[EvidenceSummaryItem] = []
+    scoreBreakdown: list[ScoreBreakdownItem] = []
+    scoreGroups:    list[ScoreGroupBreakdown] = []

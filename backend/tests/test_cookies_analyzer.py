@@ -64,18 +64,22 @@ def test_findings_no_cookies():
     findings = _build_findings([])
     assert findings[0].id == "no_cookies"
     assert findings[0].status == "info"
+    assert findings[0].classification == "informational"
 
 
 def test_findings_all_ok():
     c = CookieResult(name="s", secure=True, httpOnly=True, sameSite="Lax")
     findings = _build_findings([c])
     assert any(f.id == "cookies_ok" for f in findings)
+    assert next(f for f in findings if f.id == "cookies_ok").classification == "informational"
 
 
 def test_findings_missing_secure():
     c = CookieResult(name="bad", secure=False, httpOnly=True, sameSite="Lax")
     findings = _build_findings([c])
     finding = next(f for f in findings if f.id == "cookie_no_secure")
+    assert finding.status == "warning"
+    assert finding.classification == "observed-risk"
     assert "cookie: bad" in finding.evidence
     assert "secure: False" in finding.evidence
 
@@ -83,13 +87,17 @@ def test_findings_missing_secure():
 def test_findings_missing_httponly():
     c = CookieResult(name="bad", secure=True, httpOnly=False, sameSite="Lax")
     findings = _build_findings([c])
-    assert any(f.id == "cookie_no_httponly" for f in findings)
+    finding = next(f for f in findings if f.id == "cookie_no_httponly")
+    assert finding.status == "warning"
+    assert finding.classification == "observed-risk"
+    assert "not proof that a session token is exposed" in finding.analysis
 
 
 def test_findings_missing_samesite():
     c = CookieResult(name="bad", secure=True, httpOnly=True, sameSite=None)
     findings = _build_findings([c])
-    assert any(f.id == "cookie_no_samesite" for f in findings)
+    finding = next(f for f in findings if f.id == "cookie_no_samesite")
+    assert finding.classification == "hardening-recommendation"
 
 
 # ── Integration: analyze_cookies with mock ────────────────────────

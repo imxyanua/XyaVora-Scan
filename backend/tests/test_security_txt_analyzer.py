@@ -56,6 +56,8 @@ def test_findings_not_present():
     findings = _build_findings(result)
     assert findings[0].id == "no_security_txt"
     assert findings[0].status == "warning"
+    assert findings[0].confidence == "best-practice"
+    assert findings[0].classification == "hardening-recommendation"
 
 
 def test_findings_present_with_contact():
@@ -66,7 +68,8 @@ def test_findings_present_with_contact():
         expires="2999-01-01T00:00:00Z",
     )
     findings = _build_findings(result)
-    assert any(f.id == "security_txt_present" for f in findings)
+    present = next(f for f in findings if f.id == "security_txt_present")
+    assert present.classification == "informational"
     assert not any(f.id == "security_txt_no_contact" for f in findings)
     assert not any(f.id == "security_txt_no_expires" for f in findings)
 
@@ -79,7 +82,8 @@ def test_findings_present_without_contact():
     )
     findings = _build_findings(result)
     assert any(f.id == "security_txt_present" for f in findings)
-    assert any(f.id == "security_txt_no_contact" for f in findings)
+    missing_contact = next(f for f in findings if f.id == "security_txt_no_contact")
+    assert missing_contact.classification == "hardening-recommendation"
 
 
 # ── Integration: analyze_security_txt with mock ───────────────────
@@ -102,7 +106,8 @@ def test_findings_present_missing_or_expired_expires():
     expired_findings = _build_findings(expired)
 
     assert any(f.id == "security_txt_no_expires" for f in missing_findings)
-    assert any(f.id == "security_txt_expired" for f in expired_findings)
+    assert next(f for f in missing_findings if f.id == "security_txt_no_expires").classification == "hardening-recommendation"
+    assert next(f for f in expired_findings if f.id == "security_txt_expired").classification == "observed-risk"
 
 
 def _ok_response(body: str) -> MagicMock:

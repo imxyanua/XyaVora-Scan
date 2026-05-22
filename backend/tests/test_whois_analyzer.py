@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 from datetime import datetime, timezone, timedelta
 
-from app.analyzers.whois_analyzer import analyze_whois, _parse_whois, _build_findings, _to_iso, _days_until
+from app.analyzers.whois_analyzer import analyze_whois, _parse_whois, _build_findings, _to_iso, _days_until, _dnssec_status
 from app.schemas.report import WhoisResult
 
 
@@ -70,6 +70,13 @@ def test_parse_whois_deduplicates_nameservers():
     assert result.nameServers.count("ns1.example.com") == 1
 
 
+def test_dnssec_status_normalizes_common_values():
+    assert _dnssec_status("signedDelegation") == "enabled"
+    assert _dnssec_status("unsigned") == "unsigned"
+    assert _dnssec_status("no") == "unsigned"
+    assert _dnssec_status(None) == "unknown"
+
+
 # ── Unit: _build_findings ─────────────────────────────────────────
 
 def test_findings_registration_ok():
@@ -81,6 +88,8 @@ def test_findings_registration_ok():
     assert "domain_registration_ok" in ids
     assert "dnssec_enabled" in ids
     assert all(f.source == "whois" for f in findings)
+    assert next(f for f in findings if f.id == "domain_registration_ok").classification == "informational"
+    assert next(f for f in findings if f.id == "dnssec_enabled").classification == "informational"
 
 
 def test_findings_expiring_soon():
@@ -92,6 +101,7 @@ def test_findings_expiring_soon():
     assert expiring.status == "warning"
     assert expiring.severity == "medium"
     assert expiring.confidence == "verified"
+    assert expiring.classification == "observed-risk"
 
 
 def test_findings_expired():
@@ -102,6 +112,7 @@ def test_findings_expired():
     expired = next(f for f in findings if f.id == "domain_expired")
     assert expired.status == "fail"
     assert expired.severity == "high"
+    assert expired.classification == "verified-issue"
 
 
 def test_findings_dnssec_not_enabled():
@@ -110,12 +121,16 @@ def test_findings_dnssec_not_enabled():
     findings = _build_findings(result)
     dnssec_f = next(f for f in findings if f.id == "dnssec_not_enabled")
     assert dnssec_f.status == "warning"
+    assert dnssec_f.confidence == "best-practice"
+    assert dnssec_f.classification == "hardening-recommendation"
+    assert "not proof that DNS spoofing is occurring" in dnssec_f.impact
 
 
 def test_findings_expiry_unknown():
     result = WhoisResult(registrar="Test Registrar", dnssec="unsigned", whoisEvidence=["registrar: Test Registrar"])
     findings = _build_findings(result)
     assert "domain_expiry_unknown" in [f.id for f in findings]
+    assert next(f for f in findings if f.id == "domain_expiry_unknown").classification == "informational"
 
 
 def test_findings_error():
@@ -123,6 +138,7 @@ def test_findings_error():
     findings = _build_findings(result)
     assert findings[0].id == "whois_unavailable"
     assert findings[0].status == "info"
+    assert findings[0].classification == "informational"
 
 
 # ── Integration: analyze_whois with mock ─────────────────────────

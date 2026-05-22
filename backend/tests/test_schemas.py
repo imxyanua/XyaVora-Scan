@@ -22,6 +22,8 @@ def test_scan_report_defaults():
     assert report.findings == []
     assert report.techStack == []
     assert report.evidenceSummary == []
+    assert report.scoreBreakdown == []
+    assert report.scoreGroups == []
 
 
 def test_scan_report_camel_case_json():
@@ -46,6 +48,8 @@ def test_scan_report_camel_case_json():
     assert "pageMetadata" in data
     assert "siteDiscovery" in data
     assert "evidenceSummary" in data
+    assert "scoreBreakdown" in data
+    assert "scoreGroups" in data
 
 
 def test_finding_all_fields():

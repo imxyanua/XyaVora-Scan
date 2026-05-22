@@ -4,6 +4,7 @@ import type { ReactNode }       from "react";
 import type { ScanReport }      from "@/types";
 import { AppShell }             from "@/components/layout/AppShell";
 import { RiskScoreCard }        from "@/components/dashboard/RiskScoreCard";
+import { ScoreBreakdownCard }   from "@/components/dashboard/ScoreBreakdownCard";
 import { KeySignalsOverview }   from "@/components/dashboard/KeySignalsOverview";
 import { DataConfidenceStrip }  from "@/components/dashboard/DataConfidenceStrip";
 import { ReportQualitySummary } from "@/components/dashboard/ReportQualitySummary";
@@ -158,6 +159,10 @@ export function ReportDashboard({ domain, report, historyId, guestScanId }: Prop
               />
             </div>
           </div>
+          <ScoreBreakdownCard
+            breakdown={report.scoreBreakdown}
+            groups={report.scoreGroups}
+          />
           <DataConfidenceStrip report={report} />
           <ReportQualitySummary report={report} />
         </ReportSection>

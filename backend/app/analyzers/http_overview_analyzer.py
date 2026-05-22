@@ -142,6 +142,7 @@ def _build_findings(result: HttpOverviewResult) -> list[Finding]:
             evidence=result.responseEvidence,
             analysis="The scanner followed the redirect chain and observed a final HTTP status in the 5xx range.",
             verification=_http_verification(result.finalUrl),
+            classification="observed-risk",
         ))
     elif result.statusCode >= 400:
         findings.append(Finding(
@@ -156,8 +157,12 @@ def _build_findings(result: HttpOverviewResult) -> list[Finding]:
             confidence="observed",
             source="http",
             evidence=result.responseEvidence,
-            analysis="The scanner followed the redirect chain and observed a final HTTP status in the 4xx range.",
+            analysis=(
+                "The scanner followed the redirect chain and observed a final HTTP status in the 4xx range. "
+                "This may be expected for protected or bot-filtered URLs, so verify manually before treating it as a broken page."
+            ),
             verification=_http_verification(result.finalUrl),
+            classification="investigation-lead",
         ))
 
     if result.hostChanged:
@@ -178,6 +183,7 @@ def _build_findings(result: HttpOverviewResult) -> list[Finding]:
             ],
             analysis="The final response host differs from the original input host after redirects.",
             verification=_http_verification(result.finalUrl),
+            classification="informational",
         ))
 
     return findings

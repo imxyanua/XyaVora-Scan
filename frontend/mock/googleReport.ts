@@ -13,6 +13,41 @@ export const mockGoogleReport: ScanReport = {
   status:        "Medium Risk",
   summary:
     "The domain has a valid SSL certificate and basic DNS configuration, but several critical security headers are missing, increasing the attack surface.",
+  scoreBreakdown: [
+    {
+      findingId: "missing_hsts",
+      title: "Missing Strict-Transport-Security",
+      category: "Headers",
+      status: "warning",
+      confidence: "best-practice",
+      classification: "hardening-recommendation",
+      group: "headers",
+      groupCap: 18,
+      baseDeduction: 5,
+      confidenceWeight: 0.6,
+      weightedDeduction: 3,
+      appliedDeduction: 3,
+      reason: "warning hardening recommendation; base -5, confidence weight 0.6, group cap -18.",
+    },
+    {
+      findingId: "missing_csp",
+      title: "Missing Content-Security-Policy",
+      category: "Headers",
+      status: "warning",
+      confidence: "best-practice",
+      classification: "hardening-recommendation",
+      group: "headers",
+      groupCap: 18,
+      baseDeduction: 5,
+      confidenceWeight: 0.6,
+      weightedDeduction: 3,
+      appliedDeduction: 3,
+      reason: "warning hardening recommendation; base -5, confidence weight 0.6, group cap -18.",
+    },
+  ],
+  scoreGroups: [
+    { group: "headers", cap: 18, rawDeduction: 6, appliedDeduction: 6 },
+  ],
 
   dns: {
     records: [

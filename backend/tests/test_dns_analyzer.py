@@ -94,16 +94,42 @@ def test_email_security_confidence_medium_when_records_exist_but_not_enforced():
 
 
 def test_build_findings_missing_both():
-    result = DnsResult(spfDetected=False, dmarcDetected=False)
+    result = DnsResult(
+        mxDetected=True,
+        mxEvidence=["example.com MX 10 mail.example.com ttl=300"],
+        spfDetected=False,
+        dmarcDetected=False,
+    )
     findings = _build_findings(result, None, "example.com")
     ids = [f.id for f in findings]
     assert "missing_spf" in ids
     assert "missing_dmarc" in ids
-    assert all(f.status == "fail" for f in findings)
+    assert all(f.status == "warning" for f in findings)
     spf = next(f for f in findings if f.id == "missing_spf")
     dmarc = next(f for f in findings if f.id == "missing_dmarc")
+    assert spf.severity == "medium"
+    assert spf.confidence == "best-practice"
+    assert spf.classification == "hardening-recommendation"
+    assert dmarc.classification == "hardening-recommendation"
+    assert "mx_detected: True" in spf.evidence
+    assert "absence alone does not prove active abuse" in spf.analysis
     assert "dig TXT example.com" in spf.verification
     assert "dig TXT _dmarc.example.com" in dmarc.verification
+
+
+def test_build_findings_missing_mail_auth_without_mx_is_investigation_lead():
+    result = DnsResult(mxDetected=False, spfDetected=False, dmarcDetected=False)
+    findings = _build_findings(result, None, "example.com")
+    spf = next(f for f in findings if f.id == "missing_spf")
+    dmarc = next(f for f in findings if f.id == "missing_dmarc")
+
+    assert spf.severity == "low"
+    assert spf.status == "warning"
+    assert spf.classification == "investigation-lead"
+    assert "mx_detected: False" in spf.evidence
+    assert "no MX records were observed" in spf.description
+    assert dmarc.severity == "low"
+    assert dmarc.classification == "investigation-lead"
 
 
 def test_build_findings_dmarc_none_policy():
@@ -114,6 +140,7 @@ def test_build_findings_dmarc_none_policy():
     assert findings[0].status == "warning"
     finding = next(f for f in findings if f.id == "dmarc_not_strict")
     assert "p= tag is set to none" in finding.analysis
+    assert finding.classification == "observed-risk"
     assert "dig TXT _dmarc.example.com" in finding.verification
 
 
@@ -153,6 +180,7 @@ def test_build_findings_warns_on_multiple_spf_records():
 
     assert finding.status == "fail"
     assert finding.confidence == "verified"
+    assert finding.classification == "verified-issue"
     assert len(finding.evidence) == 2
 
 
@@ -171,14 +199,16 @@ def test_build_findings_warns_on_multiple_dmarc_records():
     )
     findings = _build_findings(result, "v=DMARC1; p=reject")
 
-    assert "dmarc_multiple_records" in [f.id for f in findings]
+    finding = next(f for f in findings if f.id == "dmarc_multiple_records")
+    assert finding.classification == "verified-issue"
 
 
 def test_build_findings_warns_on_invalid_dmarc_policy():
     result = DnsResult(spfDetected=True, dmarcDetected=True, spfAll="-", dmarcPolicy="bad")
     findings = _build_findings(result, "v=DMARC1; p=bad")
 
-    assert "dmarc_invalid_policy" in [f.id for f in findings]
+    finding = next(f for f in findings if f.id == "dmarc_invalid_policy")
+    assert finding.classification == "verified-issue"
 
 
 # ── Integration tests — real DNS (requires network) ───────────────

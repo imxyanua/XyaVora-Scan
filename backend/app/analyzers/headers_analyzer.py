@@ -14,9 +14,9 @@ _HEADER_RULES: list[dict] = [
         "header": "Strict-Transport-Security",
         "description": "Enforces HTTPS and prevents SSL-stripping downgrade attacks.",
         "finding_id": "missing_hsts",
-        "finding_title": "HSTS Is Not Enabled",
-        "finding_desc": "The site does not send Strict-Transport-Security, so browsers are not told to always use HTTPS.",
-        "finding_impact": "Users are not pinned to HTTPS after the first visit, which weakens downgrade protection.",
+        "finding_title": "HSTS Header Not Observed",
+        "finding_desc": "The final response does not send Strict-Transport-Security, so browsers are not instructed to pin this host to HTTPS.",
+        "finding_impact": "This reduces browser-side downgrade protection after the first visit. It is a hardening gap, not proof of an active downgrade issue.",
         "finding_rec": "Send Strict-Transport-Security with a long max-age. Add includeSubDomains and preload only after confirming every subdomain supports HTTPS.",
         "severity": "medium",
         "fail_status": "warning",
@@ -26,9 +26,9 @@ _HEADER_RULES: list[dict] = [
         "header": "Content-Security-Policy",
         "description": "Restricts allowed content sources, mitigating XSS and data injection.",
         "finding_id": "missing_csp",
-        "finding_title": "Content Security Policy Is Missing",
-        "finding_desc": "The site does not send a Content-Security-Policy header, so browsers have fewer controls against injected content.",
-        "finding_impact": "If an injection bug exists elsewhere, the browser has fewer policy controls to limit script execution.",
+        "finding_title": "Content Security Policy Not Observed",
+        "finding_desc": "The final response does not send a Content-Security-Policy header, so browsers receive fewer content execution controls.",
+        "finding_impact": "If an injection issue exists elsewhere, CSP would provide less browser-side containment. This is a defense-in-depth recommendation.",
         "finding_rec": "Start with a report-only CSP, review violations, then enforce a policy such as default-src 'self' and explicit script/style sources.",
         "severity": "medium",
         "fail_status": "warning",
@@ -38,9 +38,9 @@ _HEADER_RULES: list[dict] = [
         "header": "X-Frame-Options",
         "description": "Prevents the page from being embedded in an iframe (clickjacking protection).",
         "finding_id": "missing_x_frame",
-        "finding_title": "Clickjacking Protection Is Missing",
-        "finding_desc": "The site does not send X-Frame-Options, so pages may be embedded by other sites.",
-        "finding_impact": "Clickjacking attacks can trick users into clicking hidden UI elements.",
+        "finding_title": "Frame Embedding Control Not Observed",
+        "finding_desc": "The final response does not send X-Frame-Options, so older browser frame controls are not explicitly set.",
+        "finding_impact": "Pages may rely on CSP frame-ancestors or app-specific controls instead. Without either control, clickjacking resistance is weaker.",
         "finding_rec": "Send X-Frame-Options: DENY, or SAMEORIGIN if legitimate same-site framing is required.",
         "severity": "low",
         "fail_status": "warning",
@@ -50,9 +50,9 @@ _HEADER_RULES: list[dict] = [
         "header": "X-Content-Type-Options",
         "description": "Prevents browsers from MIME-sniffing responses away from the declared content type.",
         "finding_id": "missing_xcto",
-        "finding_title": "MIME Sniffing Protection Is Missing",
-        "finding_desc": "The site does not send X-Content-Type-Options, so browsers may guess content types.",
-        "finding_impact": "Browsers may execute files with wrong content types, enabling drive-by download attacks.",
+        "finding_title": "MIME Sniffing Control Not Observed",
+        "finding_desc": "The final response does not send X-Content-Type-Options, so compatible browsers may still apply content sniffing behavior.",
+        "finding_impact": "This can weaken content-type enforcement on mislabelled responses. It does not prove that a dangerous file is currently exposed.",
         "finding_rec": "Send X-Content-Type-Options: nosniff on HTML, script, style, and downloadable responses.",
         "severity": "low",
         "fail_status": "warning",
@@ -62,9 +62,9 @@ _HEADER_RULES: list[dict] = [
         "header": "Referrer-Policy",
         "description": "Controls how much referrer information is sent with navigation requests.",
         "finding_id": "missing_referrer",
-        "finding_title": "Referrer Policy Is Missing",
-        "finding_desc": "The site does not send Referrer-Policy, so browsers use their default referrer behavior.",
-        "finding_impact": "Sensitive URL parameters may be exposed to third-party sites via the Referer header.",
+        "finding_title": "Referrer Policy Not Observed",
+        "finding_desc": "The final response does not send Referrer-Policy, so browsers fall back to their default referrer behavior.",
+        "finding_impact": "Modern browser defaults are usually safer than older defaults, but an explicit policy gives the site clearer privacy control.",
         "finding_rec": "Send Referrer-Policy: strict-origin-when-cross-origin for a balanced default.",
         "severity": "low",
         "fail_status": "warning",
@@ -74,9 +74,9 @@ _HEADER_RULES: list[dict] = [
         "header": "Permissions-Policy",
         "description": "Restricts browser feature access (camera, microphone, geolocation, etc.).",
         "finding_id": "missing_permissions",
-        "finding_title": "Browser Feature Policy Is Missing",
-        "finding_desc": "The site does not send Permissions-Policy, so sensitive browser capabilities are not explicitly restricted.",
-        "finding_impact": "Embedded scripts could silently access camera, microphone, or location without restriction.",
+        "finding_title": "Browser Feature Policy Not Observed",
+        "finding_desc": "The final response does not send Permissions-Policy, so unused browser capabilities are not explicitly disabled by policy.",
+        "finding_impact": "Browser permission prompts and same-origin rules still apply, but an explicit policy can reduce feature exposure for embedded content.",
         "finding_rec": "Send Permissions-Policy and disable unused features, for example geolocation=(), camera=(), microphone=().",
         "severity": "low",
         "fail_status": "warning",
@@ -98,6 +98,14 @@ def _has_broad_csp_source(value: str) -> bool:
 
 def _header_verification(header: str) -> str:
     return f"Run curl -I against the final URL and inspect the {header} response header after redirects."
+
+
+def _missing_header_evidence(header: str) -> list[str]:
+    return [
+        f"{header}: not present in response headers",
+        "scope: final HTTP response after redirects",
+        "interpretation: hardening recommendation, not a confirmed exploit",
+    ]
 
 
 def _present_item(rule: dict, value: str) -> tuple[SecurityHeaderItem, Finding | None]:
@@ -130,6 +138,7 @@ def _present_item(rule: dict, value: str) -> tuple[SecurityHeaderItem, Finding |
                 evidence=evidence,
                 analysis="The header is present, but the observed max-age is missing or below the scanner's 180-day baseline.",
                 verification=_header_verification(header),
+                classification="observed-risk",
             )
     elif header == "Content-Security-Policy":
         has_unsafe_inline = "'unsafe-inline'" in lower
@@ -153,6 +162,7 @@ def _present_item(rule: dict, value: str) -> tuple[SecurityHeaderItem, Finding |
                 evidence=evidence,
                 analysis="The header is present, but the observed policy allows wildcard sources or unsafe inline script/style execution.",
                 verification=_header_verification(header),
+                classification="observed-risk",
             )
     elif header == "X-Frame-Options":
         if lower not in ("deny", "sameorigin"):
@@ -172,6 +182,7 @@ def _present_item(rule: dict, value: str) -> tuple[SecurityHeaderItem, Finding |
                 evidence=evidence,
                 analysis="The header is present, but the observed value is not DENY or SAMEORIGIN.",
                 verification=_header_verification(header),
+                classification="observed-risk",
             )
     elif header == "X-Content-Type-Options":
         if lower != "nosniff":
@@ -191,6 +202,7 @@ def _present_item(rule: dict, value: str) -> tuple[SecurityHeaderItem, Finding |
                 evidence=evidence,
                 analysis="The header is present, but the observed value is not nosniff.",
                 verification=_header_verification(header),
+                classification="observed-risk",
             )
     elif header == "Referrer-Policy":
         if lower in ("unsafe-url", "no-referrer-when-downgrade"):
@@ -210,6 +222,7 @@ def _present_item(rule: dict, value: str) -> tuple[SecurityHeaderItem, Finding |
                 evidence=evidence,
                 analysis="The header is present, but the observed value may send full URLs to other origins.",
                 verification=_header_verification(header),
+                classification="observed-risk",
             )
 
     return SecurityHeaderItem(
@@ -228,7 +241,7 @@ def _missing_item(rule: dict) -> SecurityHeaderItem:
         status="missing",
         description=rule["description"],
         confidence="high",
-        evidence=[f"{rule['header']}: not present in response headers"],
+        evidence=_missing_header_evidence(rule["header"]),
     )
 
 
@@ -259,6 +272,7 @@ def _check_headers(
                 findings.append(warning)
         else:
             items.append(_missing_item(rule))
+            evidence = _missing_header_evidence(rule["header"])
             findings.append(Finding(
                 id=rule["finding_id"],
                 severity=rule["severity"],   # type: ignore[arg-type]
@@ -270,12 +284,14 @@ def _check_headers(
                 status=rule["fail_status"],  # type: ignore[arg-type]
                 confidence=rule.get("confidence", "observed"),
                 source="headers",
-                evidence=[f"{rule['header']}: not present in response headers"],
+                evidence=evidence,
                 analysis=(
                     f"{rule['header']} was not present in the final HTTP response headers captured by the scanner. "
-                    "For some apps this can be intentional, but it means the browser does not receive this hardening control from this response."
+                    "The absence is directly observed on this response, while the risk rating is a hardening recommendation "
+                    "rather than proof of an exploitable vulnerability."
                 ),
                 verification=_header_verification(rule["header"]),
+                classification="hardening-recommendation",
             ))
 
     return items, findings
@@ -311,6 +327,7 @@ def _server_finding(server: str) -> Finding:
         evidence=[f"Server: {server}"],
         analysis="The Server header was present in the final HTTP response.",
         verification="Run curl -I against the final URL and inspect the Server response header.",
+        classification="informational",
     )
 
 
