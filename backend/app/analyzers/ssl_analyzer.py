@@ -28,6 +28,7 @@ def _get_cert_info(hostname: str) -> dict:
 def _parse_cert(hostname: str, info: dict) -> SslResult:
     cert   = info["cert"]
     cipher = info.get("cipher")
+    date_parse_ok = True
 
     # Subject — take CN from the subject tuple list
     subject_cn = ""
@@ -53,6 +54,7 @@ def _parse_cert(hostname: str, info: dict) -> SslResult:
         valid_to   = datetime.strptime(valid_to_raw,   fmt).replace(tzinfo=timezone.utc)
         days_remaining = (valid_to - datetime.now(timezone.utc)).days
     except ValueError:
+        date_parse_ok = False
         valid_from = datetime.now(timezone.utc)
         valid_to   = datetime.now(timezone.utc)
         days_remaining = 0
@@ -69,7 +71,9 @@ def _parse_cert(hostname: str, info: dict) -> SslResult:
     cipher_bits = cipher[2] if cipher and len(cipher) > 2 else None
 
     warning = None
-    if days_remaining < 0:
+    if not date_parse_ok:
+        warning = "Certificate validity dates could not be parsed."
+    elif days_remaining < 0:
         warning = f"Certificate expired {abs(days_remaining)} day(s) ago."
     elif days_remaining < _EXPIRY_WARN_DAYS:
         warning = f"Certificate expires in {days_remaining} day(s)."
@@ -80,6 +84,7 @@ def _parse_cert(hostname: str, info: dict) -> SslResult:
         f"valid_from: {valid_from.isoformat()}",
         f"valid_to: {valid_to.isoformat()}",
         f"protocol: {protocol or 'Unknown'}",
+        f"validity_parse_status: {'ok' if date_parse_ok else 'failed'}",
     ]
     if cipher_name:
         evidence.append(f"cipher: {cipher_name}")
@@ -111,6 +116,24 @@ def _tls_verification() -> str:
     )
 
 
+def _parse_iso_datetime(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def _certificate_expired(result: SslResult) -> bool:
+    valid_to = _parse_iso_datetime(result.validTo)
+    if valid_to is not None:
+        if valid_to.tzinfo is None:
+            valid_to = valid_to.replace(tzinfo=timezone.utc)
+        return valid_to <= datetime.now(timezone.utc)
+    return bool(result.warning and result.warning.startswith("Certificate expired"))
+
+
 def _build_findings(result: SslResult) -> list[Finding]:
     findings: list[Finding] = []
 
@@ -129,6 +152,7 @@ def _build_findings(result: SslResult) -> list[Finding]:
             evidence=result.certificateEvidence,
             analysis="The scanner attempted a TLS handshake on port 443, but no usable HTTPS connection completed.",
             verification=_tls_verification(),
+            classification="observed-risk",
         ))
         return findings
 
@@ -147,10 +171,11 @@ def _build_findings(result: SslResult) -> list[Finding]:
             evidence=result.certificateEvidence,
             analysis="A TLS server responded, but default certificate verification did not trust the chain, hostname, or validity state.",
             verification=_tls_verification(),
+            classification="verified-issue",
         ))
         return findings
 
-    if result.daysRemaining == 0:
+    if _certificate_expired(result):
         findings.append(Finding(
             id="ssl_expired",
             severity="high",
@@ -165,6 +190,7 @@ def _build_findings(result: SslResult) -> list[Finding]:
             evidence=result.certificateEvidence,
             analysis="The parsed certificate validity window has already ended at scan time.",
             verification=_tls_verification(),
+            classification="verified-issue",
         ))
     elif result.daysRemaining < _EXPIRY_WARN_DAYS:
         findings.append(Finding(
@@ -179,8 +205,12 @@ def _build_findings(result: SslResult) -> list[Finding]:
             confidence="verified",
             source="tls",
             evidence=result.certificateEvidence,
-            analysis=f"The parsed certificate is trusted, but expires within the {_EXPIRY_WARN_DAYS}-day renewal window.",
+            analysis=(
+                f"The parsed certificate is trusted and not expired, but expires within the "
+                f"{_EXPIRY_WARN_DAYS}-day renewal window."
+            ),
             verification=_tls_verification(),
+            classification="observed-risk",
         ))
     else:
         findings.append(Finding(
@@ -196,6 +226,7 @@ def _build_findings(result: SslResult) -> list[Finding]:
             evidence=result.certificateEvidence,
             analysis="The scanner completed a trusted TLS handshake and parsed a certificate that is still valid.",
             verification=_tls_verification(),
+            classification="informational",
         ))
 
     if result.protocol in {"TLSv1", "TLSv1.1", "SSLv3", "SSLv2"}:
@@ -213,6 +244,7 @@ def _build_findings(result: SslResult) -> list[Finding]:
             evidence=result.certificateEvidence,
             analysis="The negotiated protocol is obsolete for modern HTTPS clients.",
             verification=_tls_verification(),
+            classification="verified-issue",
         ))
     elif result.protocol == "TLSv1.2":
         findings.append(Finding(
@@ -228,6 +260,7 @@ def _build_findings(result: SslResult) -> list[Finding]:
             evidence=result.certificateEvidence,
             analysis="The scanner negotiated TLS 1.2. This is acceptable, though TLS 1.3 is preferred where supported.",
             verification=_tls_verification(),
+            classification="informational",
         ))
 
     if result.cipherBits is not None and result.cipherBits < 128:
@@ -245,6 +278,7 @@ def _build_findings(result: SslResult) -> list[Finding]:
             evidence=result.certificateEvidence,
             analysis="The negotiated cipher reports less than 128 bits of security.",
             verification=_tls_verification(),
+            classification="verified-issue",
         ))
 
     return findings

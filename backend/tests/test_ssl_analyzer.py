@@ -41,6 +41,7 @@ def test_parse_cert_basic():
     assert result.tlsConfidence == "high"
     assert "protocol: TLSv1.3" in result.certificateEvidence
     assert "cipher: TLS_AES_256_GCM_SHA384" in result.certificateEvidence
+    assert "validity_parse_status: ok" in result.certificateEvidence
     assert result.daysRemaining >= 89  # floor division means up to 1 day variance
     assert "example.com" in result.sanDomains
 
@@ -73,29 +74,46 @@ def test_findings_valid_cert():
     assert len(findings) == 1
     assert findings[0].id == "ssl_valid"
     assert findings[0].status == "pass"
+    assert findings[0].classification == "informational"
 
 
 def test_findings_expiring_soon():
     result = SslResult(
         httpsAvailable=True, trusted=True, daysRemaining=10,
-        issuer="X", subject="x.com", validFrom="", validTo="2026-05-22T00:00:00+00:00",
+        issuer="X", subject="x.com", validFrom="",
+        validTo=(datetime.now(timezone.utc) + timedelta(days=10)).isoformat(),
         protocol="TLSv1.3",
     )
     findings = _build_findings(result)
     assert findings[0].id == "ssl_expiring_soon"
     assert findings[0].status == "warning"
     assert findings[0].severity == "medium"
+    assert findings[0].classification == "observed-risk"
+
+
+def test_findings_less_than_one_day_remaining_is_not_expired():
+    valid_to = (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat()
+    result = SslResult(
+        httpsAvailable=True, trusted=True, daysRemaining=0,
+        issuer="X", subject="x.com", validFrom="", validTo=valid_to,
+        protocol="TLSv1.3",
+    )
+    findings = _build_findings(result)
+    assert findings[0].id == "ssl_expiring_soon"
+    assert "ssl_expired" not in {finding.id for finding in findings}
 
 
 def test_findings_expired():
     result = SslResult(
         httpsAvailable=True, trusted=True, daysRemaining=0,
-        issuer="X", subject="x.com", validFrom="", validTo="",
+        issuer="X", subject="x.com", validFrom="",
+        validTo=(datetime.now(timezone.utc) - timedelta(days=1)).isoformat(),
     )
     findings = _build_findings(result)
     assert findings[0].id == "ssl_expired"
     assert findings[0].status == "fail"
     assert findings[0].severity == "high"
+    assert findings[0].classification == "verified-issue"
 
 
 def test_findings_no_https():
@@ -104,6 +122,7 @@ def test_findings_no_https():
     assert findings[0].id == "no_https"
     assert findings[0].status == "fail"
     assert findings[0].severity == "high"
+    assert findings[0].classification == "observed-risk"
 
 
 def test_findings_untrusted_cert_not_reported_as_expired():
@@ -117,6 +136,7 @@ def test_findings_untrusted_cert_not_reported_as_expired():
 
     assert findings[0].id == "ssl_untrusted"
     assert findings[0].status == "fail"
+    assert findings[0].classification == "verified-issue"
     assert "ssl_expired" not in {finding.id for finding in findings}
 
 
@@ -138,6 +158,8 @@ def test_findings_legacy_tls_and_weak_cipher():
 
     assert "tls_legacy_protocol" in ids
     assert "tls_weak_cipher" in ids
+    assert next(f for f in findings if f.id == "tls_legacy_protocol").classification == "verified-issue"
+    assert next(f for f in findings if f.id == "tls_weak_cipher").classification == "verified-issue"
 
 
 # ── Unit: analyze_ssl with mocked socket ─────────────────────────
