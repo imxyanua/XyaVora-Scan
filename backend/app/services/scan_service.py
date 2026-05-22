@@ -475,6 +475,8 @@ async def run_scan(
             grade=score_data.get("grade", "F"),
             status=score_data.get("status", "High Risk"),
             summary=score_data.get("summary", ""),
+            scoreBreakdown=score_data.get("scoreBreakdown", []),
+            scoreGroups=score_data.get("scoreGroups", []),
             dns=dns_r.data           if isinstance(dns_r.data, DnsResult)           else DnsResult(error=_err(dns_r)),
             ssl=ssl_r.data           if isinstance(ssl_r.data, SslResult)           else SslResult(error=_err(ssl_r)),
             headers=headers_r.data   if isinstance(headers_r.data, HeadersResult)   else HeadersResult(error=_err(headers_r)),

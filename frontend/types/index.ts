@@ -286,6 +286,29 @@ export interface EvidenceSummaryItem {
   evidence?:   string[];
 }
 
+export interface ScoreBreakdownItem {
+  findingId:         string;
+  title:             string;
+  category:          FindingCategory;
+  status:            FindingStatus;
+  confidence:        FindingConfidence;
+  classification?:   FindingClassification;
+  group:             string;
+  groupCap:          number;
+  baseDeduction:     number;
+  confidenceWeight:  number;
+  weightedDeduction: number;
+  appliedDeduction:  number;
+  reason:            string;
+}
+
+export interface ScoreGroupBreakdown {
+  group:            string;
+  cap:              number;
+  rawDeduction:     number;
+  appliedDeduction: number;
+}
+
 export interface CookieResult {
   name:       string;
   secure:     boolean;
@@ -350,6 +373,8 @@ export interface ScanReport {
   screenshot:    ScreenshotResult;
   findings:      Finding[];
   evidenceSummary: EvidenceSummaryItem[];
+  scoreBreakdown: ScoreBreakdownItem[];
+  scoreGroups:    ScoreGroupBreakdown[];
 }
 
 // ── History ───────────────────────────────────

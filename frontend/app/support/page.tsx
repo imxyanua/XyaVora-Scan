@@ -24,7 +24,7 @@ const FAQ = [
   },
   {
     q: "How is the risk score calculated?",
-    a: "Each analyzer produces findings tagged fail or warning. The score starts at 100 and deducts points per finding (e.g. no HTTPS: -30, missing HSTS: -10, missing CSP: -10). The grade maps to A (≥90), B (≥80), C (≥70), D (≥60), F (<60).",
+    a: "Each analyzer produces findings tagged fail or warning. The score starts at 100, applies confidence-weighted deductions, and caps deductions by group so best-practice observations do not dominate the grade. The report includes a Score Breakdown showing the applied deductions.",
   },
   {
     q: "Why does VIEW in History sometimes re-scan?",

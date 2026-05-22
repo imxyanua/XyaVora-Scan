@@ -58,6 +58,21 @@ function summarizeTechStack(items: TechStackItem[]) {
     .join("\n");
 }
 
+function summarizeScoreBreakdown(report: ScanReport) {
+  if (!report.scoreGroups?.length) return "- No score deductions were applied.";
+
+  const groups = report.scoreGroups
+    .map((group) => `- ${group.group}: -${group.appliedDeduction} applied (raw -${group.rawDeduction}, cap -${group.cap})`)
+    .join("\n");
+  const topItems = report.scoreBreakdown
+    ?.filter((item) => item.appliedDeduction > 0)
+    .slice(0, 8)
+    .map((item) => `- ${item.title}: -${item.appliedDeduction} (${item.reason})`)
+    .join("\n");
+
+  return topItems ? `${groups}\n\nTop deductions:\n${topItems}` : groups;
+}
+
 function screenshotStatus(report: ScanReport) {
   if (report.screenshot.error) return `Error: ${report.screenshot.error}`;
   if (report.screenshot.base64 && report.screenshot.mobileBase64) return "Desktop and mobile captured";
@@ -156,6 +171,10 @@ export function generateMarkdownReport(report: ScanReport) {
       ["Risk Status", report.status],
       ["Summary", report.summary],
     ]),
+    "",
+    "## Score Breakdown",
+    "",
+    summarizeScoreBreakdown(report),
     "",
     "## Priority Findings",
     "",
