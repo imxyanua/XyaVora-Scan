@@ -92,6 +92,15 @@ def _whois_verification() -> str:
     return "Query the domain through the registrar, RDAP, or a WHOIS client and compare registrar, expiry, nameserver, and DNSSEC fields."
 
 
+def _dnssec_status(dnssec: str | None) -> str:
+    if dnssec is None or not str(dnssec).strip():
+        return "unknown"
+    value = str(dnssec).strip().lower()
+    if value in ("unsigned", "no", "false", "inactive", "not signed"):
+        return "unsigned"
+    return "enabled"
+
+
 def _build_findings(result: WhoisResult) -> list[Finding]:
     findings: list[Finding] = []
 
@@ -109,6 +118,7 @@ def _build_findings(result: WhoisResult) -> list[Finding]:
             evidence=[f"whois_error: {result.error}"],
             analysis="The WHOIS lookup raised an error or returned data the scanner could not parse.",
             verification=_whois_verification(),
+            classification="informational",
         ))
         return findings
 
@@ -134,6 +144,7 @@ def _build_findings(result: WhoisResult) -> list[Finding]:
                     evidence=result.whoisEvidence,
                     analysis="The parsed WHOIS expiration date is earlier than the scan time.",
                     verification=_whois_verification(),
+                    classification="verified-issue",
                 ))
             elif days_left < _EXPIRY_WARN_DAYS:
                 findings.append(Finding(
@@ -150,6 +161,7 @@ def _build_findings(result: WhoisResult) -> list[Finding]:
                     evidence=result.whoisEvidence,
                     analysis=f"The parsed WHOIS expiration date is within the {_EXPIRY_WARN_DAYS}-day renewal window.",
                     verification=_whois_verification(),
+                    classification="observed-risk",
                 ))
             else:
                 findings.append(Finding(
@@ -165,6 +177,7 @@ def _build_findings(result: WhoisResult) -> list[Finding]:
                     evidence=result.whoisEvidence,
                     analysis="The parsed WHOIS expiration date is in the future and outside the warning window.",
                     verification=_whois_verification(),
+                    classification="informational",
                 ))
         except (ValueError, TypeError):
             pass
@@ -182,10 +195,12 @@ def _build_findings(result: WhoisResult) -> list[Finding]:
             evidence=result.whoisEvidence,
             analysis="The WHOIS response did not include an expiration date the scanner could normalize.",
             verification=_whois_verification(),
+            classification="informational",
         ))
 
     # DNSSEC check
-    if result.dnssec and result.dnssec.lower() not in ("unsigned", "no", "false"):
+    dnssec_status = _dnssec_status(result.dnssec)
+    if dnssec_status == "enabled":
         findings.append(Finding(
             id="dnssec_enabled",
             severity="info",
@@ -199,22 +214,28 @@ def _build_findings(result: WhoisResult) -> list[Finding]:
             evidence=result.whoisEvidence,
             analysis="The WHOIS/RDAP data reported a DNSSEC value that is not unsigned/no/false.",
             verification=_whois_verification(),
+            classification="informational",
         ))
     else:
+        status_text = result.dnssec or "not returned"
         findings.append(Finding(
             id="dnssec_not_enabled",
             severity="low",
             category="WHOIS",
-            title="DNSSEC Not Enabled",
-            description="DNSSEC is not enabled or could not be confirmed.",
-            impact="Without DNSSEC, DNS responses can be spoofed (DNS cache poisoning).",
+            title="DNSSEC Not Confirmed",
+            description=f"WHOIS/RDAP DNSSEC status is {status_text}.",
+            impact="DNSSEC was not confirmed by WHOIS/RDAP. This is a DNS integrity hardening recommendation, not proof that DNS spoofing is occurring.",
             recommendation="Enable DNSSEC through your registrar or DNS provider.",
             status="warning",
-            confidence="observed",
+            confidence="best-practice" if dnssec_status == "unsigned" else "observed",
             source="whois",
-            evidence=result.whoisEvidence,
-            analysis="WHOIS/RDAP did not confirm DNSSEC as enabled.",
+            evidence=result.whoisEvidence or [f"dnssec: {status_text}"],
+            analysis=(
+                "WHOIS/RDAP did not confirm DNSSEC as enabled. Some registries may omit or normalize this field, "
+                "so verify directly with the registrar or DNS provider before treating it as final."
+            ),
             verification=_whois_verification(),
+            classification="hardening-recommendation",
         ))
 
     return findings
