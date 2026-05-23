@@ -435,6 +435,7 @@ async def run_scan(
     hostname: str,
     force_refresh: bool = False,
     progress_callback: ProgressCallback | None = None,
+    include_screenshot: bool = True,
 ) -> ScanReport:
     """
     Runs all analyzers concurrently then assembles a ScanReport.
@@ -466,24 +467,41 @@ async def run_scan(
         return result
 
     async def _pipeline() -> ScanReport:
-        dns_r, ssl_r, headers_r, http_r, location_r, meta_r, discovery_r, whois_r, tech_r, cookies_r, sectxt_r, shot_r = (
-            await asyncio.gather(
-                _run_analyzer("dns", analyze_dns(hostname)),
-                _run_analyzer("ssl", analyze_ssl(hostname)),
-                _run_analyzer("headers", analyze_headers(normalized_url)),
-                _run_analyzer("http", analyze_http_overview(normalized_url)),
-                _run_analyzer("location", analyze_server_location(hostname)),
-                _run_analyzer("metadata", analyze_page_metadata(normalized_url)),
-                _run_analyzer("discovery", analyze_site_discovery(normalized_url)),
-                _run_analyzer("whois", analyze_whois(hostname)),
-                _run_analyzer("techStack", analyze_tech_stack(normalized_url)),
-                _run_analyzer("cookies", analyze_cookies(normalized_url)),
-                _run_analyzer("securityTxt", analyze_security_txt(normalized_url)),
+        analyzer_tasks = [
+            _run_analyzer("dns", analyze_dns(hostname)),
+            _run_analyzer("ssl", analyze_ssl(hostname)),
+            _run_analyzer("headers", analyze_headers(normalized_url)),
+            _run_analyzer("http", analyze_http_overview(normalized_url)),
+            _run_analyzer("location", analyze_server_location(hostname)),
+            _run_analyzer("metadata", analyze_page_metadata(normalized_url)),
+            _run_analyzer("discovery", analyze_site_discovery(normalized_url)),
+            _run_analyzer("whois", analyze_whois(hostname)),
+            _run_analyzer("techStack", analyze_tech_stack(normalized_url)),
+            _run_analyzer("cookies", analyze_cookies(normalized_url)),
+            _run_analyzer("securityTxt", analyze_security_txt(normalized_url)),
+        ]
+        if include_screenshot:
+            analyzer_tasks.append(
                 _run_analyzer(
                     "screenshot",
                     analyze_screenshot(normalized_url, settings.ENABLE_SCREENSHOT),
                     timeout=settings.SCREENSHOT_TIMEOUT_SECONDS,
+                )
+            )
+
+        results = await asyncio.gather(*analyzer_tasks)
+        dns_r, ssl_r, headers_r, http_r, location_r, meta_r, discovery_r, whois_r, tech_r, cookies_r, sectxt_r = results[:11]
+        shot_r = (
+            results[11]
+            if include_screenshot
+            else AnalyzerResult(
+                key="screenshot",
+                status="success",
+                data=ScreenshotResult(
+                    url=normalized_url,
+                    error="Screenshot capture is running as a late background task.",
                 ),
+                findings=[],
             )
         )
 
@@ -538,5 +556,6 @@ async def run_scan(
         return report
 
     report = await asyncio.wait_for(_pipeline(), timeout=settings.SCAN_TIMEOUT_SECONDS)
-    _cache_set(hostname, report)
+    if include_screenshot:
+        _cache_set(hostname, report)
     return report

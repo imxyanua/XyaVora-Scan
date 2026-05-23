@@ -7,16 +7,16 @@ import { normalizeScanTarget } from "@/lib/startScan";
 
 type Props = {
   params:       Promise<{ domain: string }>;
-  searchParams: Promise<{ id?: string; guestScanId?: string; liveScanId?: string }>;
+  searchParams: Promise<{ id?: string; guestScanId?: string; liveScanId?: string; liveJobId?: string }>;
 };
 
 export default async function ReportPage({ params, searchParams }: Props) {
   const rawParams = await params;
   const domain = normalizeScanTarget(decodeURIComponent(rawParams.domain));
-  const { id, guestScanId, liveScanId } = await searchParams;
+  const { id, guestScanId, liveScanId, liveJobId } = await searchParams;
 
   if (guestScanId) {
-    return <GuestStoredReport domain={domain} scanId={guestScanId} />;
+    return <GuestStoredReport domain={domain} scanId={guestScanId} liveJobId={liveJobId} />;
   }
 
   if (liveScanId) {

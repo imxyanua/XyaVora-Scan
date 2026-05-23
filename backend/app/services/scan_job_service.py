@@ -4,8 +4,11 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
+from app.analyzers.screenshot_analyzer import analyze_screenshot
+from app.core.config import settings
+from app.schemas.analyzer import AnalyzerResult
 from app.schemas.api import AnalyzeRequest, ScanJobSnapshot, ScanJobState, ScanJobStep
-from app.schemas.report import ScanReport
+from app.schemas.report import ScanReport, ScreenshotResult
 from app.services import history_service, log_service
 from app.services.scan_service import is_cached, run_scan
 
@@ -134,6 +137,53 @@ async def _run_job(job: _ScanJob) -> None:
         step.error = error
         _touch(job)
 
+    async def run_late_screenshot() -> ScreenshotResult:
+        step = job.steps.get("screenshot")
+        if step:
+            step.status = "running"
+            step.error = None
+            step.duration_ms = None
+            _touch(job)
+
+        started = time.monotonic()
+        try:
+            result = await asyncio.wait_for(
+                analyze_screenshot(job.normalized_url, settings.ENABLE_SCREENSHOT),
+                timeout=settings.SCREENSHOT_TIMEOUT_SECONDS,
+            )
+        except asyncio.TimeoutError:
+            result = AnalyzerResult(
+                key="screenshot",
+                status="error",
+                data=ScreenshotResult(
+                    url=job.normalized_url,
+                    error="Screenshot capture exceeded the late capture timeout.",
+                ),
+                errors=["Screenshot capture exceeded the late capture timeout."],
+            )
+        except Exception as exc:
+            result = AnalyzerResult(
+                key="screenshot",
+                status="error",
+                data=ScreenshotResult(url=job.normalized_url, error=str(exc)),
+                errors=[str(exc)],
+            )
+
+        screenshot = (
+            result.data
+            if isinstance(result.data, ScreenshotResult)
+            else ScreenshotResult(url=job.normalized_url, error=result.errors[0] if result.errors else "Screenshot failed.")
+        )
+        duration_ms = int((time.monotonic() - started) * 1000)
+        if step:
+            step.status = "error" if screenshot.error and not screenshot.base64 and not screenshot.mobileBase64 else "success"
+            step.duration_ms = duration_ms
+            step.error = screenshot.error if step.status == "error" else None
+            _touch(job)
+        return screenshot
+
+    screenshot_task = asyncio.create_task(run_late_screenshot())
+
     try:
         report = await run_scan(
             job.body.target,
@@ -141,8 +191,11 @@ async def _run_job(job: _ScanJob) -> None:
             job.hostname,
             force_refresh=job.body.force_refresh,
             progress_callback=update_step,
+            include_screenshot=False,
         )
     except Exception as exc:
+        if not screenshot_task.done():
+            screenshot_task.cancel()
         job.status = "failed"
         job.error = str(exc)
         duration_ms = int((time.monotonic() - t0) * 1000)
@@ -159,6 +212,9 @@ async def _run_job(job: _ScanJob) -> None:
         return
 
     duration_ms = int((time.monotonic() - t0) * 1000)
+    if screenshot_task.done() and not screenshot_task.cancelled():
+        report.screenshot = screenshot_task.result()
+
     log_service.record(
         domain=report.hostname,
         duration_ms=duration_ms,
@@ -173,6 +229,12 @@ async def _run_job(job: _ScanJob) -> None:
     job.report = report
     job.status = "completed"
     _touch(job)
+
+    if not screenshot_task.done():
+        screenshot = await screenshot_task
+        if job.report:
+            job.report.screenshot = screenshot
+            _touch(job)
 
 
 def start_scan_job(

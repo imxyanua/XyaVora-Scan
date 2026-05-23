@@ -93,7 +93,10 @@ export function saveGuestScan(scanId: string, report: ScanReport) {
   const removed = existing.slice(MAX_GUEST_SCANS - 1);
 
   try {
-    window.localStorage.setItem(reportKey(scanId), JSON.stringify(compactReport(report)));
+    const compacted = compactReport(report);
+    const raw = JSON.stringify(compacted);
+    window.localStorage.setItem(reportKey(scanId), raw);
+    cachedReports.set(scanId, { raw, report });
     writeIndex(next);
     removed.forEach((item) => window.localStorage.removeItem(reportKey(item.scanId)));
     notifyGuestScansChanged();

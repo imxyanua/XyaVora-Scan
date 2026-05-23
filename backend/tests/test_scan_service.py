@@ -308,7 +308,7 @@ async def test_run_scan_returns_report():
 @pytest.mark.asyncio
 async def test_run_scan_force_refresh_bypasses_cache(monkeypatch):
     scan_service._SCAN_CACHE.clear()
-    calls = {"dns": 0}
+    calls = {"dns": 0, "screenshot": 0}
 
     async def fake_dns(hostname: str):
         calls["dns"] += 1
@@ -345,6 +345,7 @@ async def test_run_scan_force_refresh_bypasses_cache(monkeypatch):
         return AnalyzerResult(key="securityTxt", status="success", data=SecurityTxtResult())
 
     async def fake_screenshot(url: str, enabled: bool):
+        calls["screenshot"] += 1
         return AnalyzerResult(key="screenshot", status="success", data=ScreenshotResult())
 
     async def fake_score(findings):
@@ -399,6 +400,19 @@ async def test_run_scan_force_refresh_bypasses_cache(monkeypatch):
     assert ("dns", "running", None, None) in progress_events
     assert any(key == "dns" and status == "success" and duration_ms is not None for key, status, duration_ms, _ in progress_events)
     assert any(key == "score" and status == "success" for key, status, _, _ in progress_events)
+
+    progress_events.clear()
+    await scan_service.run_scan(
+        "example.com",
+        "https://example.com",
+        "example.com",
+        force_refresh=True,
+        progress_callback=collect_progress,
+        include_screenshot=False,
+    )
+
+    assert calls["screenshot"] == 3
+    assert not any(key == "screenshot" for key, *_ in progress_events)
 
 
 @pytest.mark.asyncio

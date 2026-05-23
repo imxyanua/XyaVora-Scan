@@ -111,13 +111,16 @@ function ScanSession({ target, scanId }: ScanSessionProps) {
         }
 
         if (body.data.status === "completed") {
-          if (body.data.report) {
-            saveGuestScan(scanId, body.data.report);
+          const completedJob = body.data;
+          if (completedJob.report) {
+            saveGuestScan(scanId, completedJob.report);
           }
           if (!redirectedRef.current) {
             redirectedRef.current = true;
             pollTimer = setTimeout(() => {
-              router.push(`/report/${encodeURIComponent(target)}?guestScanId=${encodeURIComponent(scanId)}`);
+              router.push(
+                `/report/${encodeURIComponent(target)}?guestScanId=${encodeURIComponent(scanId)}&liveJobId=${encodeURIComponent(completedJob.job_id)}`,
+              );
             }, 700);
           }
           return;
@@ -164,7 +167,9 @@ function ScanSession({ target, scanId }: ScanSessionProps) {
   const doneCount = steps.filter((step) => step.status === "success").length;
   const errorCount = steps.filter((step) => step.status === "error").length;
   const hasModuleErrors = errorCount > 0;
-  const runningStep = steps.find((step) => step.status === "running");
+  const runningStep = job?.status === "completed"
+    ? undefined
+    : steps.find((step) => step.status === "running");
   const currentLabel = runningStep?.label ?? (
     job?.status === "completed"
       ? hasModuleErrors
