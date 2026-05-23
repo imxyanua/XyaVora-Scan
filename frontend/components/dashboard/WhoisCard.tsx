@@ -48,11 +48,16 @@ export function WhoisCard({ whois }: Props) {
       </div>
 
       {whois.error ? (
-        <p className="font-mono text-sm text-primary-fixed/60 px-5 py-4">[-] {whois.error}</p>
+        <div className="mx-5 mb-5 border border-primary-fixed/15 bg-[#151918] p-3">
+          <p className="font-mono text-sm text-primary-fixed/70">[-] {whois.error}</p>
+          <p className="mt-1 font-mono text-[11px] text-[#d7e8ff]/55">
+            WHOIS may be unavailable because of rate limits, registry policy, or privacy protection.
+          </p>
+        </div>
       ) : (
         <div className="font-mono text-sm flex-1">
           {rows.map((row) => (
-            <div key={row.key} className="flex justify-between gap-4 px-5 py-1.5 border-b border-primary-fixed/10 hover:bg-primary-fixed/[0.04] transition-colors">
+            <div key={row.key} className="grid grid-cols-[118px_minmax(0,1fr)] gap-4 px-5 py-1.5 border-b border-primary-fixed/10 hover:bg-primary-fixed/[0.04] transition-colors">
               <span className="text-white font-bold shrink-0">{row.key}</span>
               <span className="min-w-0 break-words text-right text-white">{row.val}</span>
             </div>
@@ -63,7 +68,7 @@ export function WhoisCard({ whois }: Props) {
               <span className="text-white font-bold block mb-1">NS</span>
               <div className="space-y-1">
                 {whois.nameServers.slice(0, 4).map((ns) => (
-                  <div key={ns} className="text-[#d7e8ff]/75 text-xs truncate pl-2">
+                  <div key={ns} className="text-[#d7e8ff]/75 text-xs break-words pl-2">
                     &gt; {ns}
                   </div>
                 ))}

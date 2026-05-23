@@ -15,12 +15,12 @@ function Row({ label, value, tone = "normal" }: { label: string; value?: string 
   }[tone];
 
   return (
-    <div className="flex justify-between gap-4 px-5 py-1.5 border-b border-primary-fixed/10 last:border-b-0 hover:bg-primary-fixed/[0.04] transition-colors">
+    <div className="grid grid-cols-[142px_minmax(0,1fr)] gap-4 px-5 py-1.5 border-b border-primary-fixed/10 last:border-b-0 hover:bg-primary-fixed/[0.04] transition-colors">
       <span className="font-mono text-sm text-white font-bold shrink-0">
         {label}
       </span>
-      <span className={`font-mono text-sm ${valueCls} text-right break-all`}>
-        {value || "Unknown"}
+      <span className={`min-w-0 font-mono text-sm ${valueCls} text-right break-words`}>
+        {value === undefined || value === null || value === "" ? "Unknown" : value}
       </span>
     </div>
   );
@@ -62,7 +62,7 @@ function spfTone(spfAll?: string) {
 function dmarcTone(policy?: string) {
   if (policy === "reject" || policy === "quarantine") return "good";
   if (policy === "none") return "warn";
-  return "bad";
+  return "normal";
 }
 
 function describeSpfAll(spfAll?: string) {
@@ -116,19 +116,34 @@ export function EmailSecurityCard({ dns }: Props) {
           ) : (
             <SourceQualityBadge source="missing" />
           )}
-          <span className={`status-badge ${dns.spfDetected ? "status-pass" : "status-fail"} text-[10px]`}>
+          <span className={`status-badge ${dns.spfDetected ? "status-pass" : "status-warn"} text-[10px]`}>
             {dns.spfDetected ? "[SPF]" : "[-] SPF"}
           </span>
-          <span className={`status-badge ${dns.dmarcDetected ? "status-pass" : "status-fail"} text-[10px]`}>
+          <span className={`status-badge ${dns.dmarcDetected ? "status-pass" : "status-warn"} text-[10px]`}>
             {dns.dmarcDetected ? "[DMARC]" : "[-] DMARC"}
           </span>
         </div>
       </div>
 
       {dns.error ? (
-        <p className="font-mono text-sm text-error/70 px-4 py-4">[-] {dns.error}</p>
+        <div className="mx-5 mb-5 border border-error/25 bg-error/[0.04] p-3">
+          <p className="font-mono text-sm text-error/80">[-] {dns.error}</p>
+          <p className="mt-1 font-mono text-[11px] text-[#d7e8ff]/55">
+            DNS email-security signals could not be collected for this target.
+          </p>
+        </div>
       ) : (
         <div>
+          {!dns.mxDetected && !dns.spfDetected && !dns.dmarcDetected && (
+            <div className="mx-5 mb-2 border border-primary-fixed/15 bg-[#151918] p-3">
+              <p className="font-mono text-sm text-[#d7e8ff]/75">
+                No MX, SPF, or DMARC signal was observed.
+              </p>
+              <p className="mt-1 font-mono text-[11px] leading-relaxed text-primary-fixed/60">
+                This may be normal for domains that do not send email.
+              </p>
+            </div>
+          )}
           <Row label="MX" value={dns.mxDetected ? mxPreview || "YES" : "NO"} tone={dns.mxDetected ? "good" : "warn"} />
           <Row label="SPF Records" value={dns.spfRecordCount} tone={dns.spfRecordCount > 1 ? "bad" : dns.spfRecordCount === 1 ? "good" : "warn"} />
           <Row label="SPF Policy" value={describeSpfAll(dns.spfAll)} tone={spfTone(dns.spfAll)} />

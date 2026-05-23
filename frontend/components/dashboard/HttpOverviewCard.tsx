@@ -13,14 +13,14 @@ function formatBytes(bytes?: number | null) {
 }
 
 function Row({ label, value }: { label: string; value?: string | number | null }) {
-  const displayValue = value ? String(value) : "Unknown";
+  const displayValue = value === undefined || value === null || value === "" ? "Unknown" : String(value);
 
   return (
-    <div className="flex items-start justify-between gap-4 px-5 py-1.5 border-b border-primary-fixed/10 last:border-b-0 hover:bg-primary-fixed/[0.04] transition-colors">
+    <div className="grid grid-cols-[128px_minmax(0,1fr)] gap-4 px-5 py-1.5 border-b border-primary-fixed/10 last:border-b-0 hover:bg-primary-fixed/[0.04] transition-colors">
       <span className="font-mono text-sm text-white font-bold shrink-0">
         {label}
       </span>
-      <span className="min-w-0 max-w-[68%] truncate text-right font-mono text-sm text-white" title={displayValue}>
+      <span className="min-w-0 break-words text-right font-mono text-sm text-white" title={displayValue}>
         {displayValue}
       </span>
     </div>
@@ -55,7 +55,12 @@ export function HttpOverviewCard({ http }: Props) {
       </div>
 
       {http.error ? (
-        <p className="font-mono text-sm text-error/70 px-4 py-4">[-] {http.error}</p>
+        <div className="mx-5 mb-5 border border-error/25 bg-error/[0.04] p-3">
+          <p className="font-mono text-sm text-error/80">[-] {http.error}</p>
+          <p className="mt-1 font-mono text-[11px] text-[#d7e8ff]/55">
+            The scanner could not complete the HTTP overview request for this URL.
+          </p>
+        </div>
       ) : (
         <div className="flex-1 overflow-hidden">
           <Row label="Status" value={http.statusCode} />

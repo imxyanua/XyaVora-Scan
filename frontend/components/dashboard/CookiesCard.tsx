@@ -11,7 +11,7 @@ function FlagBadge({ ok, label }: { ok: boolean; label: string }) {
       className={`font-mono text-[10px] border px-1.5 py-0.5 ${
         ok
           ? "border-primary-fixed/40 text-primary-fixed/70"
-          : "border-error/60 text-error/80"
+          : "border-status-warn/60 text-status-warn/85"
       }`}
     >
       {ok ? label : `!${label}`}
@@ -48,7 +48,14 @@ export function CookiesCard({ cookies }: Props) {
       </div>
 
       {cookies.length === 0 ? (
-        <p className="font-mono text-sm text-primary-fixed/60 px-5 pb-5">[-] No cookies set</p>
+        <div className="px-5 pb-5">
+          <div className="border border-primary-fixed/15 bg-[#151918] p-3">
+            <p className="font-mono text-sm text-[#d7e8ff]/75">No cookies were set on the initial response.</p>
+            <p className="mt-1 font-mono text-[11px] leading-relaxed text-primary-fixed/60">
+              Later login or app flows may still set cookies.
+            </p>
+          </div>
+        </div>
       ) : (
         <div className="max-h-[320px] space-y-3 overflow-y-auto px-5 pb-5 pr-3">
           {cookies.map((c, i) => (
@@ -56,11 +63,11 @@ export function CookiesCard({ cookies }: Props) {
               key={`${c.name}-${i}`}
               className="border border-primary-fixed/15 bg-[#151918] p-3 hover:border-primary-fixed/40 transition-colors"
             >
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="font-mono text-sm text-white font-bold truncate max-w-[55%]">
+              <div className="flex flex-col gap-2 mb-1.5 sm:flex-row sm:items-start sm:justify-between">
+                <span className="min-w-0 break-words font-mono text-sm text-white font-bold">
                   {c.name}
                 </span>
-                <div className="flex gap-1 flex-wrap justify-end">
+                <div className="flex shrink-0 gap-1 flex-wrap sm:justify-end">
                   <FlagBadge ok={c.secure}   label="SEC" />
                   <FlagBadge ok={c.httpOnly} label="HTTP" />
                   <FlagBadge ok={!!c.sameSite} label="SS" />
@@ -69,6 +76,15 @@ export function CookiesCard({ cookies }: Props) {
               {c.sameSite && (
                 <div className="font-mono text-[11px] text-[#d7e8ff]/70">
                   SameSite={c.sameSite}
+                </div>
+              )}
+              {c.warnings.length > 0 && (
+                <div className="mt-2 space-y-1 border-t border-primary-fixed/10 pt-2">
+                  {c.warnings.slice(0, 2).map((warning) => (
+                    <p key={warning} className="font-mono text-[10px] leading-relaxed text-status-warn/75">
+                      &gt; {warning}
+                    </p>
+                  ))}
                 </div>
               )}
               {c.evidence && c.evidence.length > 0 && (

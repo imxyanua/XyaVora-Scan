@@ -67,13 +67,18 @@ export function SSLCard({ ssl }: Props) {
       </div>
 
       {ssl.error ? (
-        <p className="font-mono text-sm text-error/70 px-5 py-4">[-] {ssl.error}</p>
+        <div className="mx-5 mb-5 border border-error/25 bg-error/[0.04] p-3">
+          <p className="font-mono text-sm text-error/80">[-] {ssl.error}</p>
+          <p className="mt-1 font-mono text-[11px] text-[#d7e8ff]/55">
+            TLS certificate data could not be fully collected for this target.
+          </p>
+        </div>
       ) : (
         <div className="font-mono text-sm flex-1">
           {rows.map((row) => (
-            <div key={row.key} className="flex justify-between gap-4 px-5 py-1.5 border-b border-primary-fixed/10 hover:bg-primary-fixed/[0.04] transition-colors">
+            <div key={row.key} className="grid grid-cols-[126px_minmax(0,1fr)] gap-4 px-5 py-1.5 border-b border-primary-fixed/10 hover:bg-primary-fixed/[0.04] transition-colors">
               <span className="text-white font-bold shrink-0">{row.key}</span>
-              <span className="text-white text-right truncate">{row.val || "Unknown"}</span>
+              <span className="min-w-0 text-white text-right break-words">{row.val || "Unknown"}</span>
             </div>
           ))}
 
@@ -120,8 +125,8 @@ export function SSLCard({ ssl }: Props) {
                   <p className="text-white font-bold text-xs">EVIDENCE</p>
                   <SourceQualityBadge source="tls" />
                 </div>
-                {ssl.certificateEvidence?.slice(0, 5).map((item) => (
-                  <p key={item} className="font-mono text-[10px] text-[#d7e8ff]/65 break-all">
+                {ssl.certificateEvidence?.slice(0, 5).map((item, index) => (
+                  <p key={`${item}-${index}`} className="font-mono text-[10px] text-[#d7e8ff]/65 break-all">
                     &gt; {item}
                   </p>
                 ))}
