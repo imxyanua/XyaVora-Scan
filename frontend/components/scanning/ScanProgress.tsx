@@ -266,7 +266,7 @@ function ScanSession({ target, scanId }: ScanSessionProps) {
                 <p className="font-mono text-[11px] text-primary-fixed/50 mt-1">
                   &gt; {hasModuleErrors
                     ? `${errorCount} module${errorCount === 1 ? "" : "s"} returned errors. Opening report with available data...`
-                    : "Opening report dashboard..."}
+                    : "Opening report..."}
                 </p>
               </div>
             </div>
