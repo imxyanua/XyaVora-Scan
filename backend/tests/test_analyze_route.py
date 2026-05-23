@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 from app.main import app
 from app.api.routes import analyze as analyze_route
+from app.schemas.api import ScanJobSnapshot, ScanJobStep
 from app.schemas.report import ScanReport, ScreenshotResult
 
 client = TestClient(app)
@@ -108,3 +109,39 @@ def test_analyze_saved_scan_appends_history(monkeypatch):
     assert r.status_code == 200
     assert r.json()["success"] is True
     assert len(append_calls) == 1
+
+
+def test_start_analyze_job_returns_job_snapshot(monkeypatch):
+    def fake_start_scan_job(body, normalized_url, hostname):
+        return ScanJobSnapshot(
+            job_id="job-123",
+            target=body.target,
+            hostname=hostname,
+            normalized_url=normalized_url,
+            status="queued",
+            progress=0,
+            created_at="2026-05-24T00:00:00+00:00",
+            updated_at="2026-05-24T00:00:00+00:00",
+            elapsed_ms=0,
+            steps=[ScanJobStep(key="dns", label="DNS Records")],
+        )
+
+    monkeypatch.setattr(analyze_route, "validate_target", lambda target: ("https://example.com", "example.com"))
+    monkeypatch.setattr(analyze_route, "start_scan_job", fake_start_scan_job)
+
+    r = client.post("/api/analyze/jobs", json={"target": "example.com"})
+
+    assert r.status_code == 200
+    body = r.json()
+    assert body["success"] is True
+    assert body["data"]["job_id"] == "job-123"
+    assert body["data"]["steps"][0]["status"] == "pending"
+
+
+def test_get_analyze_job_status_not_found(monkeypatch):
+    monkeypatch.setattr(analyze_route, "get_scan_job", lambda job_id: None)
+
+    r = client.get("/api/analyze/jobs/missing")
+
+    assert r.status_code == 404
+    assert r.json()["success"] is False
