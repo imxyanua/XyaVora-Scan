@@ -65,6 +65,14 @@ export function LiveReportPreview({ hostname, steps }: Props) {
 
   return (
     <div className="space-y-6">
+      <LiveOverviewPanel
+        steps={steps}
+        dns={dns}
+        ssl={ssl}
+        headers={headers}
+        http={http}
+      />
+
       <LiveSection title="Security Posture" detail="cards appear when analyzers finish">
         <LiveGrid>
           <LiveCard step={stepMap.ssl}>
@@ -140,6 +148,146 @@ export function LiveReportPreview({ hostname, steps }: Props) {
       </LiveSection>
     </div>
   );
+}
+
+function LiveOverviewPanel({
+  steps,
+  dns,
+  ssl,
+  headers,
+  http,
+}: {
+  steps: ScanJobStep[];
+  dns?: DnsResult;
+  ssl?: SslResult;
+  headers?: HeadersResult;
+  http?: HttpOverviewResult;
+}) {
+  const ready = steps.filter((step) => step.status === "success").length;
+  const running = steps.filter((step) => step.status === "running").length;
+  const errors = steps.filter((step) => step.status === "error").length;
+  const signals = buildLiveSignals({ dns, ssl, headers, http });
+
+  return (
+    <LiveSection title="Live Overview" detail="high-level signals update as modules finish">
+      <div className="grid gap-4 lg:grid-cols-[minmax(260px,0.75fr)_minmax(0,1.6fr)]">
+        <div className="card-panel p-5 min-w-0">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="font-mono text-2xl font-bold text-primary-fixed leading-tight">
+                Scan Build
+              </h3>
+              <p className="font-mono text-[11px] text-[#d7e8ff]/60 mt-2">
+                Report cards are replaced with live analyzer data as each module completes.
+              </p>
+            </div>
+            <span className="font-mono text-[11px] text-white/70">[LIVE]</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2 mt-5">
+            <Metric label="Ready" value={ready} tone="pass" />
+            <Metric label="Running" value={running} tone="warn" />
+            <Metric label="Errors" value={errors} tone={errors ? "fail" : "muted"} />
+          </div>
+        </div>
+
+        <div className="card-panel p-5 min-w-0">
+          <div className="flex justify-between items-start mb-4">
+            <h3 className="font-mono text-2xl font-bold text-primary-fixed leading-tight">
+              Key Signals
+            </h3>
+            <span className="font-mono text-[11px] text-white/70">[PARTIAL]</span>
+          </div>
+          <div className="grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(min(100%,8.5rem),1fr))]">
+            {signals.map((signal) => (
+              <div key={signal.label} className="border border-primary-fixed/15 bg-[#151918] p-3 text-center">
+                <p className="font-mono text-[11px] text-[#d7e8ff] mb-2 truncate" title={signal.label}>
+                  {signal.label}
+                </p>
+                <span className={`status-badge text-[10px] ${signalClass(signal.status)}`}>
+                  {signalText(signal.status)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </LiveSection>
+  );
+}
+
+function Metric({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone: "pass" | "warn" | "fail" | "muted";
+}) {
+  const cls = {
+    pass: "text-primary-fixed border-primary-fixed/35 bg-primary-fixed/5",
+    warn: "text-secondary border-secondary/35 bg-secondary/5",
+    fail: "text-error border-error/35 bg-error/5",
+    muted: "text-on-surface-variant/55 border-primary-fixed/10 bg-[#070B0F]/35",
+  }[tone];
+
+  return (
+    <div className={`border p-3 text-center ${cls}`}>
+      <div className="font-mono text-2xl font-bold">{value}</div>
+      <div className="font-mono text-[10px] uppercase mt-1">{label}</div>
+    </div>
+  );
+}
+
+type LiveSignalStatus = "pass" | "warn" | "fail" | "pending";
+
+function buildLiveSignals({
+  dns,
+  ssl,
+  headers,
+  http,
+}: {
+  dns?: DnsResult;
+  ssl?: SslResult;
+  headers?: HeadersResult;
+  http?: HttpOverviewResult;
+}): { label: string; status: LiveSignalStatus }[] {
+  const header = (name: string) =>
+    headers?.securityHeaders.find((item) => item.header.toLowerCase() === name.toLowerCase());
+  const hsts = header("Strict-Transport-Security");
+  const csp = header("Content-Security-Policy");
+  const dmarcStatus: LiveSignalStatus = !dns
+    ? "pending"
+    : dns.error
+      ? "fail"
+      : !dns.dmarcDetected
+        ? "warn"
+        : dns.dmarcRecord?.includes("p=none")
+          ? "warn"
+          : "pass";
+
+  return [
+    { label: "HTTPS", status: !ssl ? "pending" : ssl.httpsAvailable ? "pass" : "fail" },
+    { label: "HSTS", status: !headers ? "pending" : hsts?.status === "present" ? "pass" : hsts?.status === "warning" ? "warn" : "warn" },
+    { label: "CSP", status: !headers ? "pending" : csp?.status === "present" ? "pass" : csp?.status === "warning" ? "warn" : "warn" },
+    { label: "SPF", status: !dns ? "pending" : dns.spfDetected ? "pass" : "warn" },
+    { label: "DMARC", status: dmarcStatus },
+    { label: "HTTP", status: !http ? "pending" : http.statusCode >= 200 && http.statusCode < 400 ? "pass" : "warn" },
+  ];
+}
+
+function signalText(status: LiveSignalStatus) {
+  if (status === "pass") return "[OK]";
+  if (status === "warn") return "[WARN]";
+  if (status === "fail") return "[FAIL]";
+  return "[...]";
+}
+
+function signalClass(status: LiveSignalStatus) {
+  if (status === "pass") return "status-pass";
+  if (status === "warn") return "status-warn";
+  if (status === "fail") return "status-fail";
+  return "status-missing";
 }
 
 function LiveSection({
