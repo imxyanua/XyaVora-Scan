@@ -163,16 +163,23 @@ function ScanSession({ target, scanId }: ScanSessionProps) {
   const elapsedSec = (elapsedMs / 1000).toFixed(1);
   const doneCount = steps.filter((step) => step.status === "success").length;
   const errorCount = steps.filter((step) => step.status === "error").length;
+  const hasModuleErrors = errorCount > 0;
   const runningStep = steps.find((step) => step.status === "running");
-  const currentLabel = runningStep?.label ?? (job?.status === "completed" ? "Report ready" : "Preparing scan job");
+  const currentLabel = runningStep?.label ?? (
+    job?.status === "completed"
+      ? hasModuleErrors
+        ? "Report ready with module errors"
+        : "Report ready"
+      : "Preparing scan job"
+  );
   const slowScan = elapsedMs > 10000 && job?.status !== "completed" && !scanError;
 
   const statusLabel = useMemo(() => {
     if (scanError || job?.status === "failed") return "SCAN_FAILED";
-    if (job?.status === "completed") return "REPORT_READY";
+    if (job?.status === "completed") return hasModuleErrors ? "REPORT_READY_WITH_WARNINGS" : "REPORT_READY";
     if (job?.status === "queued") return "QUEUED";
     return "SCANNING_IN_PROGRESS";
-  }, [job?.status, scanError]);
+  }, [job?.status, scanError, hasModuleErrors]);
 
   return (
     <div className="w-full max-w-[1560px] mx-auto px-4 md:px-6 py-6 space-y-6">
@@ -204,7 +211,7 @@ function ScanSession({ target, scanId }: ScanSessionProps) {
 
           <div className="space-y-2">
             <div className="flex justify-between font-mono text-[11px] uppercase tracking-wider">
-              <span className={scanError ? "text-error" : "text-primary-fixed"}>
+              <span className={scanError ? "text-error" : hasModuleErrors && job?.status === "completed" ? "text-secondary" : "text-primary-fixed"}>
                 {statusLabel}
               </span>
               <span className="text-primary-fixed/60">{progress}%</span>
@@ -236,14 +243,25 @@ function ScanSession({ target, scanId }: ScanSessionProps) {
           </div>
 
           {job?.status === "completed" && (
-            <div className="border border-primary-fixed/40 bg-primary-fixed/5 px-5 py-4 flex items-center gap-4">
-              <AppIcon name="check_circle" className="text-primary-fixed text-2xl shrink-0" />
+            <div className={`border px-5 py-4 flex items-center gap-4 ${
+              hasModuleErrors
+                ? "border-secondary/40 bg-secondary/5"
+                : "border-primary-fixed/40 bg-primary-fixed/5"
+            }`}>
+              <AppIcon
+                name={hasModuleErrors ? "report_problem" : "check_circle"}
+                className={`${hasModuleErrors ? "text-secondary" : "text-primary-fixed"} text-2xl shrink-0`}
+              />
               <div>
-                <p className="font-mono text-sm text-primary-fixed font-semibold tracking-wider">
-                  REPORT_READY
+                <p className={`font-mono text-sm font-semibold tracking-wider ${
+                  hasModuleErrors ? "text-secondary" : "text-primary-fixed"
+                }`}>
+                  {hasModuleErrors ? "REPORT_READY_WITH_WARNINGS" : "REPORT_READY"}
                 </p>
                 <p className="font-mono text-[11px] text-primary-fixed/50 mt-1">
-                  &gt; Opening report dashboard...
+                  &gt; {hasModuleErrors
+                    ? `${errorCount} module${errorCount === 1 ? "" : "s"} returned errors. Opening report with available data...`
+                    : "Opening report dashboard..."}
                 </p>
               </div>
             </div>
