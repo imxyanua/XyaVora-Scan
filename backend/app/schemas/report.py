@@ -140,6 +140,12 @@ class RedirectHop(_Base):
     fromUrl:    str
     toUrl:      str
     statusCode: int
+    fromHost:   Optional[str] = None
+    toHost:     Optional[str] = None
+    fromProtocol: Optional[str] = None
+    toProtocol:   Optional[str] = None
+    hostChanged:  bool = False
+    protocolChanged: bool = False
 
 
 class HttpOverviewResult(_Base):
@@ -150,8 +156,14 @@ class HttpOverviewResult(_Base):
     redirectCount:   int = 0
     initialHost:     Optional[str] = None
     finalHost:       Optional[str] = None
+    initialProtocol: Optional[str] = None
     finalProtocol:   Optional[str] = None
     hostChanged:     bool = False
+    crossHostRedirect: bool = False
+    upgradedToHttps: bool = False
+    downgradedFromHttps: bool = False
+    canonicalRedirectType: Optional[str] = None
+    redirectSummary: Optional[str] = None
     server:          Optional[str] = None
     poweredBy:       Optional[str] = None
     via:             Optional[str] = None
@@ -160,11 +172,14 @@ class HttpOverviewResult(_Base):
     cdnEvidence:     list[str] = []
     altSvc:          Optional[str] = None
     contentType:     Optional[str] = None
+    contentFamily:   Optional[str] = None
     contentLength:   Optional[int] = None
     responseBytes:   int = 0
+    responseTruncated: bool = False
     responseTimeMs:  int = 0
     compression:     Optional[str] = None
     cacheControl:    Optional[str] = None
+    cachePolicy:     Optional[str] = None
     expires:         Optional[str] = None
     etag:            Optional[str] = None
     lastModified:    Optional[str] = None

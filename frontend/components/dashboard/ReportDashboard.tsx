@@ -16,6 +16,7 @@ import { TechStackCard }        from "@/components/dashboard/TechStackCard";
 import { SecurityHeadersCard }  from "@/components/dashboard/SecurityHeadersCard";
 import { CSPAuditCard }         from "@/components/dashboard/CSPAuditCard";
 import { HstsCard }             from "@/components/dashboard/HstsCard";
+import { HTTPBehaviorCard }     from "@/components/dashboard/HTTPBehaviorCard";
 import { HttpOverviewCard }     from "@/components/dashboard/HttpOverviewCard";
 import { HostNamesCard }        from "@/components/dashboard/HostNamesCard";
 import { PageMetadataCard }     from "@/components/dashboard/PageMetadataCard";
@@ -242,6 +243,9 @@ export function ReportDashboard({ domain, report, historyId, guestScanId }: Prop
           <BalancedGrid minWidth="380px">
             <BalancedItem>
               <HttpOverviewCard http={report.httpOverview} />
+            </BalancedItem>
+            <BalancedItem>
+              <HTTPBehaviorCard http={report.httpOverview} />
             </BalancedItem>
             <BalancedItem>
               <RedirectsCard http={report.httpOverview} />

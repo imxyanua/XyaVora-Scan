@@ -141,6 +141,12 @@ export interface RedirectHop {
   fromUrl:    string;
   toUrl:      string;
   statusCode: number;
+  fromHost?:   string;
+  toHost?:     string;
+  fromProtocol?: string;
+  toProtocol?:   string;
+  hostChanged?:  boolean;
+  protocolChanged?: boolean;
 }
 
 export interface HttpOverviewResult {
@@ -151,8 +157,14 @@ export interface HttpOverviewResult {
   redirectCount:  number;
   initialHost?:    string;
   finalHost?:      string;
+  initialProtocol?: string;
   finalProtocol?:  string;
   hostChanged:    boolean;
+  crossHostRedirect?: boolean;
+  upgradedToHttps?: boolean;
+  downgradedFromHttps?: boolean;
+  canonicalRedirectType?: string;
+  redirectSummary?: string;
   server?:         string;
   poweredBy?:      string;
   via?:            string;
@@ -161,11 +173,14 @@ export interface HttpOverviewResult {
   cdnEvidence?:    string[];
   altSvc?:         string;
   contentType?:   string;
+  contentFamily?: string;
   contentLength?: number;
   responseBytes:  number;
+  responseTruncated?: boolean;
   responseTimeMs: number;
   compression?:   string;
   cacheControl?:  string;
+  cachePolicy?:    string;
   expires?:       string;
   etag?:          string;
   lastModified?:  string;

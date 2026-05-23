@@ -22,6 +22,7 @@ import { DNSRecordsCard } from "@/components/dashboard/DNSRecordsCard";
 import { DNSSECCard } from "@/components/dashboard/DNSSECCard";
 import { EmailSecurityCard } from "@/components/dashboard/EmailSecurityCard";
 import { HostNamesCard } from "@/components/dashboard/HostNamesCard";
+import { HTTPBehaviorCard } from "@/components/dashboard/HTTPBehaviorCard";
 import { HttpOverviewCard } from "@/components/dashboard/HttpOverviewCard";
 import { HstsCard } from "@/components/dashboard/HstsCard";
 import { PageMetadataCard } from "@/components/dashboard/PageMetadataCard";
@@ -130,6 +131,9 @@ export function LiveReportPreview({ hostname, steps }: Props) {
         <LiveGrid>
           <LiveCard step={stepMap.http}>
             {http && <HttpOverviewCard http={http} />}
+          </LiveCard>
+          <LiveCard step={stepMap.http}>
+            {http && <HTTPBehaviorCard http={http} />}
           </LiveCard>
           <LiveCard step={stepMap.http}>
             {http && <RedirectsCard http={http} />}
