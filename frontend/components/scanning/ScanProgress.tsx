@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { ScanJobResponse, ScanJobSnapshot, ScanJobStep, ScanJobStepState } from "@/types";
+import { ReportSkeleton } from "@/components/dashboard/ReportSkeleton";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { saveGuestScan } from "@/lib/guestScanStorage";
 import { normalizeScanTarget } from "@/lib/startScan";
@@ -174,8 +175,8 @@ function ScanSession({ target, scanId }: ScanSessionProps) {
   }, [job?.status, scanError]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] px-4 py-12">
-      <div className="w-full max-w-4xl card-panel">
+    <div className="w-full max-w-[1560px] mx-auto px-4 md:px-6 py-6 space-y-6">
+      <div className="w-full card-panel">
         <div className="border-b border-primary-fixed/20 px-6 py-3 bg-[#070B0F] flex justify-between items-center gap-4">
           <span className="font-mono text-[11px] tracking-widest text-primary-fixed/70 uppercase">
             REALTIME_SCAN_JOB
@@ -266,6 +267,7 @@ function ScanSession({ target, scanId }: ScanSessionProps) {
           )}
         </div>
       </div>
+      <ReportSkeleton />
     </div>
   );
 }
