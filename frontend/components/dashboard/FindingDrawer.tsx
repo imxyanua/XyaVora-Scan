@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import type { ReactNode } from "react";
 import type { Finding, FindingClassification, FindingConfidence, FindingSeverity, FindingSource, FindingStatus } from "@/types";
 import { AppIcon } from "@/components/ui/AppIcon";
 
@@ -14,6 +15,14 @@ const SEVERITY_CLASS: Record<FindingSeverity, string> = {
   medium: "text-status-warn border-status-warn",
   low:    "text-secondary-fixed border-secondary-fixed",
   info:   "text-primary-fixed/50 border-primary-fixed/30",
+};
+
+const CLASSIFICATION_CLASS: Record<FindingClassification, string> = {
+  "verified-issue": "border-error/70 bg-error/5 text-error",
+  "observed-risk": "border-status-warn/70 bg-status-warn/5 text-status-warn",
+  "hardening-recommendation": "border-primary-fixed/40 bg-primary-fixed/[0.04] text-primary-fixed",
+  "investigation-lead": "border-secondary-fixed/60 bg-secondary-fixed/[0.04] text-secondary-fixed",
+  informational: "border-primary-fixed/25 bg-primary-fixed/[0.03] text-primary-fixed/65",
 };
 
 const STATUS_CLASS: Record<FindingStatus, string> = {
@@ -71,6 +80,33 @@ const CLASSIFICATION_HELP: Record<FindingClassification, string> = {
   informational: "This item is context for the report and is not an issue by itself.",
 };
 
+function Section({
+  title,
+  children,
+  tone = "default",
+}: {
+  title: string;
+  children: ReactNode;
+  tone?: "default" | "warn" | "primary";
+}) {
+  const toneClass = tone === "warn"
+    ? "border-status-warn/35 bg-status-warn/[0.04]"
+    : tone === "primary"
+      ? "border-primary-fixed/20 bg-primary-fixed/[0.04]"
+      : "border-primary-fixed/15 bg-[#070B0F]";
+
+  return (
+    <section>
+      <p className="font-mono text-[11px] text-primary-fixed/65 uppercase tracking-widest mb-2">
+        {title}
+      </p>
+      <div className={`border p-3 ${toneClass}`}>
+        {children}
+      </div>
+    </section>
+  );
+}
+
 export function FindingDrawer({ finding, onClose }: Props) {
   useEffect(() => {
     if (!finding) return;
@@ -97,7 +133,7 @@ export function FindingDrawer({ finding, onClose }: Props) {
       <aside
         role="dialog"
         aria-modal="true"
-        className={`fixed top-0 right-0 z-60 h-full w-full max-w-md bg-[#0F1720] border-l border-primary-fixed/20 flex flex-col transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 right-0 z-60 h-full w-full max-w-xl bg-[#0F1720] border-l border-primary-fixed/20 flex flex-col transition-transform duration-300 ease-in-out ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -109,6 +145,9 @@ export function FindingDrawer({ finding, onClose }: Props) {
 
 function DrawerContent({ finding, onClose }: { finding: Finding; onClose: () => void }) {
   const sevClass = SEVERITY_CLASS[finding.severity];
+  const classificationClass = finding.classification
+    ? CLASSIFICATION_CLASS[finding.classification]
+    : "border-primary-fixed/20 bg-primary-fixed/[0.03] text-primary-fixed/65";
 
   return (
     <>
@@ -148,12 +187,12 @@ function DrawerContent({ finding, onClose }: { finding: Finding; onClose: () => 
       {(finding.confidence || finding.source || finding.classification) && (
         <div className="px-4 py-3 border-b border-primary-fixed/10 grid grid-cols-1 gap-3 shrink-0 bg-[#101720] sm:grid-cols-3">
           {finding.classification && (
-            <div>
+            <div className={`border px-3 py-2 ${classificationClass}`}>
               <p className="font-mono text-[10px] text-primary-fixed/45 uppercase tracking-widest">Classification</p>
-              <p className="font-mono text-[13px] text-[#d7e8ff]/75 mt-1">
+              <p className="font-mono text-[13px] mt-1 font-bold">
                 {CLASSIFICATION_LABEL[finding.classification]}
               </p>
-              <p className="font-mono text-[11px] text-[#d7e8ff]/50 mt-1 leading-relaxed">
+              <p className="font-mono text-[11px] text-[#d7e8ff]/60 mt-1 leading-relaxed">
                 {CLASSIFICATION_HELP[finding.classification]}
               </p>
             </div>
@@ -181,81 +220,54 @@ function DrawerContent({ finding, onClose }: { finding: Finding; onClose: () => 
       {/* Body — scrollable */}
       <div className="flex-1 overflow-y-auto p-4 space-y-5">
 
-        {/* Description */}
-        <section>
-          <p className="font-mono text-[11px] text-primary-fixed/65 uppercase tracking-widest mb-2">
-            Description
-          </p>
-          <p className="font-mono text-[14px] text-primary-fixed/70 leading-relaxed">
+        <Section title="Summary">
+          <p className="font-mono text-[14px] text-[#d7e8ff]/82 leading-relaxed">
             {finding.description}
           </p>
-        </section>
+        </Section>
 
         {finding.analysis && (
-          <section>
-            <p className="font-mono text-[11px] text-primary-fixed/65 uppercase tracking-widest mb-2">
-              Why It Appears
+          <Section title="Why The Scanner Flagged It">
+            <p className="font-mono text-[14px] text-[#d7e8ff]/78 leading-relaxed">
+              {finding.analysis}
             </p>
-            <div className="bg-[#070B0F] border border-primary-fixed/15 p-3">
-              <p className="font-mono text-[14px] text-[#d7e8ff]/75 leading-relaxed">
-                {finding.analysis}
-              </p>
-            </div>
-          </section>
+          </Section>
         )}
 
         {finding.evidence && finding.evidence.length > 0 && (
-          <section>
-            <p className="font-mono text-[11px] text-primary-fixed/65 uppercase tracking-widest mb-2">
-              Evidence
-            </p>
-            <div className="bg-[#070B0F] border border-primary-fixed/15 p-3 space-y-1">
-              {finding.evidence.map((item) => (
-                <p key={item} className="font-mono text-xs text-[#d7e8ff]/75 leading-relaxed break-words">
+          <Section title="Evidence">
+            <div className="space-y-1.5">
+              {finding.evidence.map((item, index) => (
+                <p key={`${item}-${index}`} className="font-mono text-xs text-[#d7e8ff]/75 leading-relaxed break-words">
                   &gt; {item}
                 </p>
               ))}
             </div>
-          </section>
+          </Section>
         )}
 
         {/* Impact */}
         {finding.impact && (
-          <section>
-            <p className="font-mono text-[11px] text-primary-fixed/65 uppercase tracking-widest mb-2">
-              Impact
+          <Section title="Why This Matters" tone="warn">
+            <p className="font-mono text-[14px] text-status-warn/85 leading-relaxed">
+              {finding.impact}
             </p>
-            <div className="border-l-2 border-status-warn pl-3">
-              <p className="font-mono text-[14px] text-status-warn/80 leading-relaxed">
-                {finding.impact}
-              </p>
-            </div>
-          </section>
+          </Section>
         )}
 
         {/* Recommendation */}
-        <section>
-          <p className="font-mono text-[11px] text-primary-fixed/65 uppercase tracking-widest mb-2">
-            Recommendation
+        <Section title="Recommended Fix" tone="primary">
+          <p className="font-mono text-[14px] text-primary-fixed/85 leading-relaxed whitespace-pre-wrap">
+            {finding.recommendation}
           </p>
-          <div className="bg-primary-fixed/[0.04] border border-primary-fixed/15 p-3">
-            <p className="font-mono text-[14px] text-primary-fixed/80 leading-relaxed whitespace-pre-wrap">
-              {finding.recommendation}
-            </p>
-          </div>
-        </section>
+        </Section>
 
         {finding.verification && (
-          <section>
-            <p className="font-mono text-[11px] text-primary-fixed/65 uppercase tracking-widest mb-2">
-              Manual Verification
+          <Section title="How To Verify Manually" tone="primary">
+            <p className="font-mono text-[14px] text-[#d7e8ff]/80 leading-relaxed whitespace-pre-wrap">
+              {finding.verification}
             </p>
-            <div className="bg-primary-fixed/[0.04] border border-primary-fixed/15 p-3">
-              <p className="font-mono text-[14px] text-[#d7e8ff]/80 leading-relaxed whitespace-pre-wrap">
-                {finding.verification}
-              </p>
-            </div>
-          </section>
+          </Section>
         )}
 
       </div>

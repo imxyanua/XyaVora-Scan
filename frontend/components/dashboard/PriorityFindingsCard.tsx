@@ -29,6 +29,22 @@ const SEVERITY_CLASS: Record<FindingSeverity, string> = {
   info: "border-primary-fixed/30 text-primary-fixed/60",
 };
 
+const CLASSIFICATION_WEIGHT: Record<FindingClassification, number> = {
+  "verified-issue": 5,
+  "observed-risk": 4,
+  "hardening-recommendation": 3,
+  "investigation-lead": 2,
+  informational: 1,
+};
+
+const CLASSIFICATION_CLASS: Record<FindingClassification, string> = {
+  "verified-issue": "border-error/70 text-error bg-error/5",
+  "observed-risk": "border-status-warn/70 text-status-warn bg-status-warn/5",
+  "hardening-recommendation": "border-primary-fixed/40 text-primary-fixed bg-primary-fixed/[0.04]",
+  "investigation-lead": "border-secondary-fixed/60 text-secondary-fixed bg-secondary-fixed/[0.04]",
+  informational: "border-primary-fixed/25 text-primary-fixed/60 bg-primary-fixed/[0.03]",
+};
+
 const STATUS_LABEL: Record<FindingStatus, string> = {
   fail: "Needs attention",
   warning: "Review",
@@ -63,7 +79,15 @@ const CLASSIFICATION_LABEL: Record<FindingClassification, string> = {
 };
 
 function rankFinding(finding: Finding) {
-  return STATUS_WEIGHT[finding.status] * 10 + SEVERITY_WEIGHT[finding.severity];
+  const classificationWeight = finding.classification
+    ? CLASSIFICATION_WEIGHT[finding.classification]
+    : 0;
+
+  return (
+    classificationWeight * 100
+    + STATUS_WEIGHT[finding.status] * 10
+    + SEVERITY_WEIGHT[finding.severity]
+  );
 }
 
 function compactText(value: string, maxLength = 142) {
@@ -86,6 +110,9 @@ export function PriorityFindingsCard({ findings }: Props) {
 
   const passedCount = findings.filter((finding) => finding.status === "pass").length;
   const observationCount = priorityFindings.length;
+  const verifiedCount = findings.filter((finding) => finding.classification === "verified-issue").length;
+  const observedCount = findings.filter((finding) => finding.classification === "observed-risk").length;
+  const hardeningCount = findings.filter((finding) => finding.classification === "hardening-recommendation").length;
 
   return (
     <>
@@ -100,10 +127,25 @@ export function PriorityFindingsCard({ findings }: Props) {
               Highest-impact checks that need review. These are posture observations, not exploit claims. Classification and confidence show what was verified versus recommended hardening.
             </p>
           </div>
-          <div className="flex gap-2 shrink-0">
+          <div className="flex flex-wrap justify-end gap-2 shrink-0">
             <span className={`status-badge ${observationCount > 0 ? "status-warn" : "status-pass"} text-[10px]`}>
               {observationCount > 0 ? `[${observationCount} REVIEW]` : "[CLEAR]"}
             </span>
+            {verifiedCount > 0 && (
+              <span className="status-badge status-fail text-[10px]">
+                [{verifiedCount} VERIFIED]
+              </span>
+            )}
+            {observedCount > 0 && (
+              <span className="status-badge status-warn text-[10px]">
+                [{observedCount} OBSERVED]
+              </span>
+            )}
+            {hardeningCount > 0 && (
+              <span className="status-badge text-[10px]">
+                [{hardeningCount} HARDEN]
+              </span>
+            )}
             <span className="status-badge status-pass text-[10px]">
               [{passedCount} PASS]
             </span>
@@ -126,7 +168,7 @@ export function PriorityFindingsCard({ findings }: Props) {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
                       <span className="font-mono text-[10px] text-primary-fixed/60">
                         #{index + 1}
                       </span>
@@ -142,7 +184,7 @@ export function PriorityFindingsCard({ findings }: Props) {
                         </span>
                       )}
                       {finding.classification && (
-                        <span className="font-mono text-[10px] text-status-warn/75">
+                        <span className={`font-mono text-[10px] border px-2 py-0.5 ${CLASSIFICATION_CLASS[finding.classification]}`}>
                           {CLASSIFICATION_LABEL[finding.classification]}
                         </span>
                       )}
@@ -168,6 +210,17 @@ export function PriorityFindingsCard({ findings }: Props) {
                 <p className="font-mono text-[13px] text-[#d7e8ff]/75 leading-relaxed mt-3">
                   {compactText(finding.description)}
                 </p>
+
+                {finding.analysis && (
+                  <div className="mt-3 border border-primary-fixed/10 bg-[#0d1214] px-3 py-2">
+                    <p className="font-mono text-[11px] text-primary-fixed/65 uppercase mb-1">
+                      Why flagged
+                    </p>
+                    <p className="font-mono text-xs text-[#d7e8ff]/70 leading-relaxed">
+                      {compactText(finding.analysis, 156)}
+                    </p>
+                  </div>
+                )}
 
                 {(finding.impact || finding.recommendation) && (
                   <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2">

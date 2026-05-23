@@ -7,14 +7,14 @@ type Props = {
 };
 
 function Row({ label, value }: { label: string; value?: string | number | null }) {
-  const displayValue = value ? String(value) : "Unknown";
+  const displayValue = value === undefined || value === null || value === "" ? "Unknown" : String(value);
 
   return (
-    <div className="flex items-start justify-between gap-4 px-5 py-1.5 border-b border-primary-fixed/10 last:border-b-0 hover:bg-primary-fixed/[0.04] transition-colors">
+    <div className="grid grid-cols-[120px_minmax(0,1fr)] gap-4 px-5 py-1.5 border-b border-primary-fixed/10 last:border-b-0 hover:bg-primary-fixed/[0.04] transition-colors">
       <span className="font-mono text-sm text-white font-bold shrink-0">
         {label}
       </span>
-      <span className="min-w-0 max-w-[68%] truncate text-right font-mono text-sm text-white" title={displayValue}>
+      <span className="min-w-0 break-words text-right font-mono text-sm text-white" title={displayValue}>
         {displayValue}
       </span>
     </div>
@@ -67,7 +67,12 @@ export function ServerInfoCard({ http }: Props) {
       </div>
 
       {http.error ? (
-        <p className="font-mono text-sm text-error/70 px-4 py-4">[-] {http.error}</p>
+        <div className="mx-5 mb-5 border border-error/25 bg-error/[0.04] p-3">
+          <p className="font-mono text-sm text-error/80">[-] {http.error}</p>
+          <p className="mt-1 font-mono text-[11px] text-[#d7e8ff]/55">
+            HTTP overview could not collect server headers for this target.
+          </p>
+        </div>
       ) : (
         <div className="flex-1 overflow-hidden">
           <Row label="Server" value={http.server} />
@@ -90,8 +95,8 @@ export function ServerInfoCard({ http }: Props) {
               </div>
               {(http.cdnEvidence?.length ?? 0) > 0 && (
                 <div className="mt-2 space-y-1">
-                  {http.cdnEvidence?.slice(0, 3).map((item) => (
-                    <p key={item} className="truncate font-mono text-[10px] text-[#d7e8ff]/65" title={item}>
+                  {http.cdnEvidence?.slice(0, 3).map((item, index) => (
+                    <p key={`${item}-${index}`} className="break-words font-mono text-[10px] text-[#d7e8ff]/65" title={item}>
                       &gt; {item}
                     </p>
                   ))}
