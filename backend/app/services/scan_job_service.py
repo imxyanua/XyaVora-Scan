@@ -108,6 +108,16 @@ def _snapshot(job: _ScanJob) -> ScanJobSnapshot:
     )
 
 
+def _step_data_payload(key: str, data: object | None) -> object | None:
+    if key != "screenshot" or not isinstance(data, ScreenshotResult):
+        return data
+
+    return data.model_copy(update={
+        "base64": None,
+        "mobileBase64": None,
+    })
+
+
 async def _run_job(job: _ScanJob) -> None:
     job.status = "running"
     _touch(job)
@@ -137,7 +147,7 @@ async def _run_job(job: _ScanJob) -> None:
         step.duration_ms = duration_ms
         step.error = error
         if data is not None:
-            step.data = data
+            step.data = _step_data_payload(key, data)
         _touch(job)
 
     async def run_late_screenshot() -> ScreenshotResult:
@@ -182,7 +192,7 @@ async def _run_job(job: _ScanJob) -> None:
             step.status = "error" if screenshot.error and not screenshot.base64 and not screenshot.mobileBase64 else "success"
             step.duration_ms = duration_ms
             step.error = screenshot.error if step.status == "error" else None
-            step.data = screenshot
+            step.data = _step_data_payload("screenshot", screenshot)
             _touch(job)
         return screenshot
 
