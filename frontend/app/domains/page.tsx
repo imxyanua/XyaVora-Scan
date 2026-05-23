@@ -6,7 +6,7 @@ export default function DomainsPage() {
       eyebrow="SYS.DOMAIN_REGISTRY"
       title="DOMAINS"
       icon="dns"
-      description="Domain tracking depends on saved scan history. It is reserved for the account phase so the public scanner stays clean."
+      description="Domain tracking is intentionally not part of the public scanner. Scan any public domain on demand and keep only browser-local recent reports."
     />
   );
 }

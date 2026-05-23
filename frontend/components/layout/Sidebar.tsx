@@ -5,12 +5,12 @@ import { usePathname } from "next/navigation";
 import { AppIcon } from "@/components/ui/AppIcon";
 
 const NAV_ITEMS = [
-  { label: "New Scan",  icon: "radar",                   href: "/scan"      },
-  { label: "History",   icon: "history",                 href: "/history"   },
+  { label: "Scan",    icon: "radar",   href: "/scan"    },
+  { label: "Recent",  icon: "history", href: "/history" },
 ] as const;
 
 const BOTTOM_ITEMS = [
-  { label: "Support",  icon: "help",                     href: "/support"  },
+  { label: "Help",    icon: "help", href: "/support" },
 ] as const;
 
 function getActive(href: string, pathname: string): boolean {
@@ -29,7 +29,7 @@ export function Sidebar() {
           XyaVora-Scan
         </p>
         <p className="font-mono text-[11px] text-primary-fixed/50 mt-1">
-          [SYS.V.2.4.0-STABLE]
+          [PUBLIC.SCANNER]
         </p>
       </Link>
 
@@ -38,7 +38,7 @@ export function Sidebar() {
         href="/scan"
         className="btn-primary w-full py-2.5 mb-6 text-center text-xs tracking-widest"
       >
-        &gt; INITIATE SCAN
+        &gt; SCAN DOMAIN
       </Link>
 
       {/* Main nav */}

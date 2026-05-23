@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "XyaVora-Scan — Analyze your domain security posture in seconds.",
+  title: "XyaVora-Scan - Public website security scanner",
   description:
-    "Analyze DNS, SSL, HTTP headers, WHOIS, tech stack, cookies and risk signals in seconds. A high-performance OSINT tool built for security analysis.",
-  keywords: ["domain security", "DNS analysis", "SSL check", "security headers", "OSINT"],
+    "Scan any public domain without an account. XyaVora-Scan renders live DNS, TLS, HTTP, header, WHOIS, tech stack, screenshot, and risk findings as modules complete.",
+  keywords: ["domain security", "DNS analysis", "TLS check", "security headers", "OSINT", "website scanner"],
 };
 
 export default function RootLayout({

@@ -6,7 +6,7 @@ export default function DashboardPage() {
       eyebrow="SYS.DASHBOARD"
       title="DASHBOARD"
       icon="space_dashboard"
-      description="Dashboard will return with real accounts, saved reports, and personal scan metrics. Phase 1 keeps public scans stateless."
+      description="The public scanner does not require accounts or personal workspaces. Use Scan for a new report or Recent for browser-local reports from this device."
     />
   );
 }

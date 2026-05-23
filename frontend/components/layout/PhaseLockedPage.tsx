@@ -30,7 +30,7 @@ export function PhaseLockedPage({
             <AppIcon name={icon} className="text-4xl text-primary-fixed/40 shrink-0" />
             <div className="min-w-0">
               <p className="font-mono text-sm text-primary-fixed font-bold">
-                ACCOUNT_FEATURE_PENDING
+                NOT_IN_PUBLIC_FLOW
               </p>
               <p className="font-mono text-[11px] text-primary-fixed/45 leading-relaxed mt-2">
                 {description}
@@ -43,7 +43,7 @@ export function PhaseLockedPage({
               START SCAN
             </Link>
             <Link href="/support" className="btn-ghost px-5 py-2 text-xs">
-              SUPPORT
+              HELP
             </Link>
           </div>
         </div>
