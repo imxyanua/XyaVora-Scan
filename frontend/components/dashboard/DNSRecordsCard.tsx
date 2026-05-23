@@ -13,6 +13,8 @@ const TYPE_COLOR: Record<string, string> = {
   TXT: "text-secondary-container",
   CNAME: "text-primary-fixed/75",
   SOA: "text-primary-fixed/75",
+  DS: "text-primary-fixed",
+  DNSKEY: "text-primary-fixed",
 };
 
 export function DNSRecordsCard({ dns }: Props) {

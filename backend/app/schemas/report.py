@@ -48,7 +48,7 @@ class Finding(_Base):
 
 # ── DNS ───────────────────────────────────────────────────────────
 
-DnsRecordType = Literal["A", "AAAA", "MX", "NS", "TXT", "CNAME", "SOA"]
+DnsRecordType = Literal["A", "AAAA", "MX", "NS", "TXT", "CNAME", "SOA", "DS", "DNSKEY"]
 
 
 class DnsRecord(_Base):
@@ -82,6 +82,12 @@ class DnsResult(_Base):
     dmarcRuf:       Optional[str] = None
     dmarcAlignmentDkim: Optional[str] = None
     dmarcAlignmentSpf:  Optional[str] = None
+    dnssecCheckedHost: Optional[str] = None
+    dnssecSigned:   bool = False
+    dnssecDsRecords: list[str] = []
+    dnssecDnskeyRecords: list[str] = []
+    dnssecEvidence: list[str] = []
+    dnssecConfidence: Optional[TechConfidence] = None
     error:          Optional[str] = None
 
 

@@ -13,6 +13,7 @@ import { AdvisoryPanel }        from "@/components/dashboard/AdvisoryPanel";
 import { SSLCard }              from "@/components/dashboard/SSLCard";
 import { TechStackCard }        from "@/components/dashboard/TechStackCard";
 import { SecurityHeadersCard }  from "@/components/dashboard/SecurityHeadersCard";
+import { HstsCard }             from "@/components/dashboard/HstsCard";
 import { HttpOverviewCard }     from "@/components/dashboard/HttpOverviewCard";
 import { HostNamesCard }        from "@/components/dashboard/HostNamesCard";
 import { PageMetadataCard }     from "@/components/dashboard/PageMetadataCard";
@@ -21,6 +22,7 @@ import { ServerInfoCard }       from "@/components/dashboard/ServerInfoCard";
 import { SiteDiscoveryCard }    from "@/components/dashboard/SiteDiscoveryCard";
 import { ServerLocationCard }   from "@/components/dashboard/ServerLocationCard";
 import { DNSRecordsCard }       from "@/components/dashboard/DNSRecordsCard";
+import { DNSSECCard }           from "@/components/dashboard/DNSSECCard";
 import { EmailSecurityCard }    from "@/components/dashboard/EmailSecurityCard";
 import { WhoisCard }            from "@/components/dashboard/WhoisCard";
 import { CookiesCard }          from "@/components/dashboard/CookiesCard";
@@ -191,6 +193,9 @@ export function ReportDashboard({ domain, report, historyId, guestScanId }: Prop
               <SecurityHeadersCard headers={report.headers} />
             </BalancedItem>
             <BalancedItem>
+              <HstsCard headers={report.headers} />
+            </BalancedItem>
+            <BalancedItem>
               <SSLCard ssl={report.ssl} />
             </BalancedItem>
             <BalancedItem>
@@ -209,6 +214,9 @@ export function ReportDashboard({ domain, report, historyId, guestScanId }: Prop
             </BalancedItem>
             <BalancedItem>
               <EmailSecurityCard dns={report.dns} />
+            </BalancedItem>
+            <BalancedItem>
+              <DNSSECCard dns={report.dns} whois={report.whois} />
             </BalancedItem>
             <BalancedItem>
               <WhoisCard whois={report.whois} />

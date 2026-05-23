@@ -18,9 +18,11 @@ import type {
 } from "@/types";
 import { CookiesCard } from "@/components/dashboard/CookiesCard";
 import { DNSRecordsCard } from "@/components/dashboard/DNSRecordsCard";
+import { DNSSECCard } from "@/components/dashboard/DNSSECCard";
 import { EmailSecurityCard } from "@/components/dashboard/EmailSecurityCard";
 import { HostNamesCard } from "@/components/dashboard/HostNamesCard";
 import { HttpOverviewCard } from "@/components/dashboard/HttpOverviewCard";
+import { HstsCard } from "@/components/dashboard/HstsCard";
 import { PageMetadataCard } from "@/components/dashboard/PageMetadataCard";
 import { RedirectsCard } from "@/components/dashboard/RedirectsCard";
 import { ScreenshotCard } from "@/components/dashboard/ScreenshotCard";
@@ -81,6 +83,9 @@ export function LiveReportPreview({ hostname, steps }: Props) {
           <LiveCard step={stepMap.headers} wide>
             {headers && <SecurityHeadersCard headers={headers} />}
           </LiveCard>
+          <LiveCard step={stepMap.headers}>
+            {headers && <HstsCard headers={headers} />}
+          </LiveCard>
           <LiveCard step={stepMap.cookies}>
             {cookies && <CookiesCard cookies={cookies} />}
           </LiveCard>
@@ -97,6 +102,9 @@ export function LiveReportPreview({ hostname, steps }: Props) {
           </LiveCard>
           <LiveCard step={stepMap.dns}>
             {dns && <EmailSecurityCard dns={dns} />}
+          </LiveCard>
+          <LiveCard step={stepMap.dns}>
+            {dns && <DNSSECCard dns={dns} whois={whois} />}
           </LiveCard>
           <LiveCard step={stepMap.whois}>
             {whois && <WhoisCard whois={whois} />}
@@ -272,6 +280,7 @@ function buildLiveSignals({
     { label: "CSP", status: !headers ? "pending" : csp?.status === "present" ? "pass" : csp?.status === "warning" ? "warn" : "warn" },
     { label: "SPF", status: !dns ? "pending" : dns.spfDetected ? "pass" : "warn" },
     { label: "DMARC", status: dmarcStatus },
+    { label: "DNSSEC", status: !dns ? "pending" : dns.dnssecSigned ? "pass" : "warn" },
     { label: "HTTP", status: !http ? "pending" : http.statusCode >= 200 && http.statusCode < 400 ? "pass" : "warn" },
   ];
 }

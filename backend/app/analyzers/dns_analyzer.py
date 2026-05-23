@@ -129,6 +129,59 @@ def _record_evidence(records: list[DnsRecord]) -> list[str]:
     return [f"{record.host} {record.type} {record.value} ttl={record.ttl if record.ttl is not None else 'unknown'}" for record in records]
 
 
+def _dnssec_candidate_hosts(hostname: str) -> list[str]:
+    labels = [label for label in hostname.strip(".").split(".") if label]
+    if len(labels) < 2:
+        return [hostname]
+
+    candidates: list[str] = []
+    for index in range(0, max(len(labels) - 1, 1)):
+        candidate = ".".join(labels[index:])
+        if candidate not in candidates:
+            candidates.append(candidate)
+
+    return candidates
+
+
+async def _query_dnssec(
+    resolver: dns.asyncresolver.Resolver,
+    hostname: str,
+) -> tuple[list[DnsRecord], dict]:
+    evidence: list[str] = []
+    checked_host: str | None = None
+
+    for candidate in _dnssec_candidate_hosts(hostname):
+        checked_host = candidate
+        ds_records = await _query(resolver, candidate, "DS")
+        evidence.append(f"{candidate} DS: {len(ds_records)} record(s)")
+        if not ds_records:
+            continue
+
+        dnskey_records = await _query(resolver, candidate, "DNSKEY")
+        evidence.append(f"{candidate} DNSKEY: {len(dnskey_records)} record(s)")
+        return ds_records + dnskey_records, {
+            "dnssecCheckedHost": candidate,
+            "dnssecSigned": True,
+            "dnssecDsRecords": [record.value for record in ds_records],
+            "dnssecDnskeyRecords": [record.value for record in dnskey_records],
+            "dnssecEvidence": [
+                *evidence,
+                *_record_evidence(ds_records[:5]),
+                *_record_evidence(dnskey_records[:5]),
+            ],
+            "dnssecConfidence": "high" if dnskey_records else "medium",
+        }
+
+    return [], {
+        "dnssecCheckedHost": checked_host or hostname,
+        "dnssecSigned": False,
+        "dnssecDsRecords": [],
+        "dnssecDnskeyRecords": [],
+        "dnssecEvidence": evidence or [f"{hostname} DS: no DNSSEC delegation data observed"],
+        "dnssecConfidence": "medium" if evidence else "low",
+    }
+
+
 def _mail_auth_absence_evidence(result: DnsResult, record_type: str, target: str) -> list[str]:
     evidence = [
         f"missing: {record_type}",
@@ -335,10 +388,11 @@ async def analyze_dns(hostname: str) -> AnalyzerResult:
     resolver.timeout = 3
     resolver.lifetime = 4   # per-query cap; keeps total well inside ANALYZER_TIMEOUT_SECONDS
 
-    # Run all record type queries + DMARC concurrently in one gather call
-    *type_results, dmarc_result = await asyncio.gather(
+    # Run record type queries, mail-auth lookup, and DNSSEC lookup concurrently.
+    *type_results, dmarc_result, dnssec_result = await asyncio.gather(
         *[_query(resolver, hostname, rtype) for rtype in _RECORD_TYPES],
         _query(resolver, f"_dmarc.{hostname}", "TXT"),
+        _query_dnssec(resolver, hostname),
         return_exceptions=True,
     )
     results = type_results  # keep variable name for the loop below
@@ -351,6 +405,17 @@ async def analyze_dns(hostname: str) -> AnalyzerResult:
     txt_records = [r for r in all_records if r.type == "TXT"]
 
     dmarc_records: list[DnsRecord] = dmarc_result if isinstance(dmarc_result, list) else []
+    dnssec_records: list[DnsRecord] = []
+    dnssec_info = {
+        "dnssecCheckedHost": hostname,
+        "dnssecSigned": False,
+        "dnssecDsRecords": [],
+        "dnssecDnskeyRecords": [],
+        "dnssecEvidence": [f"{hostname} DS: DNSSEC check unavailable"],
+        "dnssecConfidence": "low",
+    }
+    if isinstance(dnssec_result, tuple):
+        dnssec_records, dnssec_info = dnssec_result
 
     spf_records = _spf_records(txt_records)
     dmarc_policy_records = _dmarc_records(dmarc_records)
@@ -365,9 +430,10 @@ async def analyze_dns(hostname: str) -> AnalyzerResult:
         for rtype in _RECORD_TYPES
     ]
     dns_query_evidence.append(f"_dmarc TXT: {len(dmarc_records)} record(s)")
+    dns_query_evidence.extend(dnssec_info["dnssecEvidence"])
 
     dns_result = DnsResult(
-        records=all_records + dmarc_records,
+        records=all_records + dmarc_records + dnssec_records,
         mxDetected=bool(mx_records),
         mxRecords=mx_records,
         mxEvidence=_record_evidence(mx_dns_records),
@@ -382,6 +448,7 @@ async def analyze_dns(hostname: str) -> AnalyzerResult:
         dnsQueryEvidence=dns_query_evidence,
         **spf_info,
         **dmarc_info,
+        **dnssec_info,
     )
     dns_result.emailSecurityConfidence = _email_security_confidence(dns_result)  # type: ignore[assignment]
 

@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, patch, MagicMock
 from app.analyzers.dns_analyzer import (
     analyze_dns,
     _build_findings,
+    _dnssec_candidate_hosts,
     _detect_dmarc,
     _detect_spf,
     _email_security_confidence,
@@ -69,6 +70,14 @@ def test_parse_dmarc_extracts_policy_tags():
 def test_record_evidence_includes_host_type_and_value():
     records = [DnsRecord(type="MX", host="example.com", value="10 mail.example.com", ttl=300)]
     assert _record_evidence(records) == ["example.com MX 10 mail.example.com ttl=300"]
+
+
+def test_dnssec_candidate_hosts_walks_to_nearest_delegations():
+    assert _dnssec_candidate_hosts("www.example.com") == [
+        "www.example.com",
+        "example.com",
+    ]
+    assert _dnssec_candidate_hosts("example.com") == ["example.com"]
 
 
 def test_email_security_confidence_high_requires_strict_spf_and_enforced_dmarc():

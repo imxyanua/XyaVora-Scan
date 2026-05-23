@@ -54,7 +54,7 @@ export interface Finding {
 // ── DNS ──────────────────────────────────────
 
 export interface DnsRecord {
-  type:  "A" | "AAAA" | "MX" | "NS" | "TXT" | "CNAME" | "SOA";
+  type:  "A" | "AAAA" | "MX" | "NS" | "TXT" | "CNAME" | "SOA" | "DS" | "DNSKEY";
   host:  string;
   value: string;
   ttl?:  number;
@@ -84,6 +84,12 @@ export interface DnsResult {
   dmarcRuf?:      string;
   dmarcAlignmentDkim?: string;
   dmarcAlignmentSpf?:  string;
+  dnssecCheckedHost?: string;
+  dnssecSigned?:    boolean;
+  dnssecDsRecords?: string[];
+  dnssecDnskeyRecords?: string[];
+  dnssecEvidence?: string[];
+  dnssecConfidence?: "high" | "medium" | "low";
   error?:        string;
 }
 
