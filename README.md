@@ -2,30 +2,29 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-Open-source domain security posture scanner for quick, passive web reconnaissance.
+Open-source public website security scanner for quick, passive domain reconnaissance.
 
-XyaVora-Scan runs a set of defensive analyzers against a public domain and returns a structured report covering DNS, TLS, HTTP behavior, security headers, page metadata, technology fingerprints, cookies, security.txt, screenshots, findings, and evidence for detected signals.
+XyaVora-Scan lets anyone scan a public domain without creating an account. The report page opens immediately, shows live analyzer progress, and progressively renders module results as DNS, TLS, HTTP, headers, WHOIS, metadata, tech stack, crawl hints, cookies, security.txt, screenshot, and scoring checks complete.
 
 > Vietnamese documentation: [README.vi.md](README.vi.md)
 
-## Highlights
+## Product Direction
 
-- Fast local-first workflow with a Next.js frontend and FastAPI backend.
-- Quick scans do not require login.
-- Guest scans show the full report and keep recent reports in the current browser; backend history remains opt-in.
-- Analyzer pipeline runs modules concurrently and keeps partial results when one module fails.
-- Report Quality Summary separates verified evidence, observed page data, and inferred fingerprints.
-- Evidence labels explain whether a result was verified by DNS/TLS/headers, observed from HTTP/page data, or inferred from heuristic signals.
-- Optional Playwright screenshot capture for desktop and mobile previews.
-- Passive-only security model with SSRF protections and bounded timeouts.
+- No login or registration required.
+- Scan-first workflow: enter a public domain and inspect the report.
+- Recent scans are stored locally in the current browser only.
+- Live scan jobs show real per-module progress.
+- Partial results render while slower modules continue running.
+- Screenshot capture is optional and non-blocking.
+- Findings are evidence-based and labeled by confidence.
 
-## Current Modules
+## What It Checks
 
-| Module | What it checks |
+| Area | Details |
 |---|---|
-| Risk Summary | Score, grade, risk status, prioritized findings |
-| Report Quality Summary | Verified, observed, and inferred signal grouping |
-| Data Confidence | Module-level complete, partial, unavailable, or error status |
+| Live Overview | Ready/running/error module counts and early HTTPS, HSTS, CSP, SPF, DMARC, HTTP signals |
+| Risk Summary | Score, grade, risk status, prioritized findings, and score breakdown |
+| Data Quality | Verified, observed, inferred, unavailable, and error evidence summaries |
 | DNS Records | A, AAAA, MX, NS, TXT records, TTLs, SPF and DMARC signals |
 | Email Security | MX, SPF policy, DMARC policy, alignment, report URIs, evidence |
 | TLS / SSL | HTTPS availability, issuer, subject, validity, SANs, protocol, cipher |
@@ -37,9 +36,18 @@ XyaVora-Scan runs a set of defensive analyzers against a public domain and retur
 | Security.txt | RFC 9116 discovery and Contact/Policy/Encryption/Expires parsing |
 | Page Metadata | Title, description, canonical URL, Open Graph, favicon, robots directives |
 | Site Discovery | robots.txt, sitemap, crawl rules, user agents |
-| Screenshot | Optional desktop and mobile captures |
-| Raw Data | Full JSON report export for further analysis |
+| Screenshot | Optional desktop and mobile captures, handled after core report data |
+| Raw Data | JSON report export for further analysis |
 | External Research | Links to third-party tools for manual validation |
+
+## Live Scan Flow
+
+1. The frontend starts a scan job through the backend API.
+2. The report route opens immediately with live progress.
+3. Each analyzer updates its own job step with status, duration, error, and partial data.
+4. Completed modules replace loading cards with real report cards.
+5. The core report opens before slow screenshot capture blocks the experience.
+6. Recent guest reports are saved in browser localStorage without large screenshot base64 payloads.
 
 ## Evidence Model
 
@@ -48,10 +56,10 @@ XyaVora-Scan separates report data by confidence so the UI does not overstate un
 | Group | Meaning | Examples |
 |---|---|---|
 | Verified | Direct protocol or resolver evidence | DNS records, TLS handshake, response headers, high-confidence CDN headers |
-| Observed | Data seen in the fetched page or response | HTTP status, redirects, cookies, metadata, security.txt, screenshots |
+| Observed | Data seen in fetched pages or responses | HTTP status, redirects, cookies, metadata, security.txt, screenshots |
 | Inferred | Heuristic or best-practice observations | Tech stack fingerprints from weak signals, inferred framework relationships, missing hardening headers |
 
-Findings are posture observations. A `warning` does not mean the scanner confirmed an exploitable vulnerability. Review the source, confidence, and evidence fields before treating a result as confirmed.
+Findings are posture observations. A warning does not mean the scanner confirmed an exploitable vulnerability. Review source, confidence, and evidence before treating a result as confirmed.
 
 ## Architecture
 
@@ -60,11 +68,11 @@ frontend/  Next.js 16, React 19, TypeScript, Tailwind CSS v4
 backend/   FastAPI, Python 3.12, Pydantic v2, async analyzers
 ```
 
-The frontend proxies scan requests to the backend API. The backend normalizes and validates the target, runs analyzers concurrently, aggregates findings, and returns a camelCase JSON report shared with the TypeScript types.
+The frontend proxies scan requests to the backend API. The backend normalizes and validates the target, creates a scan job, runs analyzers concurrently, streams progress through polling-friendly job snapshots, aggregates findings, and returns a camelCase report shared with TypeScript types.
 
 ## Local Development
 
-### 1. Backend API
+### Backend API
 
 ```bash
 cd backend
@@ -84,7 +92,7 @@ python -m playwright install chromium
 
 Screenshots are controlled by `ENABLE_SCREENSHOT` and `SCREENSHOT_TIMEOUT_SECONDS` in `backend/.env`.
 
-### 2. Frontend Web
+### Frontend Web
 
 ```bash
 cd frontend
@@ -120,6 +128,8 @@ For hosted deployments, set `API_URL` to the backend origin and `CORS_ORIGIN` to
 
 ## API
 
+Classic full-report scan:
+
 ```http
 POST /api/analyze
 Content-Type: application/json
@@ -131,7 +141,14 @@ Content-Type: application/json
 }
 ```
 
-The response follows the shared report schema in `frontend/types/index.ts` and `backend/app/schemas/report.py`.
+Live job flow:
+
+```http
+POST /api/analyze/jobs
+GET  /api/analyze/jobs/{job_id}
+```
+
+The response follows shared schemas in `frontend/types/index.ts`, `backend/app/schemas/api.py`, and `backend/app/schemas/report.py`.
 
 ## Testing
 
@@ -159,7 +176,7 @@ XyaVora-Scan is designed for passive, defensive analysis.
 - It does not exploit, brute force, fuzz, or perform aggressive scanning.
 - Target validation blocks localhost, private IP ranges, link-local addresses, and cloud metadata endpoints.
 - HTTP fetches use bounded timeouts and controlled redirect handling.
-- Screenshot capture is optional and should be treated as a higher-risk network feature.
+- Screenshot capture is optional, non-blocking, and should be treated as a higher-risk network feature.
 - Results can include inferred signals. Review evidence labels before treating a finding as confirmed.
 
 Only scan domains you own or are authorized to assess.
@@ -170,7 +187,7 @@ Issues and pull requests are welcome. Useful contributions include:
 
 - New analyzer modules with offline tests.
 - Better technology fingerprints with evidence and negative tests.
-- UI improvements that make long evidence easier to inspect.
+- UI improvements for long evidence, live progress, and report readability.
 - Documentation fixes and deployment notes.
 - Security hardening for URL validation, redirects, and screenshot capture.
 
