@@ -386,8 +386,8 @@ async def test_run_scan_force_refresh_bypasses_cache(monkeypatch):
 
     progress_events = []
 
-    async def collect_progress(key, status, duration_ms, error):
-        progress_events.append((key, status, duration_ms, error))
+    async def collect_progress(key, status, duration_ms, error, data):
+        progress_events.append((key, status, duration_ms, error, data))
 
     await scan_service.run_scan(
         "example.com",
@@ -397,9 +397,12 @@ async def test_run_scan_force_refresh_bypasses_cache(monkeypatch):
         progress_callback=collect_progress,
     )
 
-    assert ("dns", "running", None, None) in progress_events
-    assert any(key == "dns" and status == "success" and duration_ms is not None for key, status, duration_ms, _ in progress_events)
-    assert any(key == "score" and status == "success" for key, status, _, _ in progress_events)
+    assert ("dns", "running", None, None, None) in progress_events
+    assert any(
+        key == "dns" and status == "success" and duration_ms is not None and isinstance(data, DnsResult)
+        for key, status, duration_ms, _, data in progress_events
+    )
+    assert any(key == "score" and status == "success" for key, status, _, _, _ in progress_events)
 
     progress_events.clear()
     await scan_service.run_scan(

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { ScanJobResponse, ScanJobSnapshot, ScanJobStep, ScanJobStepState } from "@/types";
-import { ReportSkeleton } from "@/components/dashboard/ReportSkeleton";
+import { LiveReportPreview } from "@/components/dashboard/LiveReportPreview";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { saveGuestScan } from "@/lib/guestScanStorage";
 import { normalizeScanTarget } from "@/lib/startScan";
@@ -290,7 +290,7 @@ function ScanSession({ target, scanId }: ScanSessionProps) {
           )}
         </div>
       </div>
-      <ReportSkeleton />
+      <LiveReportPreview hostname={target} steps={steps} />
     </div>
   );
 }

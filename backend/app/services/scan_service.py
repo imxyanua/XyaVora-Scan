@@ -57,7 +57,7 @@ _CONFIDENCE_PRIORITY = {
 
 EvidenceLevelValue = Literal["verified", "observed", "inferred", "unavailable", "error"]
 EvidenceConfidenceValue = Literal["high", "medium", "low"]
-ProgressCallback = Callable[[str, str, int | None, str | None], Awaitable[None] | None]
+ProgressCallback = Callable[[str, str, int | None, str | None, object | None], Awaitable[None] | None]
 
 
 def _merge_unique(values: list[str]) -> list[str]:
@@ -420,11 +420,12 @@ async def _emit_progress(
     status: str,
     duration_ms: int | None = None,
     error: str | None = None,
+    data: object | None = None,
 ) -> None:
     if progress_callback is None:
         return
 
-    result = progress_callback(key, status, duration_ms, error)
+    result = progress_callback(key, status, duration_ms, error, data)
     if inspect.isawaitable(result):
         await result
 
@@ -444,7 +445,7 @@ async def run_scan(
     """
     cached = None if force_refresh else _cache_get(hostname)
     if cached is not None:
-        await _emit_progress(progress_callback, "cache", "success", 0, None)
+        await _emit_progress(progress_callback, "cache", "success", 0, None, cached)
         return cached
 
     async def _run_analyzer(
@@ -452,7 +453,7 @@ async def run_scan(
         coro,
         timeout: float | None = None,
     ) -> AnalyzerResult:
-        await _emit_progress(progress_callback, key, "running", None, None)
+        await _emit_progress(progress_callback, key, "running", None, None, None)
         started = time.monotonic()
         result = await _run(coro, timeout=timeout)
         duration_ms = int((time.monotonic() - started) * 1000)
@@ -463,6 +464,7 @@ async def run_scan(
             "error" if result.status == "error" else "success",
             duration_ms,
             error,
+            result.data,
         )
         return result
 
