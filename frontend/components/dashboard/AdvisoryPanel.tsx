@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import type { Finding, FindingStatus } from "@/types";
+import type { Finding, FindingClassification, FindingStatus } from "@/types";
 import { FindingDrawer } from "./FindingDrawer";
 import { AppIcon } from "@/components/ui/AppIcon";
 
@@ -44,6 +44,22 @@ const GROUPS: Group[] = [
     statuses:   ["info", "pass"],
   },
 ];
+
+const CLASSIFICATION_LABEL: Record<FindingClassification, string> = {
+  "verified-issue": "Verified",
+  "observed-risk": "Observed",
+  "hardening-recommendation": "Hardening",
+  "investigation-lead": "Investigate",
+  informational: "Info",
+};
+
+const CLASSIFICATION_CLASS: Record<FindingClassification, string> = {
+  "verified-issue": "text-error border-error/60",
+  "observed-risk": "text-status-warn border-status-warn/60",
+  "hardening-recommendation": "text-primary-fixed border-primary-fixed/35",
+  "investigation-lead": "text-secondary-fixed border-secondary-fixed/60",
+  informational: "text-primary-fixed/55 border-primary-fixed/25",
+};
 
 export function AdvisoryPanel({ findings }: Props) {
   const [activeFinding, setActiveFinding] = useState<Finding | null>(null);
@@ -116,6 +132,11 @@ export function AdvisoryPanel({ findings }: Props) {
                         <span className="font-mono text-[11px] text-[#d7e8ff]/55 block mt-0.5">
                           &gt; {finding.category}
                         </span>
+                        {finding.classification && (
+                          <span className={`inline-block font-mono text-[10px] border px-1.5 py-0.5 mt-1 ${CLASSIFICATION_CLASS[finding.classification]}`}>
+                            {CLASSIFICATION_LABEL[finding.classification]}
+                          </span>
+                        )}
                       </div>
                       <button
                         type="button"
