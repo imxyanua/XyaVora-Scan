@@ -432,6 +432,7 @@ export interface ScanJobStep {
   status: ScanJobStepState;
   duration_ms?: number;
   error?: string;
+  data?: unknown;
 }
 
 export interface ScanJobSnapshot {

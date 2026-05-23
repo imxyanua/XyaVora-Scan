@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 from pydantic import BaseModel, Field, field_validator
 
 from app.schemas.report import ScanReport
@@ -34,6 +34,7 @@ class ScanJobStep(BaseModel):
     status: ScanJobStepState = "pending"
     duration_ms: Optional[int] = None
     error: Optional[str] = None
+    data: Any = None
 
 
 class ScanJobSnapshot(BaseModel):
