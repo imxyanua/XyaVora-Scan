@@ -1,40 +1,60 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import type { ScanJobResponse, ScanJobSnapshot, ScanJobStep, ScanJobStepState } from "@/types";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { saveGuestScan } from "@/lib/guestScanStorage";
 import { normalizeScanTarget } from "@/lib/startScan";
 
-const ANALYZERS = [
-  { key: "dns",        label: "DNS_RESOLUTION",     icon: "dns"               },
-  { key: "ssl",        label: "SSL_CERTIFICATE",    icon: "lock"              },
-  { key: "headers",   label: "HTTP_SEC_HEADERS",   icon: "http"              },
-  { key: "whois",     label: "WHOIS_LOOKUP",        icon: "person_search"     },
-  { key: "techstack", label: "TECH_STACK_DETECT",   icon: "stacks"            },
-  { key: "cookies",   label: "COOKIE_ANALYSIS",     icon: "cookie"            },
-  { key: "sectxt",    label: "SECURITY_TXT_CHECK",  icon: "security"          },
-  { key: "discovery", label: "SITE_DISCOVERY",      icon: "travel_explore"    },
-  { key: "screenshot",label: "SCREENSHOT_CAPTURE",  icon: "screenshot_monitor"},
-  { key: "score",     label: "RISK_SCORE_CALC",     icon: "monitoring"        },
-] as const;
+const FALLBACK_STEPS: ScanJobStep[] = [
+  { key: "dns", label: "DNS Records", status: "pending" },
+  { key: "ssl", label: "SSL Certificate", status: "pending" },
+  { key: "headers", label: "Security Headers", status: "pending" },
+  { key: "http", label: "HTTP Overview", status: "pending" },
+  { key: "location", label: "Server Location", status: "pending" },
+  { key: "metadata", label: "Page Metadata", status: "pending" },
+  { key: "discovery", label: "Crawl Discovery", status: "pending" },
+  { key: "whois", label: "WHOIS Lookup", status: "pending" },
+  { key: "techStack", label: "Tech Stack", status: "pending" },
+  { key: "cookies", label: "Cookies", status: "pending" },
+  { key: "securityTxt", label: "security.txt", status: "pending" },
+  { key: "screenshot", label: "Screenshot Capture", status: "pending" },
+  { key: "score", label: "Risk Score", status: "pending" },
+];
 
-type AnalyzerKey = (typeof ANALYZERS)[number]["key"];
-type Status = "pending" | "running" | "complete";
-type StatusMap = Record<AnalyzerKey, Status>;
+const STEP_ICONS: Record<string, string> = {
+  dns: "dns",
+  ssl: "lock",
+  headers: "http",
+  http: "public",
+  location: "location_on",
+  metadata: "article",
+  discovery: "travel_explore",
+  whois: "person_search",
+  techStack: "stacks",
+  cookies: "cookie",
+  securityTxt: "security",
+  screenshot: "screenshot_monitor",
+  score: "monitoring",
+};
+
+const TOTAL_SEGMENTS = 30;
+
 type ScanSessionProps = {
   target: string;
   scanId: string;
 };
 
-const TOTAL_SEGMENTS = 20;
-// Minimum display time per analyzer row (ms) — purely visual
-const ROW_DURATION = 600;
-
 export function ScanProgress() {
   const searchParams = useSearchParams();
   const target = normalizeScanTarget(searchParams.get("target") ?? "") || "unknown";
   const scanId = searchParams.get("scanId") ?? "manual";
+
+  return <ScanProgressForTarget target={target} scanId={scanId} />;
+}
+
+export function ScanProgressForTarget({ target, scanId }: ScanSessionProps) {
   const scanKey = `${target}:${scanId}`;
 
   return <ScanSession key={scanKey} target={target} scanId={scanId} />;
@@ -42,96 +62,123 @@ export function ScanProgress() {
 
 function ScanSession({ target, scanId }: ScanSessionProps) {
   const router = useRouter();
-  const scannedTarget = useRef<string | null>(null);
+  const startedRef = useRef<string | null>(null);
+  const redirectedRef = useRef(false);
 
-  const [statuses, setStatuses] = useState<StatusMap>(
-    () => Object.fromEntries(ANALYZERS.map((a) => [a.key, "pending"])) as StatusMap
-  );
-  const [scanDone, setScanDone] = useState(false);
+  const [job, setJob] = useState<ScanJobSnapshot | null>(null);
   const [scanError, setScanError] = useState<string | null>(null);
   const [elapsed, setElapsed] = useState(0);
 
-  // Elapsed counter
   useEffect(() => {
-    const id = setInterval(() => setElapsed((s) => s + 100), 100);
+    const id = setInterval(() => setElapsed((s) => s + 250), 250);
     return () => clearInterval(id);
   }, []);
 
   useEffect(() => {
-    // Wait until useSearchParams has the real value
     if (target === "unknown") return;
-    // Prevent re-running for the same target
+
     const scanKey = `${target}:${scanId}`;
-    if (scannedTarget.current === scanKey) return;
-    scannedTarget.current = scanKey;
-    setStatuses(Object.fromEntries(ANALYZERS.map((a) => [a.key, "pending"])) as StatusMap);
-    setScanDone(false);
+    if (startedRef.current === scanKey) return;
+    startedRef.current = scanKey;
+    redirectedRef.current = false;
+    setJob(null);
     setScanError(null);
     setElapsed(0);
 
     let cancelled = false;
+    let pollTimer: ReturnType<typeof setTimeout> | null = null;
 
-    // Start the real scan in parallel with the animation
-    const scanPromise = fetch("/api/analyze", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ target, force_refresh: true, save_history: false }),
-    }).then((r) => r.json());
+    async function fetchJson(url: string, init?: RequestInit): Promise<ScanJobResponse> {
+      const res = await fetch(url, init);
+      const body = await res.json();
+      if (!res.ok || !body.success) {
+        throw new Error(body.error ?? `HTTP ${res.status}`);
+      }
+      return body as ScanJobResponse;
+    }
 
-    // Visual animation — runs through each analyzer row sequentially
-    const timers: ReturnType<typeof setTimeout>[] = [];
-    let cursor = 200;
+    async function poll(jobId: string) {
+      try {
+        const body = await fetchJson(`/api/analyze/jobs/${encodeURIComponent(jobId)}`);
+        if (cancelled || !body.data) return;
 
-    ANALYZERS.forEach((analyzer, idx) => {
-      const runAt  = cursor;
-      cursor      += ROW_DURATION;
-      const doneAt = cursor;
+        setJob(body.data);
 
-      timers.push(
-        setTimeout(() => { if (!cancelled) setStatuses((prev) => ({ ...prev, [analyzer.key]: "running" })); }, runAt),
-        setTimeout(() => {
-          if (cancelled) return;
-          setStatuses((prev) => ({ ...prev, [analyzer.key]: "complete" }));
+        if (body.data.status === "failed") {
+          setScanError(body.data.error ?? "Scan failed.");
+          return;
+        }
 
-          // After the last animation row, wait for the real scan to finish
-          if (idx === ANALYZERS.length - 1) {
-            scanPromise.then((data) => {
-              if (cancelled) return;
-              if (!data.success) {
-                setScanError(data.error ?? "Scan failed — unknown error.");
-                return;
-              }
-              if (data.data) {
-                saveGuestScan(scanId, data.data);
-              }
-              setScanDone(true);
-              setTimeout(() => {
-                router.push(`/report/${encodeURIComponent(target)}?guestScanId=${encodeURIComponent(scanId)}`);
-              }, 800);
-            }).catch((err) => {
-              if (!cancelled) setScanError(err instanceof Error ? err.message : "Network error");
-            });
+        if (body.data.status === "completed") {
+          if (body.data.report) {
+            saveGuestScan(scanId, body.data.report);
           }
-        }, doneAt),
-      );
-    });
+          if (!redirectedRef.current) {
+            redirectedRef.current = true;
+            pollTimer = setTimeout(() => {
+              router.push(`/report/${encodeURIComponent(target)}?guestScanId=${encodeURIComponent(scanId)}`);
+            }, 700);
+          }
+          return;
+        }
 
-    return () => { cancelled = true; timers.forEach(clearTimeout); };
+        pollTimer = setTimeout(() => poll(jobId), 800);
+      } catch (err) {
+        if (!cancelled) {
+          setScanError(err instanceof Error ? err.message : "Could not read scan progress.");
+        }
+      }
+    }
+
+    async function start() {
+      try {
+        const body = await fetchJson("/api/analyze/jobs", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ target, force_refresh: true, save_history: false }),
+        });
+        if (cancelled || !body.data) return;
+        setJob(body.data);
+        poll(body.data.job_id);
+      } catch (err) {
+        if (!cancelled) {
+          setScanError(err instanceof Error ? err.message : "Could not start scan.");
+        }
+      }
+    }
+
+    start();
+
+    return () => {
+      cancelled = true;
+      if (pollTimer) clearTimeout(pollTimer);
+    };
   }, [target, scanId, router]);
 
-  const completedCount = Object.values(statuses).filter((s) => s === "complete").length;
-  const progress       = Math.round((completedCount / ANALYZERS.length) * 100);
-  const filledSegs     = Math.round((completedCount / ANALYZERS.length) * TOTAL_SEGMENTS);
-  const elapsedSec     = (elapsed / 1000).toFixed(1);
+  const steps = job?.steps.length ? job.steps : FALLBACK_STEPS;
+  const progress = job?.progress ?? (scanError ? 100 : 3);
+  const filledSegs = Math.max(1, Math.round((progress / 100) * TOTAL_SEGMENTS));
+  const elapsedMs = job?.elapsed_ms ?? elapsed;
+  const elapsedSec = (elapsedMs / 1000).toFixed(1);
+  const doneCount = steps.filter((step) => step.status === "success").length;
+  const errorCount = steps.filter((step) => step.status === "error").length;
+  const runningStep = steps.find((step) => step.status === "running");
+  const currentLabel = runningStep?.label ?? (job?.status === "completed" ? "Report ready" : "Preparing scan job");
+  const slowScan = elapsedMs > 10000 && job?.status !== "completed" && !scanError;
+
+  const statusLabel = useMemo(() => {
+    if (scanError || job?.status === "failed") return "SCAN_FAILED";
+    if (job?.status === "completed") return "REPORT_READY";
+    if (job?.status === "queued") return "QUEUED";
+    return "SCANNING_IN_PROGRESS";
+  }, [job?.status, scanError]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] px-4 py-12">
-      <div className="w-full max-w-2xl card-panel">
-
-        {/* Panel header */}
-        <div className="border-b border-primary-fixed/20 px-6 py-3 bg-[#070B0F] flex justify-between items-center">
+      <div className="w-full max-w-4xl card-panel">
+        <div className="border-b border-primary-fixed/20 px-6 py-3 bg-[#070B0F] flex justify-between items-center gap-4">
           <span className="font-mono text-[11px] tracking-widest text-primary-fixed/70 uppercase">
-            SYS.SCAN_PROCESS
+            REALTIME_SCAN_JOB
           </span>
           <span className="font-mono text-[11px] text-primary-fixed/40">
             T+{elapsedSec}s
@@ -139,22 +186,25 @@ function ScanSession({ target, scanId }: ScanSessionProps) {
         </div>
 
         <div className="p-6 space-y-6">
-
-          {/* Target */}
-          <div>
-            <p className="font-mono text-[11px] text-primary-fixed/50 uppercase tracking-widest mb-1">
-              TARGET_HOST:
-            </p>
-            <p className="font-mono text-2xl font-bold text-primary-fixed tracking-tight break-all">
-              {target}
-            </p>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div className="min-w-0">
+              <p className="font-mono text-[11px] text-primary-fixed/50 uppercase tracking-widest mb-1">
+                Target
+              </p>
+              <p className="font-mono text-2xl font-bold text-primary-fixed tracking-tight break-all">
+                {target}
+              </p>
+            </div>
+            <div className="font-mono text-[11px] text-on-surface-variant md:text-right">
+              <p>{job?.job_id ? `JOB ${job.job_id.slice(0, 8).toUpperCase()}` : "STARTING JOB"}</p>
+              <p className="text-primary-fixed/60">{doneCount} done / {errorCount} error / {steps.length} modules</p>
+            </div>
           </div>
 
-          {/* Progress bar */}
           <div className="space-y-2">
             <div className="flex justify-between font-mono text-[11px] uppercase tracking-wider">
-              <span className={scanDone ? "text-primary-fixed" : scanError ? "text-error" : "text-primary-fixed/60"}>
-                {scanDone ? "SCAN_COMPLETE" : scanError ? "SCAN_FAILED" : "SCANNING_IN_PROGRESS"}
+              <span className={scanError ? "text-error" : "text-primary-fixed"}>
+                {statusLabel}
               </span>
               <span className="text-primary-fixed/60">{progress}%</span>
             </div>
@@ -172,76 +222,32 @@ function ScanSession({ target, scanId }: ScanSessionProps) {
                 />
               ))}
             </div>
+            <p className="font-mono text-[11px] text-primary-fixed/50">
+              &gt; {currentLabel}
+              {slowScan ? " is taking longer than usual, still working..." : ""}
+            </p>
           </div>
 
-          {/* Analyzer rows */}
-          <div className="border border-primary-fixed/10">
-            {ANALYZERS.map((analyzer, idx) => {
-              const status = statuses[analyzer.key];
-              const isLast = idx === ANALYZERS.length - 1;
-
-              return (
-                <div
-                  key={analyzer.key}
-                  className={`flex items-center justify-between px-4 py-2.5 ${
-                    !isLast ? "border-b border-primary-fixed/10" : ""
-                  } ${status === "running" ? "bg-primary-fixed/[0.04]" : ""}`}
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span
-                      className={`font-mono text-[12px] font-bold shrink-0 w-8 ${
-                        status === "complete" ? "text-primary-fixed" :
-                        status === "running"  ? "text-primary-fixed animate-pulse" :
-                        "text-on-surface-variant/30"
-                      }`}
-                    >
-                      {status === "complete" ? "[OK]" :
-                       status === "running"  ? "[>>]" :
-                                              "[-]"}
-                    </span>
-                    <span
-                      className={`font-mono text-[13px] tracking-wider truncate ${
-                        status === "complete" ? "text-primary-fixed" :
-                        status === "running"  ? "text-on-surface" :
-                        "text-on-surface-variant/35"
-                      }`}
-                    >
-                      {analyzer.label}
-                    </span>
-                  </div>
-
-                  <span
-                    className={`font-mono text-[11px] uppercase shrink-0 ml-4 ${
-                      status === "complete" ? "text-primary-fixed" :
-                      status === "running"  ? "text-secondary animate-pulse" :
-                      "text-on-surface-variant/25"
-                    }`}
-                  >
-                    {status === "complete" ? "COMPLETE" :
-                     status === "running"  ? "RUNNING..." :
-                                            "PENDING"}
-                  </span>
-                </div>
-              );
-            })}
+          <div className="grid gap-2 sm:grid-cols-2">
+            {steps.map((step) => (
+              <ScanStepRow key={step.key} step={step} />
+            ))}
           </div>
 
-          {/* Scan complete banner */}
-          {scanDone && (
+          {job?.status === "completed" && (
             <div className="border border-primary-fixed/40 bg-primary-fixed/5 px-5 py-4 flex items-center gap-4">
               <AppIcon name="check_circle" className="text-primary-fixed text-2xl shrink-0" />
               <div>
                 <p className="font-mono text-sm text-primary-fixed font-semibold tracking-wider">
-                  SCAN_COMPLETE — {ANALYZERS.length} modules processed
+                  REPORT_READY
                 </p>
                 <p className="font-mono text-[11px] text-primary-fixed/50 mt-1">
-                  &gt; Redirecting to report dashboard...
+                  &gt; Opening report dashboard...
                 </p>
               </div>
             </div>
           )}
 
-          {/* Error banner */}
           {scanError && (
             <div className="border border-error/40 bg-error/5 px-5 py-4 flex items-center gap-4">
               <AppIcon name="error" className="text-error text-2xl shrink-0" />
@@ -258,16 +264,62 @@ function ScanSession({ target, scanId }: ScanSessionProps) {
               </a>
             </div>
           )}
-
-          {/* Waiting for real scan after animation completes */}
-          {completedCount === ANALYZERS.length && !scanDone && !scanError && (
-            <p className="font-mono text-[11px] text-primary-fixed/40 text-center animate-pulse">
-              &gt; AWAITING_BACKEND_RESPONSE...
-            </p>
-          )}
-
         </div>
       </div>
     </div>
   );
+}
+
+function ScanStepRow({ step }: { step: ScanJobStep }) {
+  return (
+    <div
+      className={`min-w-0 border px-3 py-2.5 transition-colors duration-300 ${
+        step.status === "running"
+          ? "border-primary-fixed/35 bg-primary-fixed/[0.05]"
+          : step.status === "error"
+            ? "border-error/30 bg-error/[0.04]"
+            : "border-primary-fixed/10 bg-[#070B0F]/40"
+      }`}
+    >
+      <div className="flex items-center gap-3 min-w-0">
+        <AppIcon
+          name={STEP_ICONS[step.key] ?? "radio_button_checked"}
+          className={`text-lg shrink-0 ${statusColor(step.status)}`}
+        />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-3">
+            <p className={`font-mono text-[13px] font-bold truncate ${statusColor(step.status)}`}>
+              {step.label}
+            </p>
+            <span className={`font-mono text-[10px] uppercase shrink-0 ${statusColor(step.status)}`}>
+              {statusText(step.status)}
+            </span>
+          </div>
+          <p className="font-mono text-[10px] text-on-surface-variant/70 truncate mt-1">
+            {step.error
+              ? step.error
+              : step.duration_ms !== undefined
+                ? `Completed in ${step.duration_ms} ms`
+                : step.status === "running"
+                  ? "Analyzer is running..."
+                  : "Waiting for analyzer"}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function statusText(status: ScanJobStepState) {
+  if (status === "success") return "Done";
+  if (status === "error") return "Error";
+  if (status === "running") return "Running";
+  return "Pending";
+}
+
+function statusColor(status: ScanJobStepState) {
+  if (status === "success") return "text-primary-fixed";
+  if (status === "error") return "text-error";
+  if (status === "running") return "text-secondary animate-pulse";
+  return "text-on-surface-variant/45";
 }

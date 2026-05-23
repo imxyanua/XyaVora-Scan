@@ -1,5 +1,7 @@
 import asyncio
+import inspect
 import time
+from collections.abc import Awaitable, Callable
 from datetime import datetime, timezone
 from typing import Literal
 
@@ -55,6 +57,7 @@ _CONFIDENCE_PRIORITY = {
 
 EvidenceLevelValue = Literal["verified", "observed", "inferred", "unavailable", "error"]
 EvidenceConfidenceValue = Literal["high", "medium", "low"]
+ProgressCallback = Callable[[str, str, int | None, str | None], Awaitable[None] | None]
 
 
 def _merge_unique(values: list[str]) -> list[str]:
@@ -411,11 +414,27 @@ async def _run(coro, timeout: float | None = None) -> AnalyzerResult:
         return AnalyzerResult(key="unknown", status="error", errors=[str(exc)])
 
 
+async def _emit_progress(
+    progress_callback: ProgressCallback | None,
+    key: str,
+    status: str,
+    duration_ms: int | None = None,
+    error: str | None = None,
+) -> None:
+    if progress_callback is None:
+        return
+
+    result = progress_callback(key, status, duration_ms, error)
+    if inspect.isawaitable(result):
+        await result
+
+
 async def run_scan(
     target: str,
     normalized_url: str,
     hostname: str,
     force_refresh: bool = False,
+    progress_callback: ProgressCallback | None = None,
 ) -> ScanReport:
     """
     Runs all analyzers concurrently then assembles a ScanReport.
@@ -424,23 +443,47 @@ async def run_scan(
     """
     cached = None if force_refresh else _cache_get(hostname)
     if cached is not None:
+        await _emit_progress(progress_callback, "cache", "success", 0, None)
         return cached
+
+    async def _run_analyzer(
+        key: str,
+        coro,
+        timeout: float | None = None,
+    ) -> AnalyzerResult:
+        await _emit_progress(progress_callback, key, "running", None, None)
+        started = time.monotonic()
+        result = await _run(coro, timeout=timeout)
+        duration_ms = int((time.monotonic() - started) * 1000)
+        error = result.errors[0] if result.errors else None
+        await _emit_progress(
+            progress_callback,
+            key,
+            "error" if result.status == "error" else "success",
+            duration_ms,
+            error,
+        )
+        return result
+
     async def _pipeline() -> ScanReport:
         dns_r, ssl_r, headers_r, http_r, location_r, meta_r, discovery_r, whois_r, tech_r, cookies_r, sectxt_r, shot_r = (
             await asyncio.gather(
-                _run(analyze_dns(hostname)),
-                _run(analyze_ssl(hostname)),
-                _run(analyze_headers(normalized_url)),
-                _run(analyze_http_overview(normalized_url)),
-                _run(analyze_server_location(hostname)),
-                _run(analyze_page_metadata(normalized_url)),
-                _run(analyze_site_discovery(normalized_url)),
-                _run(analyze_whois(hostname)),
-                _run(analyze_tech_stack(normalized_url)),
-                _run(analyze_cookies(normalized_url)),
-                _run(analyze_security_txt(normalized_url)),
-                _run(analyze_screenshot(normalized_url, settings.ENABLE_SCREENSHOT),
-                     timeout=settings.SCREENSHOT_TIMEOUT_SECONDS),
+                _run_analyzer("dns", analyze_dns(hostname)),
+                _run_analyzer("ssl", analyze_ssl(hostname)),
+                _run_analyzer("headers", analyze_headers(normalized_url)),
+                _run_analyzer("http", analyze_http_overview(normalized_url)),
+                _run_analyzer("location", analyze_server_location(hostname)),
+                _run_analyzer("metadata", analyze_page_metadata(normalized_url)),
+                _run_analyzer("discovery", analyze_site_discovery(normalized_url)),
+                _run_analyzer("whois", analyze_whois(hostname)),
+                _run_analyzer("techStack", analyze_tech_stack(normalized_url)),
+                _run_analyzer("cookies", analyze_cookies(normalized_url)),
+                _run_analyzer("securityTxt", analyze_security_txt(normalized_url)),
+                _run_analyzer(
+                    "screenshot",
+                    analyze_screenshot(normalized_url, settings.ENABLE_SCREENSHOT),
+                    timeout=settings.SCREENSHOT_TIMEOUT_SECONDS,
+                ),
             )
         )
 
@@ -452,7 +495,7 @@ async def run_scan(
         ])
 
         # Score is computed last — it depends on the combined findings list
-        score_r = await _run(analyze_score(all_findings))
+        score_r = await _run_analyzer("score", analyze_score(all_findings))
         score_data = score_r.data or {}
 
         def _err(r: AnalyzerResult) -> str | None:

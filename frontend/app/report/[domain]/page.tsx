@@ -1,21 +1,30 @@
 import { AppShell } from "@/components/layout/AppShell";
 import { GuestStoredReport } from "@/components/dashboard/GuestStoredReport";
 import { ReportDashboard } from "@/components/dashboard/ReportDashboard";
+import { ScanProgressForTarget } from "@/components/scanning/ScanProgress";
 import { analyzeDomain, getReportById } from "@/lib/api";
 import { normalizeScanTarget } from "@/lib/startScan";
 
 type Props = {
   params:       Promise<{ domain: string }>;
-  searchParams: Promise<{ id?: string; guestScanId?: string }>;
+  searchParams: Promise<{ id?: string; guestScanId?: string; liveScanId?: string }>;
 };
 
 export default async function ReportPage({ params, searchParams }: Props) {
   const rawParams = await params;
   const domain = normalizeScanTarget(decodeURIComponent(rawParams.domain));
-  const { id, guestScanId } = await searchParams;
+  const { id, guestScanId, liveScanId } = await searchParams;
 
   if (guestScanId) {
     return <GuestStoredReport domain={domain} scanId={guestScanId} />;
+  }
+
+  if (liveScanId) {
+    return (
+      <AppShell domain={domain}>
+        <ScanProgressForTarget target={domain} scanId={liveScanId} />
+      </AppShell>
+    );
   }
 
   const response = id

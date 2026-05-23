@@ -16,7 +16,7 @@ export function normalizeScanTarget(input: string) {
 export function createScanUrl(target: string) {
   const normalizedTarget = normalizeScanTarget(target);
   const scanId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  return `/scanning?target=${encodeURIComponent(normalizedTarget)}&scanId=${encodeURIComponent(scanId)}`;
+  return `/report/${encodeURIComponent(normalizedTarget)}?liveScanId=${encodeURIComponent(scanId)}`;
 }
 
 export function startScan(target: string) {

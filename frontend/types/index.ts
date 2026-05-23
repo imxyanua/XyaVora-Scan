@@ -423,6 +423,38 @@ export interface ApiResponse {
   error?:  string;
 }
 
+export type ScanJobState = "queued" | "running" | "completed" | "failed";
+export type ScanJobStepState = "pending" | "running" | "success" | "error";
+
+export interface ScanJobStep {
+  key: string;
+  label: string;
+  status: ScanJobStepState;
+  duration_ms?: number;
+  error?: string;
+}
+
+export interface ScanJobSnapshot {
+  job_id: string;
+  target: string;
+  hostname: string;
+  normalized_url: string;
+  status: ScanJobState;
+  progress: number;
+  created_at: string;
+  updated_at: string;
+  elapsed_ms: number;
+  steps: ScanJobStep[];
+  report?: ScanReport;
+  error?: string;
+}
+
+export interface ScanJobResponse {
+  success: boolean;
+  data?: ScanJobSnapshot;
+  error?: string;
+}
+
 export interface HistoryResponse {
   success: boolean;
   data:    HistoryEntry[];
