@@ -96,6 +96,83 @@ def _has_broad_csp_source(value: str) -> bool:
     return bool(re.search(r"(?:^|[\s;])\*(?:[\s;]|$)", value))
 
 
+def _parse_csp_directives(value: str) -> dict[str, list[str]]:
+    directives: dict[str, list[str]] = {}
+    for raw_directive in value.split(";"):
+        parts = raw_directive.strip().split()
+        if not parts:
+            continue
+        name = parts[0].lower()
+        sources = [part.strip() for part in parts[1:]]
+        directives[name] = sources
+    return directives
+
+
+def _csp_sources_for(directives: dict[str, list[str]], directive: str) -> list[str]:
+    return directives.get(directive, directives.get("default-src", []))
+
+
+def _csp_has_token(sources: list[str], token: str) -> bool:
+    token = token.lower()
+    return any(source.lower() == token for source in sources)
+
+
+def _csp_has_broad_source(directives: dict[str, list[str]]) -> bool:
+    for sources in directives.values():
+        for source in sources:
+            lower = source.lower()
+            if lower in {"*", "http:", "https:", "data:", "blob:"}:
+                return True
+            if lower.startswith("*."):
+                return True
+    return False
+
+
+def _csp_audit(value: str) -> dict:
+    directives = _parse_csp_directives(value)
+    script_sources = _csp_sources_for(directives, "script-src")
+    object_sources = _csp_sources_for(directives, "object-src")
+    base_uri_sources = directives.get("base-uri", [])
+    frame_ancestors = directives.get("frame-ancestors", [])
+    has_default_src = "default-src" in directives
+    unsafe_inline = _csp_has_token(script_sources, "'unsafe-inline'")
+    unsafe_eval = _csp_has_token(script_sources, "'unsafe-eval'")
+    object_locked = _csp_has_token(object_sources, "'none'")
+    base_uri_locked = _csp_has_token(base_uri_sources, "'none'") or _csp_has_token(base_uri_sources, "'self'")
+    frame_controlled = bool(frame_ancestors)
+    broad_source = _csp_has_broad_source(directives)
+
+    issues: list[str] = []
+    if not has_default_src:
+        issues.append("missing-default-src")
+    if unsafe_inline:
+        issues.append("unsafe-inline")
+    if unsafe_eval:
+        issues.append("unsafe-eval")
+    if broad_source:
+        issues.append("broad-source")
+    if not object_locked:
+        issues.append("object-src-not-locked")
+    if not base_uri_locked:
+        issues.append("base-uri-not-locked")
+
+    return {
+        "directives": directives,
+        "has_default_src": has_default_src,
+        "script_sources": script_sources,
+        "object_sources": object_sources,
+        "base_uri_sources": base_uri_sources,
+        "frame_ancestors": frame_ancestors,
+        "unsafe_inline": unsafe_inline,
+        "unsafe_eval": unsafe_eval,
+        "broad_source": broad_source,
+        "object_locked": object_locked,
+        "base_uri_locked": base_uri_locked,
+        "frame_controlled": frame_controlled,
+        "issues": issues,
+    }
+
+
 def _header_verification(header: str) -> str:
     return f"Run curl -I against the final URL and inspect the {header} response header after redirects."
 
@@ -141,11 +218,23 @@ def _present_item(rule: dict, value: str) -> tuple[SecurityHeaderItem, Finding |
                 classification="observed-risk",
             )
     elif header == "Content-Security-Policy":
-        has_unsafe_inline = "'unsafe-inline'" in lower
-        has_broad_source = _has_broad_csp_source(lower)
-        evidence.append(f"csp.unsafe_inline: {has_unsafe_inline}")
-        evidence.append(f"csp.broad_source: {has_broad_source}")
-        if has_unsafe_inline or has_broad_source:
+        csp = _csp_audit(value)
+        has_unsafe_inline = csp["unsafe_inline"]
+        has_broad_source = csp["broad_source"] or _has_broad_csp_source(lower)
+        evidence.extend([
+            f"csp.default_src_present: {csp['has_default_src']}",
+            f"csp.script_src: {' '.join(csp['script_sources']) or 'fallback-or-missing'}",
+            f"csp.object_src: {' '.join(csp['object_sources']) or 'fallback-or-missing'}",
+            f"csp.base_uri: {' '.join(csp['base_uri_sources']) or 'missing'}",
+            f"csp.frame_ancestors: {' '.join(csp['frame_ancestors']) or 'missing'}",
+            f"csp.unsafe_inline: {has_unsafe_inline}",
+            f"csp.unsafe_eval: {csp['unsafe_eval']}",
+            f"csp.broad_source: {has_broad_source}",
+            f"csp.object_src_locked: {csp['object_locked']}",
+            f"csp.base_uri_locked: {csp['base_uri_locked']}",
+            f"csp.issues: {', '.join(csp['issues']) if csp['issues'] else 'none'}",
+        ])
+        if csp["issues"] or has_broad_source:
             status = "warning"
             confidence = "medium"
             warning = Finding(
@@ -153,14 +242,14 @@ def _present_item(rule: dict, value: str) -> tuple[SecurityHeaderItem, Finding |
                 severity="medium",
                 category="Headers",
                 title="Content Security Policy Is Too Permissive",
-                description=f"CSP is present, but contains broad or unsafe directives: {value}",
+                description=f"CSP is present, but the scanner observed policy gaps: {', '.join(csp['issues']) or 'broad-source'}",
                 impact="A permissive CSP gives browsers less protection against injected scripts.",
-                recommendation="Remove unsafe-inline and wildcard sources where possible. Prefer explicit trusted sources and nonces/hashes.",
+                recommendation="Prefer default-src 'self', lock object-src to 'none', set base-uri, and remove unsafe-inline/unsafe-eval or broad sources where possible.",
                 status="warning",
                 confidence="observed",
                 source="headers",
                 evidence=evidence,
-                analysis="The header is present, but the observed policy allows wildcard sources or unsafe inline script/style execution.",
+                analysis="The header is present, but directive-level parsing found CSP hardening gaps in the final HTTP response.",
                 verification=_header_verification(header),
                 classification="observed-risk",
             )

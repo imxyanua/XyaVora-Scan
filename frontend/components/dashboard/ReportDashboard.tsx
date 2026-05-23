@@ -11,8 +11,10 @@ import { ReportQualitySummary } from "@/components/dashboard/ReportQualitySummar
 import { PriorityFindingsCard } from "@/components/dashboard/PriorityFindingsCard";
 import { AdvisoryPanel }        from "@/components/dashboard/AdvisoryPanel";
 import { SSLCard }              from "@/components/dashboard/SSLCard";
+import { TLSSecurityAuditCard } from "@/components/dashboard/TLSSecurityAuditCard";
 import { TechStackCard }        from "@/components/dashboard/TechStackCard";
 import { SecurityHeadersCard }  from "@/components/dashboard/SecurityHeadersCard";
+import { CSPAuditCard }         from "@/components/dashboard/CSPAuditCard";
 import { HstsCard }             from "@/components/dashboard/HstsCard";
 import { HttpOverviewCard }     from "@/components/dashboard/HttpOverviewCard";
 import { HostNamesCard }        from "@/components/dashboard/HostNamesCard";
@@ -193,10 +195,16 @@ export function ReportDashboard({ domain, report, historyId, guestScanId }: Prop
               <SecurityHeadersCard headers={report.headers} />
             </BalancedItem>
             <BalancedItem>
+              <CSPAuditCard headers={report.headers} />
+            </BalancedItem>
+            <BalancedItem>
               <HstsCard headers={report.headers} />
             </BalancedItem>
             <BalancedItem>
               <SSLCard ssl={report.ssl} />
+            </BalancedItem>
+            <BalancedItem>
+              <TLSSecurityAuditCard ssl={report.ssl} />
             </BalancedItem>
             <BalancedItem>
               <CookiesCard cookies={report.cookies} />

@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 
-from app.analyzers.headers_analyzer import analyze_headers, _check_headers, _server_finding
+from app.analyzers.headers_analyzer import analyze_headers, _check_headers, _csp_audit, _server_finding
 
 
 # ── Helpers ───────────────────────────────────────────────────────
@@ -24,7 +24,7 @@ def _mock_response(headers: dict[str, str], status: int = 200, url: str = "https
 def test_all_headers_present():
     raw = _make_headers({
         "strict-transport-security": "max-age=31536000; includeSubDomains",
-        "content-security-policy":   "default-src 'self'",
+        "content-security-policy":   "default-src 'self'; object-src 'none'; base-uri 'self'",
         "x-frame-options":           "DENY",
         "x-content-type-options":    "nosniff",
         "referrer-policy":           "strict-origin-when-cross-origin",
@@ -108,22 +108,37 @@ def test_permissive_csp_produces_warning_item_and_finding():
 
     assert csp.status == "warning"
     assert csp.confidence == "medium"
+    assert "csp.default_src_present: True" in csp.evidence
     assert "csp.unsafe_inline: True" in csp.evidence
     assert "csp.broad_source: True" in csp.evidence
+    assert any(item.startswith("csp.issues:") for item in csp.evidence)
     finding = next(f for f in findings if f.id == "weak_csp")
+    assert "unsafe-inline" in finding.description
     assert finding.classification == "observed-risk"
 
 
 def test_csp_nonce_hash_does_not_trigger_wildcard_warning():
     raw = _make_headers({
-        "content-security-policy": "default-src 'self'; script-src 'nonce-abc' 'sha256-deadbeef'",
+        "content-security-policy": "default-src 'self'; script-src 'nonce-abc' 'sha256-deadbeef'; object-src 'none'; base-uri 'self'",
     })
     items, findings = _check_headers(raw)
     csp = next(i for i in items if i.header == "Content-Security-Policy")
 
     assert csp.status == "present"
+    assert "csp.object_src_locked: True" in csp.evidence
+    assert "csp.base_uri_locked: True" in csp.evidence
     assert "csp.broad_source: False" in csp.evidence
     assert "weak_csp" not in {f.id for f in findings}
+
+
+def test_csp_audit_reports_directive_level_gaps():
+    audit = _csp_audit("script-src 'self' 'unsafe-eval'; object-src 'self'")
+
+    assert audit["has_default_src"] is False
+    assert audit["unsafe_eval"] is True
+    assert audit["object_locked"] is False
+    assert "missing-default-src" in audit["issues"]
+    assert "unsafe-eval" in audit["issues"]
 
 
 def test_server_finding():

@@ -17,6 +17,7 @@ import type {
   WhoisResult,
 } from "@/types";
 import { CookiesCard } from "@/components/dashboard/CookiesCard";
+import { CSPAuditCard } from "@/components/dashboard/CSPAuditCard";
 import { DNSRecordsCard } from "@/components/dashboard/DNSRecordsCard";
 import { DNSSECCard } from "@/components/dashboard/DNSSECCard";
 import { EmailSecurityCard } from "@/components/dashboard/EmailSecurityCard";
@@ -33,6 +34,7 @@ import { ServerLocationCard } from "@/components/dashboard/ServerLocationCard";
 import { SiteDiscoveryCard } from "@/components/dashboard/SiteDiscoveryCard";
 import { SSLCard } from "@/components/dashboard/SSLCard";
 import { TechStackCard } from "@/components/dashboard/TechStackCard";
+import { TLSSecurityAuditCard } from "@/components/dashboard/TLSSecurityAuditCard";
 import { WhoisCard } from "@/components/dashboard/WhoisCard";
 import { AppIcon } from "@/components/ui/AppIcon";
 
@@ -80,8 +82,14 @@ export function LiveReportPreview({ hostname, steps }: Props) {
           <LiveCard step={stepMap.ssl}>
             {ssl && <SSLCard ssl={ssl} />}
           </LiveCard>
+          <LiveCard step={stepMap.ssl}>
+            {ssl && <TLSSecurityAuditCard ssl={ssl} />}
+          </LiveCard>
           <LiveCard step={stepMap.headers} wide>
             {headers && <SecurityHeadersCard headers={headers} />}
+          </LiveCard>
+          <LiveCard step={stepMap.headers}>
+            {headers && <CSPAuditCard headers={headers} />}
           </LiveCard>
           <LiveCard step={stepMap.headers}>
             {headers && <HstsCard headers={headers} />}
