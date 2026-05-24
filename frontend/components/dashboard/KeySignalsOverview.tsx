@@ -67,6 +67,10 @@ export function KeySignalsOverview({ headers, dns, ssl }: Props) {
       label:  "DNS.SPF",
       status: !dnsOk ? "missing" : dns.spfDetected ? "pass" : "missing",
     },
+    {
+      label:  "DNSSEC",
+      status: !dnsOk ? "missing" : dns.dnssecSigned ? "pass" : "missing",
+    },
   ];
 
   return (

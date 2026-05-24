@@ -2,6 +2,7 @@ export type SourceQuality =
   | "dns"
   | "tls"
   | "header"
+  | "whois"
   | "page"
   | "cookie"
   | "inferred"
@@ -17,6 +18,7 @@ const SOURCE_LABEL: Record<SourceQuality, string> = {
   dns: "Verified by DNS",
   tls: "Verified by TLS",
   header: "Verified by headers",
+  whois: "Reported by WHOIS",
   page: "Detected from page",
   cookie: "Detected from cookie",
   inferred: "Inferred",
@@ -28,6 +30,7 @@ const SOURCE_STYLE: Record<SourceQuality, string> = {
   dns: "border-primary-fixed/45 text-primary-fixed bg-primary-fixed/10",
   tls: "border-primary-fixed/45 text-primary-fixed bg-primary-fixed/10",
   header: "border-secondary-fixed/45 text-secondary-fixed bg-secondary-fixed/10",
+  whois: "border-secondary-fixed/45 text-secondary-fixed bg-secondary-fixed/10",
   page: "border-[#d7e8ff]/25 text-[#d7e8ff]/70 bg-[#d7e8ff]/5",
   cookie: "border-[#d7e8ff]/25 text-[#d7e8ff]/70 bg-[#d7e8ff]/5",
   inferred: "border-status-warn/55 text-status-warn bg-status-warn/10",

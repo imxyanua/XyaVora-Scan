@@ -17,11 +17,17 @@ import type {
   WhoisResult,
 } from "@/types";
 import { CookiesCard } from "@/components/dashboard/CookiesCard";
+import { CSPAuditCard } from "@/components/dashboard/CSPAuditCard";
 import { DNSRecordsCard } from "@/components/dashboard/DNSRecordsCard";
+import { DNSSECCard } from "@/components/dashboard/DNSSECCard";
 import { EmailSecurityCard } from "@/components/dashboard/EmailSecurityCard";
 import { HostNamesCard } from "@/components/dashboard/HostNamesCard";
+import { HTTPBehaviorCard } from "@/components/dashboard/HTTPBehaviorCard";
 import { HttpOverviewCard } from "@/components/dashboard/HttpOverviewCard";
+import { HstsCard } from "@/components/dashboard/HstsCard";
 import { PageMetadataCard } from "@/components/dashboard/PageMetadataCard";
+import { PageQualityCard } from "@/components/dashboard/PageQualityCard";
+import { MailConfigurationCard } from "@/components/dashboard/MailConfigurationCard";
 import { RedirectsCard } from "@/components/dashboard/RedirectsCard";
 import { ScreenshotCard } from "@/components/dashboard/ScreenshotCard";
 import { SecurityHeadersCard } from "@/components/dashboard/SecurityHeadersCard";
@@ -31,6 +37,7 @@ import { ServerLocationCard } from "@/components/dashboard/ServerLocationCard";
 import { SiteDiscoveryCard } from "@/components/dashboard/SiteDiscoveryCard";
 import { SSLCard } from "@/components/dashboard/SSLCard";
 import { TechStackCard } from "@/components/dashboard/TechStackCard";
+import { TLSSecurityAuditCard } from "@/components/dashboard/TLSSecurityAuditCard";
 import { WhoisCard } from "@/components/dashboard/WhoisCard";
 import { AppIcon } from "@/components/ui/AppIcon";
 
@@ -43,6 +50,11 @@ type StepMap = Record<string, ScanJobStep | undefined>;
 
 const EMPTY_METADATA: PageMetadataResult = {
   robotsDirectives: [],
+  titleLength: 0,
+  descriptionLength: 0,
+  socialTagsPresent: false,
+  socialImagePresent: false,
+  metadataIssues: [],
   metadataEvidence: [],
   noindex: false,
   nofollow: false,
@@ -78,8 +90,17 @@ export function LiveReportPreview({ hostname, steps }: Props) {
           <LiveCard step={stepMap.ssl}>
             {ssl && <SSLCard ssl={ssl} />}
           </LiveCard>
+          <LiveCard step={stepMap.ssl}>
+            {ssl && <TLSSecurityAuditCard ssl={ssl} />}
+          </LiveCard>
           <LiveCard step={stepMap.headers} wide>
             {headers && <SecurityHeadersCard headers={headers} />}
+          </LiveCard>
+          <LiveCard step={stepMap.headers}>
+            {headers && <CSPAuditCard headers={headers} />}
+          </LiveCard>
+          <LiveCard step={stepMap.headers}>
+            {headers && <HstsCard headers={headers} />}
           </LiveCard>
           <LiveCard step={stepMap.cookies}>
             {cookies && <CookiesCard cookies={cookies} />}
@@ -97,6 +118,12 @@ export function LiveReportPreview({ hostname, steps }: Props) {
           </LiveCard>
           <LiveCard step={stepMap.dns}>
             {dns && <EmailSecurityCard dns={dns} />}
+          </LiveCard>
+          <LiveCard step={stepMap.dns}>
+            {dns && <MailConfigurationCard dns={dns} />}
+          </LiveCard>
+          <LiveCard step={stepMap.dns}>
+            {dns && <DNSSECCard dns={dns} whois={whois} />}
           </LiveCard>
           <LiveCard step={stepMap.whois}>
             {whois && <WhoisCard whois={whois} />}
@@ -116,6 +143,9 @@ export function LiveReportPreview({ hostname, steps }: Props) {
             {http && <HttpOverviewCard http={http} />}
           </LiveCard>
           <LiveCard step={stepMap.http}>
+            {http && <HTTPBehaviorCard http={http} />}
+          </LiveCard>
+          <LiveCard step={stepMap.http}>
             {http && <RedirectsCard http={http} />}
           </LiveCard>
           <LiveCard step={stepMap.http}>
@@ -132,6 +162,9 @@ export function LiveReportPreview({ hostname, steps }: Props) {
           </LiveCard>
           <LiveCard step={stepMap.metadata}>
             {metadata && <PageMetadataCard metadata={metadata} />}
+          </LiveCard>
+          <LiveCard step={stepMap.metadata}>
+            {metadata && <PageQualityCard metadata={metadata} />}
           </LiveCard>
           <LiveCard step={stepMap.techStack}>
             {techStack && <TechStackCard techStack={techStack} />}
@@ -272,6 +305,7 @@ function buildLiveSignals({
     { label: "CSP", status: !headers ? "pending" : csp?.status === "present" ? "pass" : csp?.status === "warning" ? "warn" : "warn" },
     { label: "SPF", status: !dns ? "pending" : dns.spfDetected ? "pass" : "warn" },
     { label: "DMARC", status: dmarcStatus },
+    { label: "DNSSEC", status: !dns ? "pending" : dns.dnssecSigned ? "pass" : "warn" },
     { label: "HTTP", status: !http ? "pending" : http.statusCode >= 200 && http.statusCode < 400 ? "pass" : "warn" },
   ];
 }

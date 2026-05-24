@@ -11,17 +11,24 @@ import { ReportQualitySummary } from "@/components/dashboard/ReportQualitySummar
 import { PriorityFindingsCard } from "@/components/dashboard/PriorityFindingsCard";
 import { AdvisoryPanel }        from "@/components/dashboard/AdvisoryPanel";
 import { SSLCard }              from "@/components/dashboard/SSLCard";
+import { TLSSecurityAuditCard } from "@/components/dashboard/TLSSecurityAuditCard";
 import { TechStackCard }        from "@/components/dashboard/TechStackCard";
 import { SecurityHeadersCard }  from "@/components/dashboard/SecurityHeadersCard";
+import { CSPAuditCard }         from "@/components/dashboard/CSPAuditCard";
+import { HstsCard }             from "@/components/dashboard/HstsCard";
+import { HTTPBehaviorCard }     from "@/components/dashboard/HTTPBehaviorCard";
 import { HttpOverviewCard }     from "@/components/dashboard/HttpOverviewCard";
 import { HostNamesCard }        from "@/components/dashboard/HostNamesCard";
 import { PageMetadataCard }     from "@/components/dashboard/PageMetadataCard";
+import { PageQualityCard }      from "@/components/dashboard/PageQualityCard";
 import { RedirectsCard }        from "@/components/dashboard/RedirectsCard";
 import { ServerInfoCard }       from "@/components/dashboard/ServerInfoCard";
 import { SiteDiscoveryCard }    from "@/components/dashboard/SiteDiscoveryCard";
 import { ServerLocationCard }   from "@/components/dashboard/ServerLocationCard";
 import { DNSRecordsCard }       from "@/components/dashboard/DNSRecordsCard";
+import { DNSSECCard }           from "@/components/dashboard/DNSSECCard";
 import { EmailSecurityCard }    from "@/components/dashboard/EmailSecurityCard";
+import { MailConfigurationCard } from "@/components/dashboard/MailConfigurationCard";
 import { WhoisCard }            from "@/components/dashboard/WhoisCard";
 import { CookiesCard }          from "@/components/dashboard/CookiesCard";
 import { SecurityTxtCard }      from "@/components/dashboard/SecurityTxtCard";
@@ -191,7 +198,16 @@ export function ReportDashboard({ domain, report, historyId, guestScanId }: Prop
               <SecurityHeadersCard headers={report.headers} />
             </BalancedItem>
             <BalancedItem>
+              <CSPAuditCard headers={report.headers} />
+            </BalancedItem>
+            <BalancedItem>
+              <HstsCard headers={report.headers} />
+            </BalancedItem>
+            <BalancedItem>
               <SSLCard ssl={report.ssl} />
+            </BalancedItem>
+            <BalancedItem>
+              <TLSSecurityAuditCard ssl={report.ssl} />
             </BalancedItem>
             <BalancedItem>
               <CookiesCard cookies={report.cookies} />
@@ -211,6 +227,12 @@ export function ReportDashboard({ domain, report, historyId, guestScanId }: Prop
               <EmailSecurityCard dns={report.dns} />
             </BalancedItem>
             <BalancedItem>
+              <MailConfigurationCard dns={report.dns} />
+            </BalancedItem>
+            <BalancedItem>
+              <DNSSECCard dns={report.dns} whois={report.whois} />
+            </BalancedItem>
+            <BalancedItem>
               <WhoisCard whois={report.whois} />
             </BalancedItem>
             <BalancedItem>
@@ -228,6 +250,9 @@ export function ReportDashboard({ domain, report, historyId, guestScanId }: Prop
               <HttpOverviewCard http={report.httpOverview} />
             </BalancedItem>
             <BalancedItem>
+              <HTTPBehaviorCard http={report.httpOverview} />
+            </BalancedItem>
+            <BalancedItem>
               <RedirectsCard http={report.httpOverview} />
             </BalancedItem>
             <BalancedItem>
@@ -242,6 +267,9 @@ export function ReportDashboard({ domain, report, historyId, guestScanId }: Prop
             </BalancedItem>
             <BalancedItem>
               <PageMetadataCard metadata={report.pageMetadata} />
+            </BalancedItem>
+            <BalancedItem>
+              <PageQualityCard metadata={report.pageMetadata} />
             </BalancedItem>
             <BalancedItem>
               <TechStackCard techStack={report.techStack} />

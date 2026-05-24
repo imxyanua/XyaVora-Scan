@@ -54,7 +54,7 @@ export interface Finding {
 // ── DNS ──────────────────────────────────────
 
 export interface DnsRecord {
-  type:  "A" | "AAAA" | "MX" | "NS" | "TXT" | "CNAME" | "SOA";
+  type:  "A" | "AAAA" | "MX" | "NS" | "TXT" | "CNAME" | "SOA" | "DS" | "DNSKEY";
   host:  string;
   value: string;
   ttl?:  number;
@@ -64,6 +64,7 @@ export interface DnsResult {
   records:       DnsRecord[];
   mxDetected:    boolean;
   mxRecords:     string[];
+  mxProviders?:   string[];
   mxEvidence:    string[];
   spfDetected:   boolean;
   dmarcDetected: boolean;
@@ -77,13 +78,29 @@ export interface DnsResult {
   emailSecurityConfidence?: "high" | "medium" | "low";
   spfAll?:        string;
   spfLookupCount: number;
+  spfIncludes?:   string[];
+  spfRedirect?:   string;
+  spfMechanisms?: string[];
   dmarcPolicy?:   string;
   dmarcSubdomainPolicy?: string;
   dmarcPct?:      number;
   dmarcRua?:      string;
   dmarcRuf?:      string;
+  dmarcReportingEnabled?: boolean;
+  dmarcForensicReportingEnabled?: boolean;
+  dmarcEnforcement?: string;
   dmarcAlignmentDkim?: string;
   dmarcAlignmentSpf?:  string;
+  dkimSelectorsChecked?: string[];
+  dkimSelectorsFound?: string[];
+  dkimRecords?:   string[];
+  dkimEvidence?:  string[];
+  dnssecCheckedHost?: string;
+  dnssecSigned?:    boolean;
+  dnssecDsRecords?: string[];
+  dnssecDnskeyRecords?: string[];
+  dnssecEvidence?: string[];
+  dnssecConfidence?: "high" | "medium" | "low";
   error?:        string;
 }
 
@@ -135,6 +152,12 @@ export interface RedirectHop {
   fromUrl:    string;
   toUrl:      string;
   statusCode: number;
+  fromHost?:   string;
+  toHost?:     string;
+  fromProtocol?: string;
+  toProtocol?:   string;
+  hostChanged?:  boolean;
+  protocolChanged?: boolean;
 }
 
 export interface HttpOverviewResult {
@@ -145,8 +168,14 @@ export interface HttpOverviewResult {
   redirectCount:  number;
   initialHost?:    string;
   finalHost?:      string;
+  initialProtocol?: string;
   finalProtocol?:  string;
   hostChanged:    boolean;
+  crossHostRedirect?: boolean;
+  upgradedToHttps?: boolean;
+  downgradedFromHttps?: boolean;
+  canonicalRedirectType?: string;
+  redirectSummary?: string;
   server?:         string;
   poweredBy?:      string;
   via?:            string;
@@ -155,11 +184,14 @@ export interface HttpOverviewResult {
   cdnEvidence?:    string[];
   altSvc?:         string;
   contentType?:   string;
+  contentFamily?: string;
   contentLength?: number;
   responseBytes:  number;
+  responseTruncated?: boolean;
   responseTimeMs: number;
   compression?:   string;
   cacheControl?:  string;
+  cachePolicy?:    string;
   expires?:       string;
   etag?:          string;
   lastModified?:  string;
@@ -201,12 +233,22 @@ export interface PageMetadataResult {
   ogTitle?:       string;
   ogDescription?: string;
   ogImage?:       string;
+  ogUrl?:         string;
+  twitterTitle?:  string;
+  twitterDescription?: string;
+  twitterImage?:  string;
   faviconUrl?:    string;
   language?:      string;
   robots?:        string;
   robotsDirectives: string[];
   canonicalHost?: string;
   canonicalMatchesFinalHost?: boolean;
+  titleLength?:    number;
+  descriptionLength?: number;
+  socialTagsPresent?: boolean;
+  socialImagePresent?: boolean;
+  metadataQuality?: "high" | "medium" | "low";
+  metadataIssues?: string[];
   metadataEvidence: string[];
   noindex:        boolean;
   nofollow:       boolean;

@@ -32,10 +32,13 @@ export function HttpOverviewCard({ http }: Props) {
     { label: "Status", value: http.statusCode },
     { label: "Final URL", value: http.finalUrl },
     { label: "Content Type", value: http.contentType },
+    { label: "Content Family", value: http.contentFamily },
     { label: "Content Length", value: http.contentLength },
     { label: "Bytes Read", value: http.responseBytes },
+    { label: "Response Truncated", value: http.responseTruncated },
     { label: "Response Time", value: http.responseTimeMs ? `${http.responseTimeMs}ms` : undefined },
     { label: "Compression", value: http.compression },
+    { label: "Cache Policy", value: http.cachePolicy },
     { label: "ETag", value: http.etag },
     { label: "Last Modified", value: http.lastModified },
     { label: "Cache Control", value: http.cacheControl },
@@ -66,9 +69,11 @@ export function HttpOverviewCard({ http }: Props) {
           <Row label="Status" value={http.statusCode} />
           <Row label="Final URL" value={http.finalUrl} />
           <Row label="Content Type" value={http.contentType} />
+          <Row label="Family" value={http.contentFamily} />
           <Row label="Content Length" value={formatBytes(http.contentLength)} />
-          <Row label="Bytes Read" value={formatBytes(http.responseBytes)} />
+          <Row label="Bytes Read" value={`${formatBytes(http.responseBytes)}${http.responseTruncated ? " (truncated)" : ""}`} />
           <Row label="Compression" value={http.compression} />
+          <Row label="Cache Policy" value={http.cachePolicy} />
           <Row label="ETag" value={http.etag} />
           <Row label="Last Modified" value={http.lastModified} />
         </div>

@@ -52,7 +52,7 @@ export function CookiesCard({ cookies }: Props) {
           <div className="border border-primary-fixed/15 bg-[#151918] p-3">
             <p className="font-mono text-sm text-[#d7e8ff]/75">No cookies were set on the initial response.</p>
             <p className="mt-1 font-mono text-[11px] leading-relaxed text-primary-fixed/60">
-              Later login or app flows may still set cookies.
+              Later interactive app flows may still set cookies.
             </p>
           </div>
         </div>

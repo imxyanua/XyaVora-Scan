@@ -7,8 +7,8 @@ import { AppIcon } from "@/components/ui/AppIcon";
 const NAV_ITEMS = [
   { label: "Home",     icon: "home",        href: "/"          },
   { label: "Scan",     icon: "radar",       href: "/scan"      },
-  { label: "History",  icon: "history",     href: "/history"   },
-  { label: "Support",  icon: "help",        href: "/support"   },
+  { label: "Recent",   icon: "history",     href: "/history"   },
+  { label: "Help",     icon: "help",        href: "/support"   },
 ] as const;
 
 function isActive(href: string, pathname: string): boolean {

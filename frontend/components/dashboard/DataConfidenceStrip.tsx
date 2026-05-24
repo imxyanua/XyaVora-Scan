@@ -47,6 +47,15 @@ function moduleStatuses(report: ScanReport): ModuleStatus[] {
         : `${report.dns.records.length} records`,
     },
     {
+      label: "DNSSEC",
+      status: report.dns.error ? "error" : report.dns.dnssecSigned ? "detected" : "partial",
+      detail: report.dns.error
+        ? report.dns.error
+        : report.dns.dnssecSigned
+        ? `DS observed at ${report.dns.dnssecCheckedHost ?? "checked host"}`
+        : `No DS observed at ${report.dns.dnssecCheckedHost ?? "checked host"}`,
+    },
+    {
       label: "TLS",
       status: report.ssl.error ? "error" : report.ssl.httpsAvailable ? "detected" : "unavailable",
       detail: report.ssl.error ? report.ssl.error : report.ssl.httpsAvailable ? "HTTPS available" : "No HTTPS",

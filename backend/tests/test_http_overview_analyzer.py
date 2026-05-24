@@ -1,6 +1,15 @@
 import httpx
 
-from app.analyzers.http_overview_analyzer import _build_findings, _content_length, _detect_cdn, _response_evidence
+from app.analyzers.http_overview_analyzer import (
+    _build_findings,
+    _cache_policy,
+    _canonical_redirect_type,
+    _content_family,
+    _content_length,
+    _detect_cdn,
+    _redirect_summary,
+    _response_evidence,
+)
 from app.schemas.report import HttpOverviewResult, RedirectHop
 
 
@@ -11,6 +20,42 @@ def test_content_length_parses_integer():
 def test_content_length_handles_missing_or_invalid():
     assert _content_length(httpx.Headers({})) is None
     assert _content_length(httpx.Headers({"content-length": "abc"})) is None
+
+
+def test_content_family_groups_common_media_types():
+    assert _content_family("text/html; charset=utf-8") == "html"
+    assert _content_family("application/json") == "json"
+    assert _content_family("image/png") == "image"
+    assert _content_family("application/octet-stream") == "other"
+    assert _content_family(None) is None
+
+
+def test_cache_policy_summarizes_cache_headers():
+    assert _cache_policy(httpx.Headers({"cache-control": "no-store"})) == "no-store"
+    assert _cache_policy(httpx.Headers({"cache-control": "private, max-age=60"})) == "private"
+    assert _cache_policy(httpx.Headers({"cache-control": "public, max-age=60"})) == "cacheable"
+    assert _cache_policy(httpx.Headers({"etag": '"abc"'})) == "validator-present"
+    assert _cache_policy(httpx.Headers({})) == "not-specified"
+
+
+def test_canonical_redirect_type_identifies_www_apex_and_cross_host():
+    assert _canonical_redirect_type("example.com", "www.example.com") == "apex-to-www"
+    assert _canonical_redirect_type("www.example.com", "example.com") == "www-to-apex"
+    assert _canonical_redirect_type("example.com", "accounts.example.net") == "cross-host"
+    assert _canonical_redirect_type("example.com", "example.com") == "none"
+
+
+def test_redirect_summary_describes_security_relevant_changes():
+    summary = _redirect_summary(
+        redirect_count=2,
+        host_changed=True,
+        upgraded_to_https=True,
+        downgraded_from_https=False,
+        canonical_type="apex-to-www",
+    )
+    assert "2 redirect hop(s)" in summary
+    assert "upgraded to HTTPS" in summary
+    assert "apex-to-www" in summary
 
 
 def test_detect_cdn_from_common_headers():
@@ -61,6 +106,8 @@ def test_response_evidence_includes_core_http_facts():
     assert "redirect_count: 1" in evidence
     assert "bytes_read: 1234" in evidence
     assert "content-type: text/html" in evidence
+    assert "content_family: html" in evidence
+    assert "cache_policy: cacheable" in evidence
 
 
 def test_build_findings_marks_http_errors_and_host_change():
@@ -99,3 +146,28 @@ def test_build_findings_marks_5xx_as_observed_risk():
 
     assert finding.classification == "observed-risk"
     assert finding.confidence == "observed"
+
+
+def test_build_findings_marks_https_downgrade_and_long_chain():
+    result = HttpOverviewResult(
+        statusCode=200,
+        finalUrl="http://example.com",
+        initialHost="example.com",
+        finalHost="example.com",
+        initialProtocol="https",
+        finalProtocol="http",
+        downgradedFromHttps=True,
+        redirectCount=4,
+        redirectHops=[
+            RedirectHop(fromUrl="https://example.com", toUrl="http://example.com", statusCode=301),
+            RedirectHop(fromUrl="http://example.com", toUrl="http://example.com/a", statusCode=302),
+            RedirectHop(fromUrl="http://example.com/a", toUrl="http://example.com/b", statusCode=302),
+            RedirectHop(fromUrl="http://example.com/b", toUrl="http://example.com", statusCode=302),
+        ],
+        responseEvidence=["status_code: 200"],
+    )
+
+    ids = {finding.id for finding in _build_findings(result)}
+
+    assert "http_https_downgrade" in ids
+    assert "http_redirect_chain_long" in ids

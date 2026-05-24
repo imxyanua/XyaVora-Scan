@@ -36,11 +36,11 @@ export function GuestHistoryPanel() {
       <div className="pb-4 border-b border-primary-fixed/15 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
           <span className="font-mono text-[10px] text-primary-fixed/30 uppercase tracking-widest block mb-1">
-            &gt; GUEST_BROWSER_HISTORY
+            &gt; LOCAL_RECENT_SCANS
           </span>
-          <h1 className="font-mono text-xl font-bold text-primary-fixed">Recent Guest Scans</h1>
+          <h1 className="font-mono text-xl font-bold text-primary-fixed">Recent Scans</h1>
           <p className="mt-2 font-mono text-[11px] text-[#d7e8ff]/60 max-w-2xl">
-            Stored in this browser only. Reports are kept without screenshot base64 to avoid filling local storage.
+            Stored in this browser only. This is not an account history, and reports are kept without screenshot base64 to avoid filling local storage.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -61,10 +61,10 @@ export function GuestHistoryPanel() {
             <AppIcon name="history" className="text-4xl text-primary-fixed/40 shrink-0" />
             <div className="min-w-0">
               <p className="font-mono text-sm text-primary-fixed font-bold">
-                NO_GUEST_SCANS_STORED
+                NO_RECENT_SCANS_STORED
               </p>
               <p className="font-mono text-[11px] text-primary-fixed/45 leading-relaxed mt-2">
-                Run a scan and the latest guest reports will appear here automatically.
+                Run a scan and recent browser-local reports will appear here automatically.
               </p>
             </div>
           </div>
@@ -99,7 +99,7 @@ export function GuestHistoryPanel() {
                     {item.summary}
                   </p>
                   <p className="mt-2 font-mono text-[10px] text-primary-fixed/45">
-                    {item.findingsCount} findings - browser-only guest record
+                    {item.findingsCount} findings - browser-local record
                   </p>
                 </div>
 

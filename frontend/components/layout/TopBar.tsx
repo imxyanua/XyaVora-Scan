@@ -59,20 +59,22 @@ export function TopBar({ domain }: TopBarProps) {
 
         <div className="h-6 w-px bg-primary-fixed/20 mx-1 hidden sm:block" />
 
-        {[
-          { icon: "terminal",       label: "Terminal"      },
-          { icon: "notifications",  label: "Notifications" },
-          { icon: "account_circle", label: "Account"       },
-        ].map((btn) => (
-          <button
-            key={btn.icon}
-            type="button"
-            aria-label={btn.label}
-            className="text-primary-fixed/40 hover:text-primary-fixed transition-colors p-1 hidden sm:block"
-          >
-            <AppIcon name={btn.icon} className="text-xl" />
-          </button>
-        ))}
+        <Link
+          href="/support"
+          className="text-primary-fixed/45 hover:text-primary-fixed transition-colors p-1 hidden sm:block"
+          aria-label="Help"
+        >
+          <AppIcon name="help" className="text-xl" />
+        </Link>
+        <a
+          href="https://github.com/imxyanua/XyaVora-Scan"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary-fixed/45 hover:text-primary-fixed transition-colors p-1 hidden sm:block"
+          aria-label="GitHub"
+        >
+          <AppIcon name="code" className="text-xl" />
+        </a>
       </div>
     </header>
   );

@@ -23,6 +23,74 @@ def _content_length(headers: httpx.Headers) -> int | None:
         return None
 
 
+def _content_family(content_type: str | None) -> str | None:
+    if not content_type:
+        return None
+    media_type = content_type.split(";", 1)[0].strip().lower()
+    if media_type in {"text/html", "application/xhtml+xml"}:
+        return "html"
+    if media_type.endswith("+json") or media_type == "application/json":
+        return "json"
+    if media_type.startswith("text/"):
+        return "text"
+    if media_type.startswith("image/"):
+        return "image"
+    if media_type.startswith("font/"):
+        return "font"
+    if media_type in {"application/javascript", "application/ecmascript"}:
+        return "script"
+    return "other"
+
+
+def _cache_policy(headers: httpx.Headers) -> str:
+    cache_control = (headers.get("cache-control") or "").lower()
+    if "no-store" in cache_control:
+        return "no-store"
+    if "no-cache" in cache_control:
+        return "revalidate"
+    if "private" in cache_control:
+        return "private"
+    if "public" in cache_control or "max-age" in cache_control or "s-maxage" in cache_control:
+        return "cacheable"
+    if headers.get("etag") or headers.get("last-modified") or headers.get("expires"):
+        return "validator-present"
+    return "not-specified"
+
+
+def _canonical_redirect_type(initial_host: str | None, final_host: str | None) -> str | None:
+    if not initial_host or not final_host or initial_host == final_host:
+        return "none"
+
+    initial = initial_host.lower()
+    final = final_host.lower()
+    if initial == f"www.{final}":
+        return "www-to-apex"
+    if final == f"www.{initial}":
+        return "apex-to-www"
+    if initial.removeprefix("www.") == final.removeprefix("www."):
+        return "www-apex-normalization"
+    return "cross-host"
+
+
+def _redirect_summary(
+    redirect_count: int,
+    host_changed: bool,
+    upgraded_to_https: bool,
+    downgraded_from_https: bool,
+    canonical_type: str | None,
+) -> str:
+    if redirect_count == 0:
+        return "No redirects detected."
+    notes = [f"{redirect_count} redirect hop(s)"]
+    if upgraded_to_https:
+        notes.append("upgraded to HTTPS")
+    if downgraded_from_https:
+        notes.append("downgraded from HTTPS")
+    if host_changed and canonical_type and canonical_type != "none":
+        notes.append(canonical_type)
+    return ", ".join(notes) + "."
+
+
 def _detect_cdn(headers: httpx.Headers) -> tuple[str | None, str | None, list[str]]:
     evidence: list[str] = []
     server = (headers.get("server") or "").lower()
@@ -109,6 +177,8 @@ def _response_evidence(
         f"redirect_count: {redirect_count}",
         f"response_time_ms: {elapsed_ms}",
         f"bytes_read: {total_bytes}",
+        f"content_family: {_content_family(headers.get('content-type')) or 'unknown'}",
+        f"cache_policy: {_cache_policy(headers)}",
     ]
 
     for key in ("content-type", "content-length", "content-encoding", "cache-control", "etag", "last-modified"):
@@ -186,6 +256,45 @@ def _build_findings(result: HttpOverviewResult) -> list[Finding]:
             classification="informational",
         ))
 
+    if result.downgradedFromHttps:
+        findings.append(Finding(
+            id="http_https_downgrade",
+            severity="high",
+            category="HTTP",
+            title="Redirect Downgraded HTTPS To HTTP",
+            description="The redirect chain moved from HTTPS to HTTP.",
+            impact="Users may lose transport encryption after following redirects.",
+            recommendation="Keep the final URL on HTTPS and update redirect rules to avoid HTTPS-to-HTTP downgrades.",
+            status="fail",
+            confidence="observed",
+            source="http",
+            evidence=[
+                *[f"{hop.statusCode}: {hop.fromUrl} -> {hop.toUrl}" for hop in result.redirectHops],
+                *result.responseEvidence,
+            ],
+            analysis="The scanner observed a protocol transition from HTTPS to HTTP in the redirect chain.",
+            verification=_http_verification(result.finalUrl),
+            classification="observed-risk",
+        ))
+
+    if result.redirectCount >= 4:
+        findings.append(Finding(
+            id="http_redirect_chain_long",
+            severity="low",
+            category="HTTP",
+            title="Redirect Chain Is Long",
+            description=f"The request followed {result.redirectCount} redirect hops before reaching the final URL.",
+            impact="Long redirect chains add latency and can make canonical behavior harder to reason about.",
+            recommendation="Collapse redirects so users and crawlers reach the canonical URL in one or two hops.",
+            status="warning",
+            confidence="observed",
+            source="http",
+            evidence=[f"{hop.statusCode}: {hop.fromUrl} -> {hop.toUrl}" for hop in result.redirectHops],
+            analysis="The scanner observed four or more redirect hops before the final response.",
+            verification=_http_verification(result.finalUrl),
+            classification="observed-risk",
+        ))
+
     return findings
 
 
@@ -195,6 +304,7 @@ async def analyze_http_overview(normalized_url: str) -> AnalyzerResult:
     chain = [current_url]
     hops: list[RedirectHop] = []
     initial_host = urlparse(current_url).hostname
+    initial_protocol = urlparse(current_url).scheme
     timeout = httpx.Timeout(settings.FETCH_TIMEOUT_SECONDS)
 
     try:
@@ -208,10 +318,18 @@ async def analyze_http_overview(normalized_url: str) -> AnalyzerResult:
                     location = response.headers.get("location")
                     if response.status_code in _REDIRECT_STATUSES and location:
                         next_url = validate_public_http_url(urljoin(str(response.url), location))
+                        from_parts = urlparse(str(response.url))
+                        to_parts = urlparse(next_url)
                         hops.append(RedirectHop(
                             fromUrl=str(response.url),
                             toUrl=next_url,
                             statusCode=response.status_code,
+                            fromHost=from_parts.hostname,
+                            toHost=to_parts.hostname,
+                            fromProtocol=from_parts.scheme,
+                            toProtocol=to_parts.scheme,
+                            hostChanged=bool(from_parts.hostname and to_parts.hostname and from_parts.hostname != to_parts.hostname),
+                            protocolChanged=bool(from_parts.scheme and to_parts.scheme and from_parts.scheme != to_parts.scheme),
                         ))
                         current_url = next_url
                         chain.append(current_url)
@@ -229,6 +347,17 @@ async def analyze_http_overview(normalized_url: str) -> AnalyzerResult:
                     final_url = str(response.url)
                     parsed_final = urlparse(final_url)
                     redirect_count = max(len(chain) - 1, 0)
+                    host_changed = bool(initial_host and parsed_final.hostname and initial_host != parsed_final.hostname)
+                    protocols = [
+                        *(hop.fromProtocol for hop in hops if hop.fromProtocol),
+                        *(hop.toProtocol for hop in hops if hop.toProtocol),
+                    ] or [initial_protocol, parsed_final.scheme]
+                    upgraded_to_https = "http" in protocols and parsed_final.scheme == "https"
+                    downgraded_from_https = any(
+                        hop.fromProtocol == "https" and hop.toProtocol == "http"
+                        for hop in hops
+                    ) or (initial_protocol == "https" and parsed_final.scheme == "http")
+                    canonical_type = _canonical_redirect_type(initial_host, parsed_final.hostname)
                     result = HttpOverviewResult(
                         statusCode=response.status_code,
                         finalUrl=final_url,
@@ -237,8 +366,20 @@ async def analyze_http_overview(normalized_url: str) -> AnalyzerResult:
                         redirectCount=redirect_count,
                         initialHost=initial_host,
                         finalHost=parsed_final.hostname,
+                        initialProtocol=initial_protocol,
                         finalProtocol=parsed_final.scheme,
-                        hostChanged=bool(initial_host and parsed_final.hostname and initial_host != parsed_final.hostname),
+                        hostChanged=host_changed,
+                        crossHostRedirect=any(hop.hostChanged for hop in hops) or host_changed,
+                        upgradedToHttps=upgraded_to_https,
+                        downgradedFromHttps=downgraded_from_https,
+                        canonicalRedirectType=canonical_type,
+                        redirectSummary=_redirect_summary(
+                            redirect_count,
+                            host_changed,
+                            upgraded_to_https,
+                            downgraded_from_https,
+                            canonical_type,
+                        ),
                         server=headers.get("server"),
                         poweredBy=headers.get("x-powered-by"),
                         via=headers.get("via"),
@@ -247,11 +388,14 @@ async def analyze_http_overview(normalized_url: str) -> AnalyzerResult:
                         cdnEvidence=cdn_evidence,
                         altSvc=headers.get("alt-svc"),
                         contentType=headers.get("content-type"),
+                        contentFamily=_content_family(headers.get("content-type")),
                         contentLength=_content_length(headers),
                         responseBytes=total,
+                        responseTruncated=total >= _MAX_RESPONSE_BYTES,
                         responseTimeMs=elapsed_ms,
                         compression=headers.get("content-encoding"),
                         cacheControl=headers.get("cache-control"),
+                        cachePolicy=_cache_policy(headers),
                         expires=headers.get("expires"),
                         etag=headers.get("etag"),
                         lastModified=headers.get("last-modified"),

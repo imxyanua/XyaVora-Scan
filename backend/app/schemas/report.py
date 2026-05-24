@@ -48,7 +48,7 @@ class Finding(_Base):
 
 # ── DNS ───────────────────────────────────────────────────────────
 
-DnsRecordType = Literal["A", "AAAA", "MX", "NS", "TXT", "CNAME", "SOA"]
+DnsRecordType = Literal["A", "AAAA", "MX", "NS", "TXT", "CNAME", "SOA", "DS", "DNSKEY"]
 
 
 class DnsRecord(_Base):
@@ -62,6 +62,7 @@ class DnsResult(_Base):
     records:        list[DnsRecord] = []
     mxDetected:     bool = False
     mxRecords:      list[str] = []
+    mxProviders:    list[str] = []
     mxEvidence:     list[str] = []
     spfDetected:    bool = False
     dmarcDetected:  bool = False
@@ -75,13 +76,29 @@ class DnsResult(_Base):
     emailSecurityConfidence: Optional[TechConfidence] = None
     spfAll:         Optional[str] = None
     spfLookupCount: int = 0
+    spfIncludes:    list[str] = []
+    spfRedirect:    Optional[str] = None
+    spfMechanisms:  list[str] = []
     dmarcPolicy:    Optional[str] = None
     dmarcSubdomainPolicy: Optional[str] = None
     dmarcPct:       Optional[int] = None
     dmarcRua:       Optional[str] = None
     dmarcRuf:       Optional[str] = None
+    dmarcReportingEnabled: bool = False
+    dmarcForensicReportingEnabled: bool = False
+    dmarcEnforcement: Optional[str] = None
     dmarcAlignmentDkim: Optional[str] = None
     dmarcAlignmentSpf:  Optional[str] = None
+    dkimSelectorsChecked: list[str] = []
+    dkimSelectorsFound: list[str] = []
+    dkimRecords:    list[str] = []
+    dkimEvidence:   list[str] = []
+    dnssecCheckedHost: Optional[str] = None
+    dnssecSigned:   bool = False
+    dnssecDsRecords: list[str] = []
+    dnssecDnskeyRecords: list[str] = []
+    dnssecEvidence: list[str] = []
+    dnssecConfidence: Optional[TechConfidence] = None
     error:          Optional[str] = None
 
 
@@ -134,6 +151,12 @@ class RedirectHop(_Base):
     fromUrl:    str
     toUrl:      str
     statusCode: int
+    fromHost:   Optional[str] = None
+    toHost:     Optional[str] = None
+    fromProtocol: Optional[str] = None
+    toProtocol:   Optional[str] = None
+    hostChanged:  bool = False
+    protocolChanged: bool = False
 
 
 class HttpOverviewResult(_Base):
@@ -144,8 +167,14 @@ class HttpOverviewResult(_Base):
     redirectCount:   int = 0
     initialHost:     Optional[str] = None
     finalHost:       Optional[str] = None
+    initialProtocol: Optional[str] = None
     finalProtocol:   Optional[str] = None
     hostChanged:     bool = False
+    crossHostRedirect: bool = False
+    upgradedToHttps: bool = False
+    downgradedFromHttps: bool = False
+    canonicalRedirectType: Optional[str] = None
+    redirectSummary: Optional[str] = None
     server:          Optional[str] = None
     poweredBy:       Optional[str] = None
     via:             Optional[str] = None
@@ -154,11 +183,14 @@ class HttpOverviewResult(_Base):
     cdnEvidence:     list[str] = []
     altSvc:          Optional[str] = None
     contentType:     Optional[str] = None
+    contentFamily:   Optional[str] = None
     contentLength:   Optional[int] = None
     responseBytes:   int = 0
+    responseTruncated: bool = False
     responseTimeMs:  int = 0
     compression:     Optional[str] = None
     cacheControl:    Optional[str] = None
+    cachePolicy:     Optional[str] = None
     expires:         Optional[str] = None
     etag:            Optional[str] = None
     lastModified:    Optional[str] = None
@@ -200,12 +232,22 @@ class PageMetadataResult(_Base):
     ogTitle:        Optional[str] = None
     ogDescription:  Optional[str] = None
     ogImage:        Optional[str] = None
+    ogUrl:          Optional[str] = None
+    twitterTitle:   Optional[str] = None
+    twitterDescription: Optional[str] = None
+    twitterImage:   Optional[str] = None
     faviconUrl:     Optional[str] = None
     language:       Optional[str] = None
     robots:         Optional[str] = None
     robotsDirectives: list[str] = []
     canonicalHost:  Optional[str] = None
     canonicalMatchesFinalHost: Optional[bool] = None
+    titleLength:    int = 0
+    descriptionLength: int = 0
+    socialTagsPresent: bool = False
+    socialImagePresent: bool = False
+    metadataQuality: Optional[TechConfidence] = None
+    metadataIssues: list[str] = []
     metadataEvidence: list[str] = []
     noindex:        bool = False
     nofollow:       bool = False

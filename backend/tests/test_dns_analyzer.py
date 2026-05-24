@@ -3,6 +3,9 @@ from unittest.mock import AsyncMock, patch, MagicMock
 from app.analyzers.dns_analyzer import (
     analyze_dns,
     _build_findings,
+    _detect_mx_providers,
+    _dnssec_candidate_hosts,
+    _dkim_txt_values,
     _detect_dmarc,
     _detect_spf,
     _email_security_confidence,
@@ -42,6 +45,8 @@ def test_parse_spf_extracts_all_policy_and_lookup_count():
     parsed = _parse_spf("v=spf1 include:_spf.example.com mx a -all")
     assert parsed["spfAll"] == "-"
     assert parsed["spfLookupCount"] == 3
+    assert parsed["spfIncludes"] == ["_spf.example.com"]
+    assert parsed["spfMechanisms"] == ["include:_spf.example.com", "mx", "a", "-all"]
 
 
 def test_detect_dmarc_found():
@@ -62,6 +67,8 @@ def test_parse_dmarc_extracts_policy_tags():
     assert parsed["dmarcSubdomainPolicy"] == "reject"
     assert parsed["dmarcPct"] == 50
     assert parsed["dmarcRua"] == "mailto:d@example.com"
+    assert parsed["dmarcReportingEnabled"] is True
+    assert parsed["dmarcEnforcement"] == "enforced"
     assert parsed["dmarcAlignmentDkim"] == "s"
     assert parsed["dmarcAlignmentSpf"] == "r"
 
@@ -71,6 +78,29 @@ def test_record_evidence_includes_host_type_and_value():
     assert _record_evidence(records) == ["example.com MX 10 mail.example.com ttl=300"]
 
 
+def test_dnssec_candidate_hosts_walks_to_nearest_delegations():
+    assert _dnssec_candidate_hosts("www.example.com") == [
+        "www.example.com",
+        "example.com",
+    ]
+    assert _dnssec_candidate_hosts("example.com") == ["example.com"]
+
+
+def test_detect_mx_providers_matches_common_mail_hosts():
+    assert _detect_mx_providers(["10 aspmx.l.google.com", "0 example-com.mail.protection.outlook.com"]) == [
+        "Google Workspace",
+        "Microsoft 365",
+    ]
+
+
+def test_dkim_txt_values_extracts_dkim_records_only():
+    records = [
+        DnsRecord(type="TXT", host="s1._domainkey.example.com", value="v=DKIM1; k=rsa; p=abc"),
+        DnsRecord(type="TXT", host="s1._domainkey.example.com", value="google-site-verification=abc"),
+    ]
+    assert _dkim_txt_values(records) == ["v=DKIM1; k=rsa; p=abc"]
+
+
 def test_email_security_confidence_high_requires_strict_spf_and_enforced_dmarc():
     result = DnsResult(
         mxDetected=True,
@@ -78,6 +108,7 @@ def test_email_security_confidence_high_requires_strict_spf_and_enforced_dmarc()
         dmarcDetected=True,
         spfAll="-",
         dmarcPolicy="reject",
+        dkimSelectorsFound=["google"],
     )
     assert _email_security_confidence(result) == "high"
 
@@ -104,9 +135,10 @@ def test_build_findings_missing_both():
     ids = [f.id for f in findings]
     assert "missing_spf" in ids
     assert "missing_dmarc" in ids
-    assert all(f.status == "warning" for f in findings)
     spf = next(f for f in findings if f.id == "missing_spf")
     dmarc = next(f for f in findings if f.id == "missing_dmarc")
+    assert spf.status == "warning"
+    assert dmarc.status == "warning"
     assert spf.severity == "medium"
     assert spf.confidence == "best-practice"
     assert spf.classification == "hardening-recommendation"
@@ -145,7 +177,14 @@ def test_build_findings_dmarc_none_policy():
 
 
 def test_build_findings_all_good():
-    result = DnsResult(spfDetected=True, dmarcDetected=True, spfAll="-", dmarcPolicy="reject")
+    result = DnsResult(
+        spfDetected=True,
+        dmarcDetected=True,
+        spfAll="-",
+        dmarcPolicy="reject",
+        dmarcReportingEnabled=True,
+        dkimSelectorsFound=["google"],
+    )
     findings = _build_findings(result, "v=DMARC1; p=reject")
     assert findings == []
 
@@ -160,6 +199,23 @@ def test_build_findings_warns_on_partial_dmarc_pct():
     result = DnsResult(spfDetected=True, dmarcDetected=True, spfAll="-", dmarcPolicy="reject", dmarcPct=50)
     findings = _build_findings(result, "v=DMARC1; p=reject; pct=50")
     assert "dmarc_partial_enforcement" in [f.id for f in findings]
+
+
+def test_build_findings_reports_dmarc_reporting_and_dkim_selector_context():
+    result = DnsResult(
+        mxDetected=True,
+        spfDetected=True,
+        dmarcDetected=True,
+        spfAll="-",
+        dmarcPolicy="reject",
+        dmarcReportingEnabled=False,
+        dkimSelectorsFound=[],
+        dkimEvidence=["default._domainkey.example.com: no common DKIM TXT/CNAME observed"],
+    )
+    ids = {finding.id for finding in _build_findings(result, "v=DMARC1; p=reject", "example.com")}
+
+    assert "dmarc_reporting_not_configured" in ids
+    assert "dkim_common_selectors_not_observed" in ids
 
 
 def test_build_findings_warns_on_multiple_spf_records():

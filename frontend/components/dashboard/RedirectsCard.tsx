@@ -8,6 +8,11 @@ type Props = {
 export function RedirectsCard({ http }: Props) {
   const detailItems = [
     { label: "Redirect Count", value: http.redirectCount },
+    { label: "Redirect Summary", value: http.redirectSummary },
+    { label: "Canonical Redirect Type", value: http.canonicalRedirectType },
+    { label: "Cross Host Redirect", value: http.crossHostRedirect },
+    { label: "Upgraded To HTTPS", value: http.upgradedToHttps },
+    { label: "Downgraded From HTTPS", value: http.downgradedFromHttps },
     { label: "Redirect Chain", value: http.redirectChain?.join("\n") || "No redirects detected" },
     ...http.redirectHops.map((hop, index) => ({
       label: `Hop ${index + 1}`,
@@ -15,6 +20,12 @@ export function RedirectsCard({ http }: Props) {
         `status: ${hop.statusCode}`,
         `from: ${hop.fromUrl}`,
         `to: ${hop.toUrl}`,
+        `from_host: ${hop.fromHost ?? "unknown"}`,
+        `to_host: ${hop.toHost ?? "unknown"}`,
+        `from_protocol: ${hop.fromProtocol ?? "unknown"}`,
+        `to_protocol: ${hop.toProtocol ?? "unknown"}`,
+        `host_changed: ${hop.hostChanged ?? false}`,
+        `protocol_changed: ${hop.protocolChanged ?? false}`,
       ].join("\n"),
     })),
   ];
@@ -33,9 +44,16 @@ export function RedirectsCard({ http }: Props) {
       {http.error ? (
         <p className="font-mono text-sm text-error/70 px-4 py-4 flex-1">[-] {http.error}</p>
       ) : http.redirectHops.length === 0 ? (
-        <p className="font-mono text-sm text-[#d7e8ff]/65 px-5 py-4 flex-1">No redirects detected.</p>
+        <p className="font-mono text-sm text-[#d7e8ff]/65 px-5 py-4 flex-1">
+          {http.redirectSummary ?? "No redirects detected."}
+        </p>
       ) : (
         <div className="flex-1">
+          {http.redirectSummary && (
+            <p className="px-5 pb-2 font-mono text-[11px] text-[#d7e8ff]/65">
+              {http.redirectSummary}
+            </p>
+          )}
           {http.redirectHops.slice(0, 3).map((hop, index) => (
             <div
               key={`${hop.fromUrl}-${hop.toUrl}-${index}`}
@@ -49,6 +67,12 @@ export function RedirectsCard({ http }: Props) {
                   {hop.statusCode}
                 </span>
               </div>
+              {(hop.hostChanged || hop.protocolChanged) && (
+                <div className="mb-1 flex flex-wrap gap-1">
+                  {hop.hostChanged && <span className="status-badge status-warn text-[9px]">HOST</span>}
+                  {hop.protocolChanged && <span className="status-badge status-warn text-[9px]">PROTOCOL</span>}
+                </div>
+              )}
               <p className="font-mono text-[10px] text-[#d7e8ff]/60 truncate">
                 {hop.fromUrl}
               </p>

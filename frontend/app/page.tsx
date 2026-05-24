@@ -31,19 +31,19 @@ const HOW_IT_WORKS = [
   {
     step: "01",
     title: "Enter a Domain",
-    desc: "Type any public domain — no login, no API key, no account required. We handle the rest.",
+    desc: "Type any public domain - no login, no API key, no account required. The scanner handles the rest.",
     icon: "edit",
   },
   {
     step: "02",
-    title: "8 Analyzers Run in Parallel",
-    desc: "DNS, SSL, headers, WHOIS, tech stack, cookies, security.txt, and screenshot — all concurrent.",
+    title: "Live Modules Render Progressively",
+    desc: "HTTP, DNS, TLS, headers, WHOIS, metadata, tech stack, crawl hints, and screenshots update the report as they finish.",
     icon: "hub",
   },
   {
     step: "03",
     title: "Get a Risk-Graded Report",
-    desc: "Findings are scored A–F with actionable advisories. Export PDF or re-scan any time.",
+    desc: "Findings are scored A-F with actionable advisories. Export PDF or re-scan any time.",
     icon: "monitoring",
   },
 ];
@@ -102,7 +102,7 @@ export default function LandingPage() {
               <div className="inline-flex items-center gap-2 bg-primary-fixed/10 panel-border px-3 py-1.5 w-max">
                 <AppIcon name="rocket_launch" className="text-primary-fixed text-sm" />
                 <span className="font-mono text-[11px] tracking-widest font-semibold text-primary-fixed uppercase">
-                  V.2.4.0-STABLE — 8 ANALYZERS
+                  PUBLIC SCANNER - LIVE PARTIAL RESULTS
                 </span>
               </div>
 
@@ -115,8 +115,8 @@ export default function LandingPage() {
                   <span className="text-primary-fixed block lg:inline">Website Security</span>
                 </h1>
                 <p className="font-sans text-base text-on-surface-variant max-w-xl leading-relaxed">
-                  Analyze DNS, SSL, headers, WHOIS, technologies, cookies and risk signals in seconds.
-                  A brutalist, high-performance OSINT tool built for security operatives.
+                  Analyze DNS, TLS, headers, WHOIS, technologies, crawl hints, screenshots and risk signals in one live report.
+                  No account, no project setup, no saved profile.
                 </p>
               </div>
 
@@ -124,13 +124,13 @@ export default function LandingPage() {
 
               <div className="flex flex-wrap items-center gap-6 font-mono text-[11px] text-on-surface-variant opacity-70">
                 <span className="flex items-center gap-2">
-                  <span className="text-primary-fixed">[*]</span> No signup required
+                  <span className="text-primary-fixed">[*]</span> No account required
                 </span>
                 <span className="flex items-center gap-2">
-                  <span className="text-primary-fixed">[*]</span> Real-time results
+                  <span className="text-primary-fixed">[*]</span> Partial results while scanning
                 </span>
                 <span className="flex items-center gap-2">
-                  <span className="text-primary-fixed">[*]</span> 100% passive analysis
+                  <span className="text-primary-fixed">[*]</span> Browser-local recent scans
                 </span>
               </div>
             </div>
@@ -222,10 +222,10 @@ export default function LandingPage() {
                 &gt; SYS.CAPABILITY_MATRIX
               </span>
               <h2 className="font-sans font-bold text-2xl md:text-3xl text-on-surface">
-                8 Analyzers. One Scan.
+                Live Modules. One Report.
               </h2>
               <p className="font-sans text-sm text-on-surface-variant mt-2 max-w-xl mx-auto">
-                Every module runs concurrently — full results in under 30 seconds.
+                Fast modules render first; slower modules keep updating the report without blocking the core result.
               </p>
             </div>
 
@@ -284,7 +284,7 @@ export default function LandingPage() {
                 Try it on a real domain
               </h2>
               <p className="font-mono text-[11px] text-primary-fixed/50 max-w-lg mx-auto">
-                No account needed. Results in under 30 seconds. Scan any public domain right now.
+                No account needed. The report opens immediately and fills in as modules complete.
               </p>
               <div className="flex flex-wrap gap-3 justify-center">
                 {["github.com", "cloudflare.com", "mozilla.org"].map((d) => (
@@ -313,10 +313,10 @@ export default function LandingPage() {
             <Link href="/" className="flex items-center gap-3 group">
               <AppIcon name="radar" className="text-primary-fixed text-xl" />
               <span className="font-mono text-sm font-bold text-primary-fixed uppercase group-hover:text-white transition-colors">XyaVora-Scan</span>
-              <span className="font-mono text-[10px] text-primary-fixed/30">[V.2.4.0-STABLE]</span>
+              <span className="font-mono text-[10px] text-primary-fixed/30">[PUBLIC.SCANNER]</span>
             </Link>
             <p className="font-mono text-[10px] text-primary-fixed/30">
-              Passive OSINT only — no active exploitation, no data stored beyond session cache.
+              Passive OSINT only - no active exploitation, no account database, recent scans stay in your browser.
             </p>
           </div>
         </footer>
