@@ -27,6 +27,7 @@ import { HttpOverviewCard } from "@/components/dashboard/HttpOverviewCard";
 import { HstsCard } from "@/components/dashboard/HstsCard";
 import { PageMetadataCard } from "@/components/dashboard/PageMetadataCard";
 import { PageQualityCard } from "@/components/dashboard/PageQualityCard";
+import { MailConfigurationCard } from "@/components/dashboard/MailConfigurationCard";
 import { RedirectsCard } from "@/components/dashboard/RedirectsCard";
 import { ScreenshotCard } from "@/components/dashboard/ScreenshotCard";
 import { SecurityHeadersCard } from "@/components/dashboard/SecurityHeadersCard";
@@ -117,6 +118,9 @@ export function LiveReportPreview({ hostname, steps }: Props) {
           </LiveCard>
           <LiveCard step={stepMap.dns}>
             {dns && <EmailSecurityCard dns={dns} />}
+          </LiveCard>
+          <LiveCard step={stepMap.dns}>
+            {dns && <MailConfigurationCard dns={dns} />}
           </LiveCard>
           <LiveCard step={stepMap.dns}>
             {dns && <DNSSECCard dns={dns} whois={whois} />}

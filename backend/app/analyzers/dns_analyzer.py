@@ -8,6 +8,17 @@ from app.schemas.analyzer import AnalyzerResult
 # Record types to query. SOA and CNAME are excluded — SOA is internal
 # infrastructure detail, CNAME requires chasing the chain which adds latency.
 _RECORD_TYPES = ("A", "AAAA", "MX", "NS", "TXT")
+_DKIM_SELECTORS = (
+    "default",
+    "dkim",
+    "google",
+    "selector1",
+    "selector2",
+    "s1",
+    "s2",
+    "k1",
+    "mail",
+)
 
 
 async def _query(resolver: dns.asyncresolver.Resolver, hostname: str, rtype: str) -> list[DnsRecord]:
@@ -56,13 +67,23 @@ def _clean_txt_value(value: str) -> str:
 
 def _parse_spf(record: str | None) -> dict:
     if not record:
-        return {"spfAll": None, "spfLookupCount": 0}
+        return {
+            "spfAll": None,
+            "spfLookupCount": 0,
+            "spfIncludes": [],
+            "spfRedirect": None,
+            "spfMechanisms": [],
+        }
 
     lookup_count = 0
     all_policy: str | None = None
+    includes: list[str] = []
+    redirect: str | None = None
+    mechanisms: list[str] = []
 
     for token in record.split()[1:]:
         mechanism = token.lower().lstrip("+-~?")
+        mechanisms.append(token)
         if (
             mechanism.startswith(("include:", "exists:", "redirect=", "ptr"))
             or mechanism == "a"
@@ -71,10 +92,20 @@ def _parse_spf(record: str | None) -> dict:
             or mechanism.startswith("mx:")
         ):
             lookup_count += 1
+        if mechanism.startswith("include:"):
+            includes.append(mechanism.split(":", 1)[1])
+        if mechanism.startswith("redirect="):
+            redirect = mechanism.split("=", 1)[1]
         if mechanism == "all":
             all_policy = token[0] if token[0] in ("+", "-", "~", "?") else "+"
 
-    return {"spfAll": all_policy, "spfLookupCount": lookup_count}
+    return {
+        "spfAll": all_policy,
+        "spfLookupCount": lookup_count,
+        "spfIncludes": includes,
+        "spfRedirect": redirect,
+        "spfMechanisms": mechanisms,
+    }
 
 
 def _parse_dmarc(record: str | None) -> dict:
@@ -84,6 +115,9 @@ def _parse_dmarc(record: str | None) -> dict:
         "dmarcPct": None,
         "dmarcRua": None,
         "dmarcRuf": None,
+        "dmarcReportingEnabled": False,
+        "dmarcForensicReportingEnabled": False,
+        "dmarcEnforcement": None,
         "dmarcAlignmentDkim": None,
         "dmarcAlignmentSpf": None,
     }
@@ -110,14 +144,48 @@ def _parse_dmarc(record: str | None) -> dict:
         "dmarcPct": pct,
         "dmarcRua": tags.get("rua"),
         "dmarcRuf": tags.get("ruf"),
+        "dmarcReportingEnabled": bool(tags.get("rua")),
+        "dmarcForensicReportingEnabled": bool(tags.get("ruf")),
+        "dmarcEnforcement": _dmarc_enforcement(tags.get("p")),
         "dmarcAlignmentDkim": tags.get("adkim"),
         "dmarcAlignmentSpf": tags.get("aspf"),
     }
 
 
+def _dmarc_enforcement(policy: str | None) -> str | None:
+    if policy in ("quarantine", "reject"):
+        return "enforced"
+    if policy == "none":
+        return "monitoring"
+    return None
+
+
+def _detect_mx_providers(mx_records: list[str]) -> list[str]:
+    providers: list[str] = []
+    patterns = [
+        ("Google Workspace", ("google.com", "googlemail.com", "aspmx.l.google.com")),
+        ("Microsoft 365", ("protection.outlook.com", "mail.protection.outlook.com")),
+        ("Zoho Mail", ("zoho.com", "zoho.eu")),
+        ("Proton Mail", ("protonmail.ch", "protonmail.com")),
+        ("Fastmail", ("messagingengine.com",)),
+        ("Cloudflare Email Routing", ("mx.cloudflare.net",)),
+        ("Amazon SES", ("amazonses.com",)),
+        ("Mailgun", ("mailgun.org",)),
+        ("SendGrid", ("sendgrid.net",)),
+    ]
+
+    for record in mx_records:
+        value = record.lower()
+        for provider, needles in patterns:
+            if provider not in providers and any(needle in value for needle in needles):
+                providers.append(provider)
+
+    return providers
+
+
 def _email_security_confidence(result: DnsResult) -> str:
     if result.mxDetected and result.spfDetected and result.dmarcDetected:
-        if result.spfAll == "-" and result.dmarcPolicy in ("quarantine", "reject"):
+        if result.spfAll == "-" and result.dmarcPolicy in ("quarantine", "reject") and result.dkimSelectorsFound:
             return "high"
         return "medium"
     if result.mxDetected or result.spfDetected or result.dmarcDetected:
@@ -179,6 +247,51 @@ async def _query_dnssec(
         "dnssecDnskeyRecords": [],
         "dnssecEvidence": evidence or [f"{hostname} DS: no DNSSEC delegation data observed"],
         "dnssecConfidence": "medium" if evidence else "low",
+    }
+
+
+def _dkim_txt_values(records: list[DnsRecord]) -> list[str]:
+    return [
+        _clean_txt_value(record.value)
+        for record in records
+        if _clean_txt_value(record.value).lower().startswith("v=dkim1")
+    ]
+
+
+async def _query_dkim_selectors(
+    resolver: dns.asyncresolver.Resolver,
+    hostname: str,
+) -> tuple[list[DnsRecord], dict]:
+    txt_results = await asyncio.gather(
+        *[_query(resolver, f"{selector}._domainkey.{hostname}", "TXT") for selector in _DKIM_SELECTORS],
+        return_exceptions=True,
+    )
+    cname_results = await asyncio.gather(
+        *[_query(resolver, f"{selector}._domainkey.{hostname}", "CNAME") for selector in _DKIM_SELECTORS],
+        return_exceptions=True,
+    )
+
+    found_records: list[DnsRecord] = []
+    found_selectors: list[str] = []
+    evidence: list[str] = []
+
+    for selector, txt_result, cname_result in zip(_DKIM_SELECTORS, txt_results, cname_results):
+        txt_records = txt_result if isinstance(txt_result, list) else []
+        cname_records = cname_result if isinstance(cname_result, list) else []
+        dkim_txt_values = _dkim_txt_values(txt_records)
+        selector_records = [*txt_records, *cname_records]
+        if dkim_txt_values or cname_records:
+            found_selectors.append(selector)
+            found_records.extend(selector_records)
+            evidence.extend(_record_evidence(selector_records[:5]))
+        else:
+            evidence.append(f"{selector}._domainkey.{hostname}: no common DKIM TXT/CNAME observed")
+
+    return found_records, {
+        "dkimSelectorsChecked": list(_DKIM_SELECTORS),
+        "dkimSelectorsFound": found_selectors,
+        "dkimRecords": [record.value for record in found_records],
+        "dkimEvidence": evidence,
     }
 
 
@@ -361,6 +474,23 @@ def _build_findings(
             verification=f"Run an SPF validator against {target} and count include, a, mx, exists, ptr, and redirect lookups.",
             classification="verified-issue",
         ))
+    elif result.spfLookupCount >= 8:
+        findings.append(Finding(
+            id="spf_lookup_budget_high",
+            severity="low",
+            category="DNS",
+            title="SPF DNS Lookup Budget Is High",
+            description=f"SPF record uses approximately {result.spfLookupCount} DNS-lookup mechanisms out of the 10 lookup limit.",
+            impact="Future SPF includes can push the policy over the limit and cause SPF PermError.",
+            recommendation="Review SPF includes and keep the policy comfortably below 10 DNS lookups.",
+            status="warning",
+            confidence="verified",
+            source="dns",
+            evidence=[result.spfRecord] if result.spfRecord else [],
+            analysis="The SPF record was found and its DNS-lookup mechanism count is close to the SPF limit.",
+            verification=f"Run an SPF validator against {target} and count include, a, mx, exists, ptr, and redirect lookups.",
+            classification="observed-risk",
+        ))
 
     if result.dmarcDetected and result.dmarcPct is not None and result.dmarcPct < 100:
         findings.append(Finding(
@@ -380,6 +510,42 @@ def _build_findings(
             classification="observed-risk",
         ))
 
+    if result.dmarcDetected and not result.dmarcReportingEnabled:
+        findings.append(Finding(
+            id="dmarc_reporting_not_configured",
+            severity="info",
+            category="DNS",
+            title="DMARC Aggregate Reporting Not Configured",
+            description="DMARC exists, but no rua aggregate reporting destination was observed.",
+            impact="The domain may have less visibility into spoofing attempts and authentication failures.",
+            recommendation="Add a rua=mailto: destination if the domain owner wants aggregate DMARC reports.",
+            status="info",
+            confidence="observed",
+            source="dns",
+            evidence=[result.dmarcRecord] if result.dmarcRecord else [],
+            analysis="The DMARC record was parsed and no rua tag was found.",
+            verification=f"Run dig TXT {dmarc_target} and inspect the rua= tag.",
+            classification="informational",
+        ))
+
+    if result.mxDetected and not result.dkimSelectorsFound:
+        findings.append(Finding(
+            id="dkim_common_selectors_not_observed",
+            severity="info",
+            category="DNS",
+            title="Common DKIM Selectors Not Observed",
+            description="The scanner did not find DKIM records at common selector names.",
+            impact="This does not prove DKIM is absent because DKIM selectors are chosen by the mail platform and may be non-standard.",
+            recommendation="Verify DKIM selectors from the mail provider and check selector._domainkey records directly.",
+            status="info",
+            confidence="inferred",
+            source="dns",
+            evidence=result.dkimEvidence[:10],
+            analysis="Common selector discovery checked a short list of frequent DKIM selectors and did not observe TXT/CNAME records.",
+            verification=f"Ask the mail provider for the DKIM selector, then run dig TXT <selector>._domainkey.{target}.",
+            classification="investigation-lead",
+        ))
+
     return findings
 
 
@@ -388,11 +554,12 @@ async def analyze_dns(hostname: str) -> AnalyzerResult:
     resolver.timeout = 3
     resolver.lifetime = 4   # per-query cap; keeps total well inside ANALYZER_TIMEOUT_SECONDS
 
-    # Run record type queries, mail-auth lookup, and DNSSEC lookup concurrently.
-    *type_results, dmarc_result, dnssec_result = await asyncio.gather(
+    # Run record type queries, mail-auth lookup, DNSSEC, and common DKIM selector checks concurrently.
+    *type_results, dmarc_result, dnssec_result, dkim_result = await asyncio.gather(
         *[_query(resolver, hostname, rtype) for rtype in _RECORD_TYPES],
         _query(resolver, f"_dmarc.{hostname}", "TXT"),
         _query_dnssec(resolver, hostname),
+        _query_dkim_selectors(resolver, hostname),
         return_exceptions=True,
     )
     results = type_results  # keep variable name for the loop below
@@ -416,6 +583,15 @@ async def analyze_dns(hostname: str) -> AnalyzerResult:
     }
     if isinstance(dnssec_result, tuple):
         dnssec_records, dnssec_info = dnssec_result
+    dkim_records: list[DnsRecord] = []
+    dkim_info = {
+        "dkimSelectorsChecked": list(_DKIM_SELECTORS),
+        "dkimSelectorsFound": [],
+        "dkimRecords": [],
+        "dkimEvidence": [f"{hostname}: common DKIM selector check unavailable"],
+    }
+    if isinstance(dkim_result, tuple):
+        dkim_records, dkim_info = dkim_result
 
     spf_records = _spf_records(txt_records)
     dmarc_policy_records = _dmarc_records(dmarc_records)
@@ -425,17 +601,20 @@ async def analyze_dns(hostname: str) -> AnalyzerResult:
     dmarc_info = _parse_dmarc(dmarc_record)
     mx_records = [r.value for r in all_records if r.type == "MX"]
     mx_dns_records = [r for r in all_records if r.type == "MX"]
+    mx_providers = _detect_mx_providers(mx_records)
     dns_query_evidence = [
         f"{rtype}: {sum(1 for record in all_records if record.type == rtype)} record(s)"
         for rtype in _RECORD_TYPES
     ]
     dns_query_evidence.append(f"_dmarc TXT: {len(dmarc_records)} record(s)")
     dns_query_evidence.extend(dnssec_info["dnssecEvidence"])
+    dns_query_evidence.append(f"dkim common selectors: {len(dkim_info['dkimSelectorsFound'])} selector(s) found")
 
     dns_result = DnsResult(
-        records=all_records + dmarc_records + dnssec_records,
+        records=all_records + dmarc_records + dnssec_records + dkim_records,
         mxDetected=bool(mx_records),
         mxRecords=mx_records,
+        mxProviders=mx_providers,
         mxEvidence=_record_evidence(mx_dns_records),
         spfDetected=spf_detected,
         dmarcDetected=dmarc_detected,
@@ -449,6 +628,7 @@ async def analyze_dns(hostname: str) -> AnalyzerResult:
         **spf_info,
         **dmarc_info,
         **dnssec_info,
+        **dkim_info,
     )
     dns_result.emailSecurityConfidence = _email_security_confidence(dns_result)  # type: ignore[assignment]
 

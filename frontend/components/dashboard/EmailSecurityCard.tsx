@@ -78,12 +78,16 @@ export function EmailSecurityCard({ dns }: Props) {
   const detailItems = [
     { label: "MX Detected", value: dns.mxDetected },
     { label: "MX Records", value: dns.mxRecords?.join("\n") },
+    { label: "MX Providers", value: dns.mxProviders?.join("\n") },
     { label: "MX Evidence", value: dns.mxEvidence?.join("\n") },
     { label: "SPF Detected", value: dns.spfDetected },
     { label: "SPF Record Count", value: dns.spfRecordCount },
     { label: "SPF Record", value: dns.spfRecord },
     { label: "SPF All Policy", value: describeSpfAll(dns.spfAll) },
     { label: "SPF Lookups", value: dns.spfLookupCount },
+    { label: "SPF Includes", value: dns.spfIncludes?.join("\n") },
+    { label: "SPF Redirect", value: dns.spfRedirect },
+    { label: "SPF Mechanisms", value: dns.spfMechanisms?.join("\n") },
     { label: "SPF Evidence", value: dns.spfEvidence?.join("\n") },
     { label: "DMARC Detected", value: dns.dmarcDetected },
     { label: "DMARC Record Count", value: dns.dmarcRecordCount },
@@ -93,8 +97,15 @@ export function EmailSecurityCard({ dns }: Props) {
     { label: "DMARC Percent", value: dns.dmarcPct !== undefined ? `${dns.dmarcPct}%` : undefined },
     { label: "Aggregate Reports", value: dns.dmarcRua },
     { label: "Forensic Reports", value: dns.dmarcRuf },
+    { label: "DMARC Reporting Enabled", value: dns.dmarcReportingEnabled },
+    { label: "DMARC Forensic Reporting", value: dns.dmarcForensicReportingEnabled },
+    { label: "DMARC Enforcement", value: dns.dmarcEnforcement },
     { label: "DKIM Alignment", value: dns.dmarcAlignmentDkim },
     { label: "SPF Alignment", value: dns.dmarcAlignmentSpf },
+    { label: "DKIM Selectors Checked", value: dns.dkimSelectorsChecked?.join("\n") },
+    { label: "DKIM Selectors Found", value: dns.dkimSelectorsFound?.join("\n") },
+    { label: "DKIM Records", value: dns.dkimRecords?.join("\n") },
+    { label: "DKIM Evidence", value: dns.dkimEvidence?.join("\n") },
     { label: "DMARC Evidence", value: dns.dmarcEvidence?.join("\n") },
     { label: "DNS Query Evidence", value: dns.dnsQueryEvidence?.join("\n") },
   ];
@@ -145,14 +156,18 @@ export function EmailSecurityCard({ dns }: Props) {
             </div>
           )}
           <Row label="MX" value={dns.mxDetected ? mxPreview || "YES" : "NO"} tone={dns.mxDetected ? "good" : "warn"} />
+          <Row label="MX Provider" value={dns.mxProviders?.join(", ")} />
           <Row label="SPF Records" value={dns.spfRecordCount} tone={dns.spfRecordCount > 1 ? "bad" : dns.spfRecordCount === 1 ? "good" : "warn"} />
           <Row label="SPF Policy" value={describeSpfAll(dns.spfAll)} tone={spfTone(dns.spfAll)} />
           <Row label="SPF Lookups" value={dns.spfLookupCount} tone={dns.spfLookupCount > 10 ? "bad" : dns.spfLookupCount > 8 ? "warn" : "normal"} />
+          <Row label="SPF Includes" value={dns.spfIncludes?.length} tone={(dns.spfIncludes?.length ?? 0) > 4 ? "warn" : "normal"} />
           <Row label="DMARC Records" value={dns.dmarcRecordCount} tone={dns.dmarcRecordCount > 1 ? "bad" : dns.dmarcRecordCount === 1 ? "good" : "warn"} />
           <Row label="DMARC Policy" value={dns.dmarcPolicy} tone={dmarcTone(dns.dmarcPolicy)} />
+          <Row label="DMARC Mode" value={dns.dmarcEnforcement} tone={dns.dmarcEnforcement === "enforced" ? "good" : dns.dmarcEnforcement === "monitoring" ? "warn" : "normal"} />
           <Row label="Subdomain Policy" value={dns.dmarcSubdomainPolicy} tone={dmarcTone(dns.dmarcSubdomainPolicy || dns.dmarcPolicy)} />
           <Row label="DMARC Percent" value={dns.dmarcPct !== undefined ? `${dns.dmarcPct}%` : undefined} tone={dns.dmarcPct !== undefined && dns.dmarcPct < 100 ? "warn" : "normal"} />
           <Row label="Aggregate Reports" value={dns.dmarcRua} />
+          <Row label="Common DKIM" value={(dns.dkimSelectorsFound?.length ?? 0) > 0 ? dns.dkimSelectorsFound?.join(", ") : "Not observed"} tone={(dns.dkimSelectorsFound?.length ?? 0) > 0 ? "good" : "warn"} />
           <Row label="DKIM Alignment" value={dns.dmarcAlignmentDkim === "s" ? "strict" : dns.dmarcAlignmentDkim === "r" ? "relaxed" : undefined} />
           <Row label="SPF Alignment" value={dns.dmarcAlignmentSpf === "s" ? "strict" : dns.dmarcAlignmentSpf === "r" ? "relaxed" : undefined} />
           <EvidenceBlock title="MX Evidence" items={dns.mxEvidence} />

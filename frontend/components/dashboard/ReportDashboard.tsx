@@ -28,6 +28,7 @@ import { ServerLocationCard }   from "@/components/dashboard/ServerLocationCard"
 import { DNSRecordsCard }       from "@/components/dashboard/DNSRecordsCard";
 import { DNSSECCard }           from "@/components/dashboard/DNSSECCard";
 import { EmailSecurityCard }    from "@/components/dashboard/EmailSecurityCard";
+import { MailConfigurationCard } from "@/components/dashboard/MailConfigurationCard";
 import { WhoisCard }            from "@/components/dashboard/WhoisCard";
 import { CookiesCard }          from "@/components/dashboard/CookiesCard";
 import { SecurityTxtCard }      from "@/components/dashboard/SecurityTxtCard";
@@ -224,6 +225,9 @@ export function ReportDashboard({ domain, report, historyId, guestScanId }: Prop
             </BalancedItem>
             <BalancedItem>
               <EmailSecurityCard dns={report.dns} />
+            </BalancedItem>
+            <BalancedItem>
+              <MailConfigurationCard dns={report.dns} />
             </BalancedItem>
             <BalancedItem>
               <DNSSECCard dns={report.dns} whois={report.whois} />
