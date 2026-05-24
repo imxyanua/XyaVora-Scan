@@ -17,6 +17,10 @@ def test_parse_page_metadata_common_fields():
         <meta property="og:title" content="OG Title">
         <meta property="og:description" content="OG Description">
         <meta property="og:image" content="/card.png">
+        <meta property="og:url" content="/canonical">
+        <meta name="twitter:title" content="Twitter Title">
+        <meta name="twitter:description" content="Twitter Description">
+        <meta name="twitter:image" content="/twitter.png">
         <link rel="canonical" href="https://example.com/canonical">
         <link rel="icon" href="/favicon.ico">
       </head>
@@ -34,12 +38,23 @@ def test_parse_page_metadata_common_fields():
     assert result.ogTitle == "OG Title"
     assert result.ogDescription == "OG Description"
     assert result.ogImage == "https://example.com/card.png"
+    assert result.ogUrl == "https://example.com/canonical"
+    assert result.twitterTitle == "Twitter Title"
+    assert result.twitterDescription == "Twitter Description"
+    assert result.twitterImage == "https://example.com/twitter.png"
     assert result.canonicalUrl == "https://example.com/canonical"
     assert result.canonicalHost == "example.com"
     assert result.canonicalMatchesFinalHost is True
     assert result.faviconUrl == "https://example.com/favicon.ico"
     assert result.language == "en"
+    assert result.titleLength == len("Example Site")
+    assert result.descriptionLength == len("Plain description")
+    assert result.socialTagsPresent is True
+    assert result.socialImagePresent is True
+    assert result.metadataQuality == "low"
+    assert "robots-noindex" in result.metadataIssues
     assert "title: present" in result.metadataEvidence
+    assert "twitter:image: present" in result.metadataEvidence
 
 
 def test_clean_text_collapses_whitespace_and_limits_length():
@@ -74,3 +89,44 @@ def test_build_findings_for_noindex_and_canonical_host_change():
     assert "canonical_host_differs" in ids
     assert next(f for f in findings if f.id == "page_noindex").classification == "investigation-lead"
     assert next(f for f in findings if f.id == "canonical_host_differs").classification == "investigation-lead"
+
+
+def test_metadata_quality_flags_missing_core_fields_and_social_tags():
+    html = b"""
+    <html>
+      <head>
+        <title></title>
+        <link rel="canonical" href="https://example.com/page">
+      </head>
+    </html>
+    """
+    result = parse_page_metadata(html, "https://example.com/page")
+    findings = _build_findings(result)
+    ids = {finding.id for finding in findings}
+
+    assert result.metadataQuality == "low"
+    assert "missing-title" in result.metadataIssues
+    assert "missing-description" in result.metadataIssues
+    assert "missing-social-tags" in result.metadataIssues
+    assert "metadata_missing_title" in ids
+    assert "metadata_missing_description" in ids
+    assert "metadata_social_tags_incomplete" in ids
+
+
+def test_metadata_quality_high_when_core_and_social_tags_are_complete():
+    html = b"""
+    <html lang="en">
+      <head>
+        <title>Example product security scanner</title>
+        <meta name="description" content="A practical security scanner for DNS, TLS, headers, metadata, and web posture checks.">
+        <meta property="og:title" content="Example product security scanner">
+        <meta property="og:description" content="A practical security scanner for DNS, TLS, headers, metadata, and web posture checks.">
+        <meta property="og:image" content="/card.png">
+        <link rel="canonical" href="https://example.com/page">
+      </head>
+    </html>
+    """
+    result = parse_page_metadata(html, "https://example.com/page")
+
+    assert result.metadataQuality == "high"
+    assert result.metadataIssues == []

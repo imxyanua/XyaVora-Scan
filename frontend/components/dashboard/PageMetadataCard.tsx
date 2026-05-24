@@ -31,12 +31,22 @@ export function PageMetadataCard({ metadata }: Props) {
     { label: "Open Graph Title", value: metadata.ogTitle },
     { label: "Open Graph Description", value: metadata.ogDescription },
     { label: "Open Graph Image", value: metadata.ogImage },
+    { label: "Open Graph URL", value: metadata.ogUrl },
+    { label: "Twitter Title", value: metadata.twitterTitle },
+    { label: "Twitter Description", value: metadata.twitterDescription },
+    { label: "Twitter Image", value: metadata.twitterImage },
     { label: "Favicon", value: metadata.faviconUrl },
     { label: "Language", value: metadata.language },
     { label: "Robots", value: metadata.robots },
     { label: "Robots Directives", value: metadata.robotsDirectives?.join("\n") },
     { label: "Canonical Host", value: metadata.canonicalHost },
     { label: "Canonical Matches Host", value: metadata.canonicalMatchesFinalHost },
+    { label: "Title Length", value: metadata.titleLength },
+    { label: "Description Length", value: metadata.descriptionLength },
+    { label: "Social Tags Present", value: metadata.socialTagsPresent },
+    { label: "Social Image Present", value: metadata.socialImagePresent },
+    { label: "Metadata Quality", value: metadata.metadataQuality },
+    { label: "Metadata Issues", value: metadata.metadataIssues?.join("\n") },
     { label: "Metadata Evidence", value: metadata.metadataEvidence?.join("\n") },
     { label: "Noindex", value: metadata.noindex },
     { label: "Nofollow", value: metadata.nofollow },
@@ -82,7 +92,9 @@ export function PageMetadataCard({ metadata }: Props) {
             <Row label="Canonical" value={metadata.canonicalUrl} />
             <Row label="Canonical Host" value={metadata.canonicalHost} />
             <Row label="OG Image" value={metadata.ogImage} />
+            <Row label="Twitter Image" value={metadata.twitterImage} />
             <Row label="Robots" value={metadata.robots} />
+            <Row label="Quality" value={metadata.metadataQuality?.toUpperCase()} />
             <Row label="Noindex" value={metadata.noindex ? "YES" : "NO"} />
             <Row label="Nofollow" value={metadata.nofollow ? "YES" : "NO"} />
           </div>

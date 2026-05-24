@@ -20,6 +20,7 @@ import { HTTPBehaviorCard }     from "@/components/dashboard/HTTPBehaviorCard";
 import { HttpOverviewCard }     from "@/components/dashboard/HttpOverviewCard";
 import { HostNamesCard }        from "@/components/dashboard/HostNamesCard";
 import { PageMetadataCard }     from "@/components/dashboard/PageMetadataCard";
+import { PageQualityCard }      from "@/components/dashboard/PageQualityCard";
 import { RedirectsCard }        from "@/components/dashboard/RedirectsCard";
 import { ServerInfoCard }       from "@/components/dashboard/ServerInfoCard";
 import { SiteDiscoveryCard }    from "@/components/dashboard/SiteDiscoveryCard";
@@ -262,6 +263,9 @@ export function ReportDashboard({ domain, report, historyId, guestScanId }: Prop
             </BalancedItem>
             <BalancedItem>
               <PageMetadataCard metadata={report.pageMetadata} />
+            </BalancedItem>
+            <BalancedItem>
+              <PageQualityCard metadata={report.pageMetadata} />
             </BalancedItem>
             <BalancedItem>
               <TechStackCard techStack={report.techStack} />

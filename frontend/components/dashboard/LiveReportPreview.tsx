@@ -26,6 +26,7 @@ import { HTTPBehaviorCard } from "@/components/dashboard/HTTPBehaviorCard";
 import { HttpOverviewCard } from "@/components/dashboard/HttpOverviewCard";
 import { HstsCard } from "@/components/dashboard/HstsCard";
 import { PageMetadataCard } from "@/components/dashboard/PageMetadataCard";
+import { PageQualityCard } from "@/components/dashboard/PageQualityCard";
 import { RedirectsCard } from "@/components/dashboard/RedirectsCard";
 import { ScreenshotCard } from "@/components/dashboard/ScreenshotCard";
 import { SecurityHeadersCard } from "@/components/dashboard/SecurityHeadersCard";
@@ -48,6 +49,11 @@ type StepMap = Record<string, ScanJobStep | undefined>;
 
 const EMPTY_METADATA: PageMetadataResult = {
   robotsDirectives: [],
+  titleLength: 0,
+  descriptionLength: 0,
+  socialTagsPresent: false,
+  socialImagePresent: false,
+  metadataIssues: [],
   metadataEvidence: [],
   noindex: false,
   nofollow: false,
@@ -152,6 +158,9 @@ export function LiveReportPreview({ hostname, steps }: Props) {
           </LiveCard>
           <LiveCard step={stepMap.metadata}>
             {metadata && <PageMetadataCard metadata={metadata} />}
+          </LiveCard>
+          <LiveCard step={stepMap.metadata}>
+            {metadata && <PageQualityCard metadata={metadata} />}
           </LiveCard>
           <LiveCard step={stepMap.techStack}>
             {techStack && <TechStackCard techStack={techStack} />}
